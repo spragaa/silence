@@ -3,7 +3,8 @@
 #include "server.hpp"
 
 int main() {
-    print_hello();
-    
+    Server server(8080);
+    server.start();
+
     return 0;
 }
