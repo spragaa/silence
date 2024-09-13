@@ -1,17 +1,33 @@
 #include "server.hpp"
 
+Server::Server(unsigned int port, unsigned int thread_pool_size)
+    : acceptor(io_service, tcp::endpoint(tcp::v4(), port)), 
+      work(new boost::asio::io_service::work(io_service)) {
+    for (unsigned int i = 0; i < thread_pool_size; ++i) {
+        thread_pool.push_back(boost::make_shared<boost::thread>(boost::bind(&boost::asio::io_service::run, &io_service)));
+    }
+}
+
 Server::~Server() {
-    if (s_thread) {
-        s_thread->join();
+    io_service.stop();
+    for (auto& thread : thread_pool) {
+        thread->join();
     }
 }
 
 void Server::start() {
     DEBUG_MSG("server started");
 
-    s_thread = boost::make_shared<boost::thread>(boost::bind(&boost::asio::io_service::run, &io_service));
-
     start_request_handling();
+
+    while (true) {
+        try {
+            io_service.run();
+        } catch (const std::exception& e) {
+            std::cerr << "Exception: " << e.what() << std::endl;
+            io_service.reset();
+        }
+    }
 }
 
 void Server::start_request_handling() {
@@ -26,8 +42,10 @@ void Server::start_request_handling() {
 void Server::handle_accept(boost::shared_ptr<tcp::socket> socket, const boost::system::error_code& error) {
     if (!error) {
         DEBUG_MSG("client connected");
-        
-        boost::thread(boost::bind(&Server::handle_request, this, socket));
+
+        boost::asio::post(io_service, [this, socket]() {
+            handle_request(socket);
+        });
 
         start_request_handling();
     }

@@ -16,8 +16,7 @@ using boost::asio::ip::tcp;
 
 class Server : public boost::enable_shared_from_this<Server> {
 public:
-
-    Server(unsigned int port) : acceptor(io_service, tcp::endpoint(tcp::v4(), port)) {}
+    Server(unsigned int port, unsigned int thread_pool_size);
     ~Server();
     
     void start();
@@ -30,5 +29,6 @@ private:
 private:
     boost::asio::io_service io_service;
     tcp::acceptor acceptor;
-    boost::shared_ptr<boost::thread> s_thread;
+    boost::shared_ptr<boost::asio::io_service::work> work;
+    std::vector<boost::shared_ptr<boost::thread>> thread_pool;
 };
