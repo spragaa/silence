@@ -13,7 +13,10 @@ void Client::run() {
 
         while (true) {
             std::string message = get_user_input();
-            if (message == "exit") break;
+            if (message == "exit") {
+                break;
+            }
+
             send_message(message);
             std::string response = receive_response();
             std::cout << "Server response: " << response << std::endl;
@@ -21,7 +24,7 @@ void Client::run() {
         
         socket.close();
     } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+        std::cerr << "Exception in Client::run() : " << e.what() << std::endl;
     }
 }
 
@@ -29,10 +32,12 @@ std::string Client::get_user_input() {
     std::string message;
     std::cout << "Enter message to send (or 'exit' to quit): ";
     std::getline(std::cin, message);
+   
     return message;
 }
 
 void Client::send_message(const std::string& message) {
+    DEBUG_MSG("send_message" + get_socket_info(socket));
     boost::asio::write(socket, boost::asio::buffer(message + "\r\n\r\n"));
 }
 
@@ -42,11 +47,12 @@ std::string Client::receive_response() {
     boost::asio::read_until(socket, response_buf, "\r\n\r\n", error);
 
     if (error && error != boost::asio::error::eof) {
-        throw std::runtime_error("Error while reading response: " + error.message());
+        throw std::runtime_error("Error while receiveing response: " + error.message());
     }
 
     std::istream response_stream(&response_buf);
     std::string response;
     std::getline(response_stream, response);
+
     return response;
 }
