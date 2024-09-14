@@ -1,6 +1,6 @@
 #include "server.hpp"
 
-Server::Server(unsigned int port, unsigned int thread_pool_size)
+Server::Server(unsigned short port, unsigned int thread_pool_size)
     : acceptor(io_service, tcp::endpoint(tcp::v4(), port)), 
       work(new boost::asio::io_service::work(io_service)) {
     for (unsigned int i = 0; i < thread_pool_size; ++i) {
@@ -41,7 +41,7 @@ void Server::start_request_handling() {
 
 void Server::handle_accept(boost::shared_ptr<tcp::socket> socket, const boost::system::error_code& error) {
     if (!error) {
-        DEBUG_MSG("client connected");
+        DEBUG_MSG("handling accept");
 
         boost::asio::post(io_service, [this, socket]() {
             handle_request(socket);

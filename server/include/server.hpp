@@ -16,7 +16,7 @@ using boost::asio::ip::tcp;
 
 class Server : public boost::enable_shared_from_this<Server> {
 public:
-    Server(unsigned int port, unsigned int thread_pool_size);
+    Server(unsigned short port, unsigned int thread_pool_size);
     ~Server();
     
     void start();
