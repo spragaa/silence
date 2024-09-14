@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./build/server/server 
+../build/server/server 
