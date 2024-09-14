@@ -1,5 +1,3 @@
-find_package(Boost 1.74 REQUIRED COMPONENTS system thread)
-
 add_subdirectory(src)
 
 add_executable(client

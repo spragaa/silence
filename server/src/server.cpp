@@ -24,7 +24,7 @@ void Server::start() {
         try {
             io_service.run();
         } catch (const std::exception& e) {
-            std::cerr << "Exception: " << e.what() << std::endl;
+            std::cerr << "Exception in Server::start(): " << e.what() << std::endl;
             io_service.reset();
         }
     }
@@ -41,7 +41,7 @@ void Server::start_request_handling() {
 
 void Server::handle_accept(boost::shared_ptr<tcp::socket> socket, const boost::system::error_code& error) {
     if (!error) {
-        DEBUG_MSG("handling accept");
+        DEBUG_MSG("handle_accept on socket: " + get_socket_info(*socket));
 
         boost::asio::post(io_service, [this, socket]() {
             handle_request(socket);
@@ -52,29 +52,43 @@ void Server::handle_accept(boost::shared_ptr<tcp::socket> socket, const boost::s
 }
 
 void Server::handle_request(boost::shared_ptr<tcp::socket> socket) {
+    DEBUG_MSG("handle_request on socket: " + get_socket_info(*socket));
+
     boost::asio::streambuf request_buf;
     boost::system::error_code error;
 
-    boost::asio::read_until(*socket, request_buf, "\r\n\r\n", error);
+    while (true) {
+        boost::asio::read_until(*socket, request_buf, "\r\n\r\n", error);
 
-    if (!error) {
+        if (error == boost::asio::error::eof) {
+            DEBUG_MSG("Client closed connection on socket: " + get_socket_info(*socket));
+            break;
+        } else if (error) {
+            throw std::runtime_error("Error while receiving request: " + error.message());
+        }
+
         std::istream request_stream(&request_buf);
         std::string request_line;
         std::getline(request_stream, request_line);
 
         DEBUG_MSG("Received request: " + request_line);
+        DEBUG_MSG("on socket: " + get_socket_info(*socket));
 
         std::string response =
             "HTTP/1.1 200 OK\r\n"
             "Content-Type: text/plain\r\n"
             "Content-Length: 66\r\n"
-            "Connection: close\r\n\r\n"
-            "BLABLABALBALABLA";
-        
+            "Connection: keep-alive\r\n\r\n"
+            "Server response: HTTP/1.1 200 OK";
+
         DEBUG_MSG(response);
 
         boost::asio::write(*socket, boost::asio::buffer(response), error);
-    }
 
-    socket->close();
+        if (error) {
+            throw std::runtime_error("Error while sending response: " + error.message());
+        }
+
+        request_buf.consume(request_buf.size());
+    }
 }
