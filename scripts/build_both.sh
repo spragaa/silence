@@ -14,13 +14,13 @@ debug_echo() {
 }
 
 if [[ "$1" == "--clean" ]]; then
-    debug_echo "rm -rf build/* ..."
-    rm -rf build/*
+    debug_echo "rm -rf ../build/* ..."
+    rm -rf ../build/*
 fi
 
-mkdir -p build
+mkdir -p ../build
 
-cd build || exit
+cd ../build || exit
 
 cmake ..
 debug_echo "'cmake ..' finished"

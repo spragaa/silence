@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./build/client/client 
+../build/client/client 
