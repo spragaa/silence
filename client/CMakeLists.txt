@@ -5,6 +5,7 @@ add_executable(client
 )
 
 target_link_libraries(client 
-    client_lib 
-    common_lib
+PRIVATE client_lib 
+        common_lib
+        nlohmann_json::nlohmann_json
 )
