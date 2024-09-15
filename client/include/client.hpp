@@ -21,6 +21,7 @@ public:
 private:
 
 	void        send_message(const std::string& message);
+    void inline show_actions();
     std::string read_user_text() const noexcept;
 	std::string receive_response();
 
