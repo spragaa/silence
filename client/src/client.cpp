@@ -24,16 +24,25 @@ void Client::run() {
 			resolver.resolve(query);
 		boost::asio::connect(socket, endpoint_iterator);
 
-		while (true) {
-			std::string message = read_user_text();
+        while (true) {
+            std::string command = read_user_text();
 
-			if (message == "exit") {
-				break;
-			}
+            if (command == "exit") {
+                break;
+            }
 
-			send_message(message);
-			std::string response = receive_response();
-			std::cout << "Server response: " << response << std::endl;
+            std::istringstream command_stream(command);
+            std::string action;
+            std::getline(command_stream, action, ':');
+            std::string data = command.substr(action.length() + 1);
+
+            nlohmann::json request;
+            request["type"] = action;
+            request["data"] = data;
+
+            boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
+            nlohmann::json response = receive_response();
+            std::cout << "Server response: " << response.dump() << std::endl;
 		}
 
 		socket.close();

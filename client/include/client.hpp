@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <boost/asio.hpp>
+#include <nlohmann/json.hpp>
 
 class Client {
 public:
@@ -20,8 +21,7 @@ public:
 private:
 
 	void        send_message(const std::string& message);
-	std::string read_receiver() const noexcept;
-	std::string construct_message() const noexcept;
+    std::string read_user_text() const noexcept;
 	std::string receive_response();
 
 private:
