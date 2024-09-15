@@ -16,10 +16,10 @@ debug_echo() {
 if [[ "$1" == "--clean" ]]; then
     debug_echo "rm -rf ../build/client ..."
     rm -rf ../build/client
+    shift
 fi
 
 mkdir -p ../build || exit
-
 cd ../build || exit
 
 cmake ..
@@ -27,3 +27,12 @@ debug_echo "'cmake ..' finished"
 
 make client
 debug_echo "'make client' finished"
+
+NICKNAME="noname"
+for arg in "$@"; do
+    if [[ $arg == --nickname=* ]]; then
+        NICKNAME="${arg#*=}"
+    fi
+done
+
+../build/client/client --nickname="$NICKNAME"

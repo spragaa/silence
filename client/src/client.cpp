@@ -15,6 +15,22 @@ User Client::get_user() {
 	return user;
 }
 
+void inline Client::show_actions() {
+    // handle it somewhere else? (if not registered)
+    // if (user.get_nickname().size() != 0) {
+    //     std::cout << user.get_nickname() << ", please choose the action type from the list:\n";
+    // } else {
+    //     std::cout << "To be able to use full functionality of this chat application, you should register first!" << std::endl;
+    // }
+
+    std::cout << user.get_nickname() << ", please select the number of the action you would like to perform now from the list below:" << std::endl;
+    std::cout << "1. Authorize" << std::endl;
+    std::cout << "2. Get list of chats" << std::endl;
+    std::cout << "3. Send message" << std::endl;
+    std::cout << "4. Get offline messages" << std::endl;
+    std::cout << "5. KYS" << std::endl;
+}
+
 void Client::run() {
 	try {
 		boost::asio::ip::tcp::resolver resolver(io_service);
@@ -25,6 +41,58 @@ void Client::run() {
 		boost::asio::connect(socket, endpoint_iterator);
 
         while (true) {
+            int action_type = 0;
+            while(action_type <= 0 || action_type >= 6) {
+                show_actions();
+                std::cin >> action_type;
+                if (action_type <= 0 || action_type >= 6) {
+                    std::cout << "Incorrect action type has been chosen:" << action_type << std::endl;
+                }
+            }
+
+            switch (action_type) {
+                case 1: {
+                    std::string password;
+                    std::cout << user.get_nickname() << ", please provide the password to your account: ";
+                    std::getline(std::cin, password);
+                    std::cout << std::endl;
+                    break;
+                }
+                case 2: {
+                    std::cout << "TODO: " << std::endl;
+                    std::cout << "Getting list of all chats... " << std::endl;
+                    std::cout << std::endl;
+                    break;
+                }
+                case 3: {
+                    std::string receiver_nickname;                    
+                    std::cout << "Provide receiver's nickname: " << std::endl;
+                    std::getline(std::cin, receiver_nickname);
+                    std::cout << std::endl;
+                    
+                    std::string message;                    
+                    std::cout << "Enter the message to send to " << receiver_nickname << ": ";
+                    std::getline(std::cin, message);
+                    std::cout << "Sending message to " << receiver_nickname << ": " << message << std::endl;
+                    break;
+                }
+                case 4: {
+                    std::cout << "TODO" << std::endl;
+                    std::cout << "Getting offline messages... " << std::endl;
+                    std::cout << std::endl;
+                    break;
+                }
+                case 5: {
+                    std::cout << "KYS KYS KYS KYS KYS KYS KYS ";
+                    std::cout << std::endl;
+                    break;
+                }
+                default: {
+                    std::cout << "Invalid option." << std::endl;
+                    break;
+                }
+            }
+
             std::string command = read_user_text();
 
             if (command == "exit") {
@@ -53,8 +121,6 @@ void Client::run() {
 
 std::string Client::read_user_text() const noexcept{
 	std::string message;
-
-	std::cout << "Enter message to send (or 'exit' to quit): ";
 	std::getline(std::cin, message);
 
 	return message;
