@@ -1,8 +1,16 @@
 #include "client.hpp"
 
-Client::Client(const std::string& server_address, unsigned short server_port)
-    : io_service(), socket(io_service), server_address(server_address), server_port(server_port) {}
+Client::Client(const std::string& server_address, unsigned short server_port, const std::string& nickname)
+    : io_service()
+    , socket(io_service)
+    , server_address(server_address)
+    , server_port(server_port)
+    , user(nickname)
+{}
 
+User Client::get_user() {
+    return user;
+}
 
 void Client::run() {
     try {
@@ -28,7 +36,7 @@ void Client::run() {
     }
 }
 
-std::string Client::get_user_input() {
+std::string Client::get_user_input() const noexcept{
     std::string message;
     std::cout << "Enter message to send (or 'exit' to quit): ";
     std::getline(std::cin, message);

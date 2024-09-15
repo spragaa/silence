@@ -1,5 +1,7 @@
 add_library(common_lib
     debug.cpp
+    common.cpp
+    message.cpp
 )
 
 target_link_libraries(common_lib
