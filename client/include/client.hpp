@@ -20,7 +20,8 @@ public:
 private:
 
 	void        send_message(const std::string& message);
-	std::string get_user_input() const noexcept;
+	std::string read_receiver() const noexcept;
+	std::string construct_message() const noexcept;
 	std::string receive_response();
 
 private:

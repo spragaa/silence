@@ -25,7 +25,7 @@ void Client::run() {
 		boost::asio::connect(socket, endpoint_iterator);
 
 		while (true) {
-			std::string message = get_user_input();
+			std::string message = read_user_text();
 
 			if (message == "exit") {
 				break;
@@ -42,7 +42,7 @@ void Client::run() {
 	}
 }
 
-std::string Client::get_user_input() const noexcept{
+std::string Client::read_user_text() const noexcept{
 	std::string message;
 
 	std::cout << "Enter message to send (or 'exit' to quit): ";
