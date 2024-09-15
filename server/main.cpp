@@ -3,8 +3,9 @@
 #include "server.hpp"
 
 int main() {
-    Server server(55555, 128);
-    server.start();
+	Server server(55555, 128);
 
-    return 0;
+	server.start();
+
+	return 0;
 }
