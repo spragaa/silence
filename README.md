@@ -6,4 +6,7 @@ bash build_both.sh --debug --clean
 
  applicable for `build_server.sh` and `build_client.sh` 
 
+
+bash build_client.sh --debug && bash run_client.sh --nickname=<user_nickname>
+
 ```
