@@ -7,7 +7,7 @@ Client::Client(const std::string& server_address,
 	, socket(io_service)
 	, server_address(server_address)
 	, server_port(server_port)
-	, user(nickname)
+	, user(nickname, "")
 {
 }
 
@@ -16,15 +16,19 @@ User Client::get_user() {
 }
 
 void inline Client::show_actions() {
-    // handle it somewhere else? (if not registered)
+    // std::string created_nickname;
     // if (user.get_nickname().size() != 0) {
     //     std::cout << user.get_nickname() << ", please choose the action type from the list:\n";
     // } else {
     //     std::cout << "To be able to use full functionality of this chat application, you should register first!" << std::endl;
+    //     std::cout << "Create a nickname to your account:";
+    //     std::getline(std::cin, nickname);
+    //     std::cout << std::endl;
     // }
 
     std::cout << user.get_nickname() << ", please select the number of the action you would like to perform now from the list below:" << std::endl;
-    std::cout << "1. Authorize" << std::endl;
+    std::cout << "0. Register new user" << std::endl;
+    std::cout << "1. Authorize user" << std::endl;
     std::cout << "2. Get list of chats" << std::endl;
     std::cout << "3. Send message" << std::endl;
     std::cout << "4. Get offline messages" << std::endl;
@@ -41,22 +45,57 @@ void Client::run() {
 		boost::asio::connect(socket, endpoint_iterator);
 
         while (true) {
-            int action_type = 0;
-            while(action_type <= 0 || action_type >= 6) {
-                show_actions();
+            int action_type = -1;
+            show_actions();
+            
+            while(action_type < 0 || action_type >= 6) {
                 std::cin >> action_type;
-                if (action_type <= 0 || action_type >= 6) {
+                if (action_type < 0 || action_type >= 6) {
                     std::cout << "Incorrect action type has been chosen:" << action_type << std::endl;
                 }
             }
-
+            
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             switch (action_type) {
-                case 1: {
-                    std::string password;
-                    std::cout << user.get_nickname() << ", please provide the password to your account: ";
+                case 0: {
+                    std::string nickname, password;
+                    std::cout << "Enter nickname: ";
+                    std::getline(std::cin, nickname);
+
+                    std::cout << "Enter password: ";
                     std::getline(std::cin, password);
-                    std::cout << std::endl;
-                    break;
+
+                    // this should be outside of the case {}
+                    nlohmann::json request;
+                    request["type"] = "register";
+                    request["nickname"] = nickname;
+                    request["password"] = password;
+                    
+                    // this should be in a separate func or at least out side of the case {}
+                    boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
+                    nlohmann::json response = receive_response();
+                    std::cout << "Server response: " << response.dump() << std::endl;
+                    break;                
+                }
+                case 1: {
+                    std::string nickname, password;
+                    std::cout << "Enter nickname: ";
+                    std::getline(std::cin, nickname);
+
+                    std::cout << "Enter password: ";
+                    std::getline(std::cin, password);
+
+                    // this should be outside of the case {}
+                    nlohmann::json request;
+                    request["type"] = "authorize";
+                    request["nickname"] = nickname;
+                    request["password"] = password;
+                    
+                    // this should be in a separate func or at least out side of the case {}
+                    boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
+                    nlohmann::json response = receive_response();
+                    std::cout << "Server response: " << response.dump() << std::endl;
+                    break;                
                 }
                 case 2: {
                     std::cout << "TODO: " << std::endl;
@@ -65,12 +104,12 @@ void Client::run() {
                     break;
                 }
                 case 3: {
-                    std::string receiver_nickname;                    
+                    std::string receiver_nickname;
                     std::cout << "Provide receiver's nickname: " << std::endl;
                     std::getline(std::cin, receiver_nickname);
                     std::cout << std::endl;
-                    
-                    std::string message;                    
+
+                    std::string message;
                     std::cout << "Enter the message to send to " << receiver_nickname << ": ";
                     std::getline(std::cin, message);
                     std::cout << "Sending message to " << receiver_nickname << ": " << message << std::endl;
@@ -93,24 +132,24 @@ void Client::run() {
                 }
             }
 
-            std::string command = read_user_text();
+            // std::string command = read_user_text();
 
-            if (command == "exit") {
-                break;
-            }
+            // if (command == "exit") {
+            //     break;
+            // }
 
-            std::istringstream command_stream(command);
-            std::string action;
-            std::getline(command_stream, action, ':');
-            std::string data = command.substr(action.length() + 1);
+            // std::istringstream command_stream(command);
+            // std::string action;
+            // std::getline(command_stream, action, ':');
+            // std::string data = command.substr(action.length() + 1);
 
-            nlohmann::json request;
-            request["type"] = action;
-            request["data"] = data;
+            // nlohmann::json request;
+            // request["type"] = action;
+            // request["data"] = data;
 
-            boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
-            nlohmann::json response = receive_response();
-            std::cout << "Server response: " << response.dump() << std::endl;
+            // boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
+            // nlohmann::json response = receive_response();
+            // std::cout << "Server response: " << response.dump() << std::endl;
 		}
 
 		socket.close();

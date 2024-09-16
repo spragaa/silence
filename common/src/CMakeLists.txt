@@ -2,6 +2,7 @@ add_library(common_lib
     debug.cpp
     common.cpp
     message.cpp
+    user.cpp
 )
 
 target_link_libraries(common_lib

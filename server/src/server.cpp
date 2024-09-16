@@ -60,47 +60,106 @@ void Server::handle_accept(boost::shared_ptr<tcp::socket>   socket,
 	}
 }
 
-void Server::handle_request(boost::shared_ptr<tcp::socket>socket) {
-	DEBUG_MSG("handle_request on socket: " + get_socket_info(*socket));
+void Server::handle_request(boost::shared_ptr<tcp::socket> socket) {
+    DEBUG_MSG("handle_request on socket: " + get_socket_info(*socket));
 
-	boost::asio::streambuf request_buf;
-	boost::system::error_code error;
+    boost::asio::streambuf request_buf;
+    boost::system::error_code error;
 
-	while (true) {
-		boost::asio::read_until(*socket, request_buf, "\r\n\r\n", error);
+    while (true) {
+        boost::asio::read_until(*socket, request_buf, "\r\n\r\n", error);
 
-		if (error == boost::asio::error::eof) {
-			DEBUG_MSG("Client closed connection on socket: " + get_socket_info(
-						  *socket));
-			break;
-		} else if (error) {
-			throw std::runtime_error(
-					  "Error while receiving request: " + error.message());
-		}
+        if (error == boost::asio::error::eof) {
+            DEBUG_MSG("Client closed connection on socket: " + get_socket_info(*socket));
+            break;
+        } else if (error) {
+            throw std::runtime_error("Error while receiving request: " + error.message());
+        }
 
-		std::istream request_stream(&request_buf);
-		std::string request_line;
-		std::getline(request_stream, request_line);
+        std::istream request_stream(&request_buf);
+        std::string request_line;
+        std::getline(request_stream, request_line);
 
-		DEBUG_MSG("Received request: " + request_line);
-		DEBUG_MSG("on socket: " + get_socket_info(*socket));
+        DEBUG_MSG("Received request: " + request_line);
+        DEBUG_MSG("on socket: " + get_socket_info(*socket));
 
-		std::string response =
-			"HTTP/1.1 200 OK\r\n"
-			"Content-Type: text/plain\r\n"
-			"Content-Length: 66\r\n"
-			"Connection: keep-alive\r\n\r\n"
-			"Server response: HTTP/1.1 200 OK";
+        try {
+            nlohmann::json request = nlohmann::json::parse(request_line);
+            
+            if (request.contains("type")) {
+                if (request["type"] == "register") {
+                    handle_register(socket, request);
+                } else if (request["type"] == "authorize") {
+                    handle_authorize(socket, request);
+                } else {
+                    nlohmann::json response = {
+                        {"status", "error"},
+                        {"message", "Unknown request type"}
+                    };
+                    boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"), error);
+                }
+            } else {
+                nlohmann::json response = {
+                    {"status", "error"},
+                    {"message", "Missing request type"}
+                };
+                boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"), error);
+            }
+        } catch (const nlohmann::json::parse_error& e) {
+            nlohmann::json response = {
+                {"status", "error"},
+                {"message", "Invalid JSON format"}
+            };
+            boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"), error);
+        }
 
-		DEBUG_MSG(response);
+        if (error) {
+            throw std::runtime_error("Error while sending response: " + error.message());
+        }
 
-		boost::asio::write(*socket, boost::asio::buffer(response), error);
+        request_buf.consume(request_buf.size());
+    }
+}
 
-		if (error) {
-			throw std::runtime_error(
-					  "Error while sending response: " + error.message());
-		}
+void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
+    std::string nickname = request["nickname"];
+    std::string password = request["password"];
+    
+    if (users.find(nickname) != users.end()) {
+        nlohmann::json response = {
+            {"status", "error"},
+            {"message", "User already exists"}
+        };
+        boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+    } else {
+        User new_user(nickname, password);
+        users[nickname] = new_user;
+        nlohmann::json response = {
+            {"status", "success"},
+            {"message", "User registered successfully"},
+            {"user_id", new_user.get_id()}
+        };
+        boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+    }
+}
 
-		request_buf.consume(request_buf.size());
-	}
+void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
+    std::string nickname = request["nickname"];
+    std::string password = request["password"];
+    
+    auto user_it = users.find(nickname);
+    if (user_it != users.end() && user_it->second.check_password(password)) {
+        nlohmann::json response = {
+            {"status", "success"},
+            {"message", "User authorized successfully"},
+            {"user_id", user_it->second.get_id()}
+        };
+        boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+    } else {
+        nlohmann::json response = {
+            {"status", "error"},
+            {"message", "Invalid credentials"}
+        };
+        boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+    }
 }

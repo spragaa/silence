@@ -15,6 +15,7 @@ next steps:
 2. user registration and authorization 
 3. sending messages to the server 
 4. receiving messages by receiver user 
+5. add password and authorization 
 
 improvements:
 1. remove user_id, nickname is id
