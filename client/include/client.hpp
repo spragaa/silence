@@ -12,8 +12,7 @@ class Client {
 public:
 
 	Client(const std::string& server_address,
-	       unsigned short server_port,
-	       const std::string& nickname);
+	       unsigned short server_port);
 
 	void run();
 	User get_user();

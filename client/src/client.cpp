@@ -1,13 +1,11 @@
 #include "client.hpp"
 
 Client::Client(const std::string& server_address,
-               unsigned short server_port,
-               const std::string& nickname)
+               unsigned short server_port)
 	: io_service()
 	, socket(io_service)
 	, server_address(server_address)
 	, server_port(server_port)
-	, user(nickname, "")
 {
 }
 
@@ -25,7 +23,9 @@ void inline Client::show_actions() {
     //     std::getline(std::cin, nickname);
     //     std::cout << std::endl;
     // }
-
+    
+    
+    // there is always no nickname
     std::cout << user.get_nickname() << ", please select the number of the action you would like to perform now from the list below:" << std::endl;
     std::cout << "0. Register new user" << std::endl;
     std::cout << "1. Authorize user" << std::endl;
@@ -43,7 +43,8 @@ void Client::run() {
 		boost::asio::ip::tcp::resolver::iterator endpoint_iterator =
 			resolver.resolve(query);
 		boost::asio::connect(socket, endpoint_iterator);
-
+		
+		// remembder nickname on the client side
         while (true) {
             int action_type = -1;
             show_actions();
@@ -72,8 +73,10 @@ void Client::run() {
                     request["password"] = password;
                     
                     // this should be in a separate func or at least out side of the case {}
+                    // or shouldn't it?
                     boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
                     nlohmann::json response = receive_response();
+                    // make it pretty!
                     std::cout << "Server response: " << response.dump() << std::endl;
                     break;                
                 }
@@ -94,6 +97,7 @@ void Client::run() {
                     // this should be in a separate func or at least out side of the case {}
                     boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
                     nlohmann::json response = receive_response();
+                    // make it pretty
                     std::cout << "Server response: " << response.dump() << std::endl;
                     break;                
                 }
@@ -171,20 +175,27 @@ void Client::send_message(const std::string& message) {
 }
 
 std::string Client::receive_response() {
-	boost::asio::streambuf response_buf;
-	boost::system::error_code error;
+    boost::asio::streambuf response_buf;
+    boost::system::error_code error;
 
-	boost::asio::read_until(socket, response_buf, "\r\n\r\n", error);
+    // Read until the end of the HTTP-like header (i.e., "\r\n\r\n")
+    boost::asio::read_until(socket, response_buf, "\r\n\r\n", error);
 
-	if (error && (error != boost::asio::error::eof)) {
-		throw std::runtime_error(
-				  "Error while receiveing response: " + error.message());
-	}
+    if (error && (error != boost::asio::error::eof)) {
+        throw std::runtime_error(
+            "Error while receiving response: " + error.message());
+    }
 
-	std::istream response_stream(&response_buf);
-	std::string response;
+    // Convert the response stream into a string
+    std::istream response_stream(&response_buf);
+    std::string response(
+        (std::istreambuf_iterator<char>(response_stream)),
+        std::istreambuf_iterator<char>()
+    );
 
-	std::getline(response_stream, response);
+    // Clean up any trailing \r or \n characters
+    response.erase(std::remove_if(response.begin(), response.end(),
+        [](unsigned char c) { return std::isspace(c); }), response.end());
 
-	return response;
+    return response;
 }
