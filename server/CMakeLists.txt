@@ -7,4 +7,5 @@ add_executable(server
 target_link_libraries(server 
     server_lib 
     common_lib
+    nlohmann_json::nlohmann_json
 )
