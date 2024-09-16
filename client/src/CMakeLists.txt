@@ -1,6 +1,5 @@
 add_library(client_lib
     client.cpp
-    user.cpp
 )
 
 target_link_libraries(client_lib
