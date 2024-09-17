@@ -91,24 +91,26 @@ void Server::handle_request(boost::shared_ptr<tcp::socket> socket) {
                     handle_register(socket, request);
                 } else if (request["type"] == "authorize") {
                     handle_authorize(socket, request);
+                } else if(request["type"] == "send_message") {
+                    handle_send_message(socket, request);
                 } else {
                     nlohmann::json response = {
                         {"status", "error"},
-                        {"message", "Unknown request type"}
+                        {"response", "Unknown request type"}
                     };
                     boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"), error);
                 }
             } else {
                 nlohmann::json response = {
                     {"status", "error"},
-                    {"message", "Missing request type"}
+                    {"response", "Missing request type"}
                 };
                 boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"), error);
             }
         } catch (const nlohmann::json::parse_error& e) {
             nlohmann::json response = {
                 {"status", "error"},
-                {"message", "Invalid JSON format"}
+                {"response", "Invalid JSON format"}
             };
             boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"), error);
         }
@@ -131,7 +133,7 @@ void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohma
     if (it != users.end()) {
         nlohmann::json response = {
             {"status", "error"},
-            {"message", "User already exists"}
+            {"response", "User already exists"}
         };
         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
     } else {
@@ -140,7 +142,7 @@ void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohma
         users[user_id] = new_user;
         nlohmann::json response = {
             {"status", "success"},
-            {"message", "User registered successfully"},
+            {"response", "User registered successfully"},
             {"user_id", user_id}
         };
         print_users();
@@ -157,16 +159,53 @@ void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohm
     if (user_it != users.end() && user_it->second.get_nickname() == nickname && user_it->second.check_password(password)) {
         nlohmann::json response = {
             {"status", "success"},
-            {"message", "User authorized successfully"},
+            {"response", "User authorized successfully"},
         };
         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
     } else {
         nlohmann::json response = {
             {"status", "error"},
-            {"message", "Invalid credentials"}
+            {"response", "Invalid credentials"}
         };
         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
     }
+}
+
+void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
+    int sender_id = request["sender_id"];
+    std::string receiver_nickname = request["receiver_nickname"];
+    std::string message_text = request["message_text"];
+    // handle media here
+    
+    // move into inline func
+    auto receiver_it = std::find_if(users.begin(), users.end(),
+        [&receiver_nickname](const auto& pair) { return pair.second.get_nickname() == receiver_nickname; });
+    
+    if (receiver_it == users.end()) {
+        nlohmann::json response = {
+            {"status", "error"},
+            {"response", "Receiver not found"}
+        };
+        boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+        return;
+    }
+    
+    int receiver_id = receiver_it->first;
+    
+            Message new_message(sender_id, receiver_id, message_text);
+    
+    messages.push_back(new_message);
+    print_messages();
+    
+    nlohmann::json response = {
+        {"status", "success"},
+        {"response", "Message sent successfully"},
+        {"message", new_message.to_json()}
+    };
+    
+    boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+    
+    DEBUG_MSG("Message sent from user " + std::to_string(sender_id) + " to user " + std::to_string(receiver_id));
 }
 
 void inline Server::print_users() const noexcept {
@@ -177,5 +216,11 @@ void inline Server::print_users() const noexcept {
         std::cout << id << "\t\t";
         std::cout << user.get_nickname() << "\t\t";
         std::cout << user.get_password() << "\t\t\n";
+    }
+}
+
+void inline Server::print_messages() const noexcept {
+    for (const auto message: messages) {
+        std::cout << message.to_json().dump() << std::endl;
     }
 }
