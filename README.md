@@ -23,5 +23,5 @@ bugs?
 
 
 improvements:
-1. remove user_id, nickname is id
+1. disable multiple users in one app
 2. remembder nickname on the client side
