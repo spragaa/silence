@@ -20,8 +20,12 @@ next steps:
 
 bugs? 
 1. why users id are 1, 3, 5, 7, ... ?
-
+2. prettier.sh is broken?
 
 improvements:
 1. disable multiple users in one app
 2. remembder nickname on the client side
+
+ideas:
+1. another server with rest api with statistics
+2. 

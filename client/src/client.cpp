@@ -81,18 +81,19 @@ void Client::run() {
                     
                     std::cout << "Server response status: ";
                     if(response["status"] == "success") {
-                        std::cout << "Success: " << response["message"] << std::endl;
+                        std::cout << "Success: " << response["response"] << std::endl;
                         user.set_id(response["user_id"].get<int>());
                         user.set_nickname(nickname);
                         user.set_password(password);
                     } else if (response["status"] == "error") {
-                        std::cout << "Error: " << response["message"] << std::endl;
+                        std::cout << "Error: " << response["response"] << std::endl;
                     }
                     
                     DEBUG_MSG("Server response: " + response.dump());
                     break;                
                 }
                 case 1: {
+                    // move somewhere
                     if (user.get_id() == 0) {
                         std::cout << "Error: You need to register first." << std::endl;
                         break;
@@ -112,9 +113,9 @@ void Client::run() {
                     
                     std::cout << "Server response status: ";
                     if(response["status"] == "success") {
-                        std::cout << "Success: " << response["message"] << std::endl;
+                        std::cout << "Success: " << response["response"] << std::endl;
                     } else if (response["status"] == "error") {
-                        std::cout << "Error: " << response["message"] << std::endl;
+                        std::cout << "Error: " << response["response"] << std::endl;
                     }
                     
                     DEBUG_MSG("Server response: " + response.dump());
@@ -126,32 +127,49 @@ void Client::run() {
                     std::cout << std::endl;
                     break;
                 }
+                // A sends a message to B
+                // on server we store a message from A to B with all needed metadata
+                // client has its own copy of the message stored, 
+                // lets say that client can store only last N messages
+                // to open chat, it make request to the server to get last M messages
+                // to do so, server find last M messages where receiver or/and sender is A and B in the messages table
+                // 
+                // ? on the client side I would like to have chats list ? 
                 case 3: {
-                    std::string receiver, message;
-                    // remove when chat logic will be implemented?
+                    // move somewhere
+                    if (user.get_id() == 0) {
+                        std::cout << "Error: You need to register and authorize first." << std::endl;
+                        break;
+                    }
+                
+                    std::string receiver_nickname, message_text;
                     std::cout << "Provide receiver nickname: ";
-                    std::getline(std::cin, receiver);
+                    std::getline(std::cin, receiver_nickname);
                     
-                    std::cout << "Provide the message for " << receiver << ": ";
-                    std::getline(std::cin, message);
+                    std::cout << "Provide the message for " << receiver_nickname << ": ";
+                    std::getline(std::cin, message_text);
                     
                     request["type"] = "send_message";
-                    request["sender"] = user.get_nickname();
-                    request["receiver"] = receiver;
-                    request["message"] = message;
+                    request["sender_id"] = user.get_id();
+                    request["sender_nickname"] = user.get_nickname();
+                    request["receiver_nickname"] = receiver_nickname;
+                    request["message_text"] = message_text;
+                    // handle mediahere
                     
-                    
-                    // this should be in a separate func or at least out side of the case {}
                     boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
-                    response = nlohmann::json::parse(receive_response());
+                    nlohmann::json response = nlohmann::json::parse(receive_response());
                     
-                    std::cout << "Server response status is ";
                     if(response["status"] == "success") {
-                       std::cout << "success: " << response["message"] << std::endl;
+                        std::cout << "Message sent successfully." << std::endl;
+                        Message received_message = Message::from_json(response["message"]);
+                        messages.push_back(received_message);
+                        DEBUG_MSG("Message added: " + received_message.to_json().dump());
                     } else if (response["status"] == "error") {
-                        std::cout << "error: " << response["message"] << std::endl;
+                        std::cout << "Error: " << response["message"] << std::endl;
                     }
-
+                    
+                    DEBUG_MSG("Server response: " + response.dump());
+                
                     break;
                 }
                 case 4: {
