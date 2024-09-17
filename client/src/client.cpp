@@ -72,7 +72,6 @@ void Client::run() {
                     std::cout << "Enter password: ";
                     std::getline(std::cin, password);
                 
-                    nlohmann::json request;
                     request["type"] = "register";
                     request["nickname"] = nickname;
                     request["password"] = password;
@@ -89,7 +88,8 @@ void Client::run() {
                     } else if (response["status"] == "error") {
                         std::cout << "Error: " << response["message"] << std::endl;
                     }
-                
+                    
+                    DEBUG_MSG("Server response: " + response.dump());
                     break;                
                 }
                 case 1: {
@@ -97,13 +97,16 @@ void Client::run() {
                         std::cout << "Error: You need to register first." << std::endl;
                         break;
                     }
-                
-                    nlohmann::json request;
+                    
+                    std::string password;
+                    std::cout << user.get_nickname() << ", please, enter password: ";
+                    std::getline(std::cin, password);
+                    
+                    request["password"] = password;
                     request["type"] = "authorize";
                     request["nickname"] = user.get_nickname();
-                    request["password"] = user.get_password();
                     request["user_id"] = user.get_id();
-                    
+
                     boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
                     nlohmann::json response = nlohmann::json::parse(receive_response());
                     
@@ -113,7 +116,8 @@ void Client::run() {
                     } else if (response["status"] == "error") {
                         std::cout << "Error: " << response["message"] << std::endl;
                     }
-                
+                    
+                    DEBUG_MSG("Server response: " + response.dump());
                     break;                
                 }
                 case 2: {
