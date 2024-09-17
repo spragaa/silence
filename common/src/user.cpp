@@ -1,8 +1,8 @@
 #include "user.hpp"
 
-int User::user_id_counter = 0;
+int User::user_id_counter = 1;
 
-User::User() : id(), nickname(""), password("") {}
+User::User() : id(0), nickname(""), password("") {}
 
 User::User(const std::string& nick, const std::string& pass) : id(user_id_counter++), nickname(
 		nick), password(pass) {
@@ -26,7 +26,7 @@ bool User::check_password(const std::string& pass) noexcept {
 }
 
 void User::set_id(const int& user_id) noexcept {
-    id = id;
+    id = user_id;
 }
 
 void User::set_nickname(const std::string& nick) noexcept {
