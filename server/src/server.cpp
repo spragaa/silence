@@ -125,7 +125,10 @@ void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohma
     std::string nickname = request["nickname"];
     std::string password = request["password"];
     
-    if (users.find(nickname) != users.end()) {
+    auto it = std::find_if(users.begin(), users.end(),
+        [&nickname](const auto& pair) { return pair.second.get_nickname() == nickname; });
+    
+    if (it != users.end()) {
         nlohmann::json response = {
             {"status", "error"},
             {"message", "User already exists"}
@@ -133,11 +136,12 @@ void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohma
         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
     } else {
         User new_user(nickname, password);
-        users[nickname] = new_user;
+        int user_id = new_user.get_id();
+        users[user_id] = new_user;
         nlohmann::json response = {
             {"status", "success"},
             {"message", "User registered successfully"},
-            {"user_id", new_user.get_id()}
+            {"user_id", user_id}
         };
         print_users();
         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
@@ -147,13 +151,13 @@ void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohma
 void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
     std::string nickname = request["nickname"];
     std::string password = request["password"];
+    int user_id = request["user_id"].get<int>();
     
-    auto user_it = users.find(nickname);
-    if (user_it != users.end() && user_it->second.check_password(password)) {
+    auto user_it = users.find(user_id);
+    if (user_it != users.end() && user_it->second.get_nickname() == nickname && user_it->second.check_password(password)) {
         nlohmann::json response = {
             {"status", "success"},
             {"message", "User authorized successfully"},
-            {"user_id", user_it->second.get_id()}
         };
         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
     } else {
@@ -167,11 +171,11 @@ void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohm
 
 void inline Server::print_users() const noexcept {
     std::cout << "There are " << users.size() << " users registered in the chat application right now" << std::endl;
-    std::cout << "id \t\t" <<"nickname \t\t" << "password \t\t\n";
+    std::cout << "id \t\t" << "nickname \t\t" << "password \t\t\n";
     
-    for (const auto [nickname, user]: users) {
-        std::cout << user.get_id()       << "\t\t";
-        std::cout << nickname << "\t\t";
+    for (const auto& [id, user] : users) {
+        std::cout << id << "\t\t";
+        std::cout << user.get_nickname() << "\t\t";
         std::cout << user.get_password() << "\t\t\n";
     }
 }

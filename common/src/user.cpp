@@ -1,16 +1,16 @@
 #include "user.hpp"
 
-int User::id_counter = 0;
+int User::user_id_counter = 0;
 
-User::User() : user_id(++id_counter), nickname(""), password("") {}
+User::User() : id(), nickname(""), password("") {}
 
-User::User(const std::string& nick, const std::string& pass) : user_id(++id_counter), nickname(
+User::User(const std::string& nick, const std::string& pass) : id(user_id_counter++), nickname(
 		nick), password(pass) {
 		DEBUG_MSG("New user registered,  nickname: " + nickname + ", " + "password: " + password);
 }
 
 int User::get_id() const noexcept {
-	return user_id;
+    return id;
 }
 
 std::string User::get_nickname() const noexcept {
@@ -25,6 +25,14 @@ bool User::check_password(const std::string& pass) noexcept {
     return pass == password;
 }
 
-// void User::set_password(const std::string& password) noexcept {
-//     password = password;
-// }
+void User::set_id(const int& user_id) noexcept {
+    id = id;
+}
+
+void User::set_nickname(const std::string& nick) noexcept {
+    nickname = nick;
+}
+
+void User::set_password(const std::string& pass) noexcept {
+    password = pass;
+}

@@ -42,5 +42,5 @@ private:
 	tcp::acceptor acceptor;
 	boost::shared_ptr<boost::asio::io_service::work>work;
 	std::vector<boost::shared_ptr<boost::thread> >thread_pool;
-	std::map<std::string, User> users;
+	std::map<int, User> users;
 };
