@@ -139,6 +139,7 @@ void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohma
             {"message", "User registered successfully"},
             {"user_id", new_user.get_id()}
         };
+        print_users();
         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
     }
 }
@@ -161,5 +162,16 @@ void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohm
             {"message", "Invalid credentials"}
         };
         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+    }
+}
+
+void inline Server::print_users() const noexcept {
+    std::cout << "There are " << users.size() << " users registered in the chat application right now" << std::endl;
+    std::cout << "id \t\t" <<"nickname \t\t" << "password \t\t\n";
+    
+    for (const auto [nickname, user]: users) {
+        std::cout << user.get_id()       << "\t\t";
+        std::cout << nickname << "\t\t";
+        std::cout << user.get_password() << "\t\t\n";
     }
 }
