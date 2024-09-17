@@ -46,7 +46,7 @@ void Client::run() {
 			resolver.resolve(query);
 		boost::asio::connect(socket, endpoint_iterator);
 		
-		// remembder nickname on the client side
+		// TODO: remembder nickname on the client side
         while (true) {
             int action_type = -1;
             show_actions();
@@ -68,51 +68,52 @@ void Client::run() {
                     std::string nickname, password;
                     std::cout << "Enter nickname: ";
                     std::getline(std::cin, nickname);
-
+                
                     std::cout << "Enter password: ";
                     std::getline(std::cin, password);
-
+                
+                    nlohmann::json request;
                     request["type"] = "register";
                     request["nickname"] = nickname;
                     request["password"] = password;
                     
-                    // this should be in a separate func or at least out side of the case {}
-                    // or shouldn't it?
                     boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
-                    response = nlohmann::json::parse(receive_response());
+                    nlohmann::json response = nlohmann::json::parse(receive_response());
                     
-                    std::cout << "Server response status is ";
+                    std::cout << "Server response status: ";
                     if(response["status"] == "success") {
-                       std::cout << "success: " << response["message"] << std::endl;
+                        std::cout << "Success: " << response["message"] << std::endl;
+                        user.set_id(response["user_id"].get<int>());
+                        user.set_nickname(nickname);
+                        user.set_password(password);
                     } else if (response["status"] == "error") {
-                        std::cout << "error: " << response["message"] << std::endl;
+                        std::cout << "Error: " << response["message"] << std::endl;
                     }
-
+                
                     break;                
                 }
                 case 1: {
-                    std::string nickname, password;
-                    std::cout << "Enter nickname: ";
-                    std::getline(std::cin, nickname);
-
-                    std::cout << "Enter password: ";
-                    std::getline(std::cin, password);
-
-                    request["type"] = "authorize";
-                    request["nickname"] = nickname;
-                    request["password"] = password;
-                    
-                    // this should be in a separate func or at least out side of the case {}
-                    boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
-                    response = nlohmann::json::parse(receive_response());
-                    
-                    std::cout << "Server response status is ";
-                    if(response["status"] == "success") {
-                       std::cout << "success: " << response["message"] << std::endl;
-                    } else if (response["status"] == "error") {
-                        std::cout << "error: " << response["message"] << std::endl;
+                    if (user.get_id() == 0) {
+                        std::cout << "Error: You need to register first." << std::endl;
+                        break;
                     }
-
+                
+                    nlohmann::json request;
+                    request["type"] = "authorize";
+                    request["nickname"] = user.get_nickname();
+                    request["password"] = user.get_password();
+                    request["user_id"] = user.get_id();
+                    
+                    boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
+                    nlohmann::json response = nlohmann::json::parse(receive_response());
+                    
+                    std::cout << "Server response status: ";
+                    if(response["status"] == "success") {
+                        std::cout << "Success: " << response["message"] << std::endl;
+                    } else if (response["status"] == "error") {
+                        std::cout << "Error: " << response["message"] << std::endl;
+                    }
+                
                     break;                
                 }
                 case 2: {
@@ -122,15 +123,31 @@ void Client::run() {
                     break;
                 }
                 case 3: {
-                    std::string receiver_nickname;
-                    std::cout << "Provide receiver's nickname: " << std::endl;
-                    std::getline(std::cin, receiver_nickname);
-                    std::cout << std::endl;
-
-                    std::string message;
-                    std::cout << "Enter the message to send to " << receiver_nickname << ": ";
+                    std::string receiver, message;
+                    // remove when chat logic will be implemented?
+                    std::cout << "Provide receiver nickname: ";
+                    std::getline(std::cin, receiver);
+                    
+                    std::cout << "Provide the message for " << receiver << ": ";
                     std::getline(std::cin, message);
-                    std::cout << "Sending message to " << receiver_nickname << ": " << message << std::endl;
+                    
+                    request["type"] = "send_message";
+                    request["sender"] = user.get_nickname();
+                    request["receiver"] = receiver;
+                    request["message"] = message;
+                    
+                    
+                    // this should be in a separate func or at least out side of the case {}
+                    boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
+                    response = nlohmann::json::parse(receive_response());
+                    
+                    std::cout << "Server response status is ";
+                    if(response["status"] == "success") {
+                       std::cout << "success: " << response["message"] << std::endl;
+                    } else if (response["status"] == "error") {
+                        std::cout << "error: " << response["message"] << std::endl;
+                    }
+
                     break;
                 }
                 case 4: {
@@ -192,7 +209,6 @@ std::string Client::receive_response() {
     boost::asio::streambuf response_buf;
     boost::system::error_code error;
 
-    // Read until the end of the HTTP-like header (i.e., "\r\n\r\n")
     boost::asio::read_until(socket, response_buf, "\r\n\r\n", error);
 
     if (error && (error != boost::asio::error::eof)) {
@@ -205,9 +221,6 @@ std::string Client::receive_response() {
         (std::istreambuf_iterator<char>(response_stream)),
         std::istreambuf_iterator<char>()
     );
-
-    // response.erase(std::remove_if(response.begin(), response.end(),
-    //     [](unsigned char c) { return std::isspace(c); }), response.end());
 
     return response;
 }
