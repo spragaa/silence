@@ -34,7 +34,8 @@ private:
 	void handle_request(boost::shared_ptr<tcp::socket>socket);
 	void handle_register(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	void handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
-
+	
+	void inline print_users() const noexcept; 
 private:
 
 	boost::asio::io_service io_service;

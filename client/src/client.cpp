@@ -33,6 +33,8 @@ void inline Client::show_actions() {
     std::cout << "3. Send message" << std::endl;
     std::cout << "4. Get offline messages" << std::endl;
     std::cout << "5. KYS" << std::endl;
+    
+    std::cout << "Input: ";
 }
 
 void Client::run() {
@@ -53,10 +55,14 @@ void Client::run() {
                 std::cin >> action_type;
                 if (action_type < 0 || action_type >= 6) {
                     std::cout << "Incorrect action type has been chosen:" << action_type << std::endl;
+                    show_actions();
                 }
             }
             
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            nlohmann::json request;
+            nlohmann::json response;
+            
             switch (action_type) {
                 case 0: {
                     std::string nickname, password;
@@ -66,8 +72,6 @@ void Client::run() {
                     std::cout << "Enter password: ";
                     std::getline(std::cin, password);
 
-                    // this should be outside of the case {}
-                    nlohmann::json request;
                     request["type"] = "register";
                     request["nickname"] = nickname;
                     request["password"] = password;
@@ -75,9 +79,15 @@ void Client::run() {
                     // this should be in a separate func or at least out side of the case {}
                     // or shouldn't it?
                     boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
-                    nlohmann::json response = receive_response();
-                    // make it pretty!
-                    std::cout << "Server response: " << response.dump() << std::endl;
+                    response = nlohmann::json::parse(receive_response());
+                    
+                    std::cout << "Server response status is ";
+                    if(response["status"] == "success") {
+                       std::cout << "success: " << response["message"] << std::endl;
+                    } else if (response["status"] == "error") {
+                        std::cout << "error: " << response["message"] << std::endl;
+                    }
+
                     break;                
                 }
                 case 1: {
@@ -88,17 +98,21 @@ void Client::run() {
                     std::cout << "Enter password: ";
                     std::getline(std::cin, password);
 
-                    // this should be outside of the case {}
-                    nlohmann::json request;
                     request["type"] = "authorize";
                     request["nickname"] = nickname;
                     request["password"] = password;
                     
                     // this should be in a separate func or at least out side of the case {}
                     boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
-                    nlohmann::json response = receive_response();
-                    // make it pretty
-                    std::cout << "Server response: " << response.dump() << std::endl;
+                    response = nlohmann::json::parse(receive_response());
+                    
+                    std::cout << "Server response status is ";
+                    if(response["status"] == "success") {
+                       std::cout << "success: " << response["message"] << std::endl;
+                    } else if (response["status"] == "error") {
+                        std::cout << "error: " << response["message"] << std::endl;
+                    }
+
                     break;                
                 }
                 case 2: {
@@ -186,16 +200,14 @@ std::string Client::receive_response() {
             "Error while receiving response: " + error.message());
     }
 
-    // Convert the response stream into a string
     std::istream response_stream(&response_buf);
     std::string response(
         (std::istreambuf_iterator<char>(response_stream)),
         std::istreambuf_iterator<char>()
     );
 
-    // Clean up any trailing \r or \n characters
-    response.erase(std::remove_if(response.begin(), response.end(),
-        [](unsigned char c) { return std::isspace(c); }), response.end());
+    // response.erase(std::remove_if(response.begin(), response.end(),
+    //     [](unsigned char c) { return std::isspace(c); }), response.end());
 
     return response;
 }
