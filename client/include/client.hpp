@@ -2,9 +2,11 @@
 
 #include "debug.hpp"
 #include "user.hpp"
+#include "message.hpp"
 
 #include <iostream>
 #include <string>
+#include <vector>
 #include <boost/asio.hpp>
 #include <nlohmann/json.hpp>
 
@@ -31,4 +33,5 @@ private:
 	std::string server_address;
 	unsigned short server_port;
 	User user;
+	std::vector<Message> messages; // vector is stupid, but good for now
 };

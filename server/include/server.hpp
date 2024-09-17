@@ -2,13 +2,16 @@
 
 #include "debug.hpp"
 #include "user.hpp"
+#include "message.hpp"
 
 #include <iostream>
 #include <ostream>
 #include <istream>
 #include <ctime>
 #include <string>
+#include <vector>
 #include <map>
+#include <set>
 #include <boost/asio.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -34,13 +37,18 @@ private:
 	void handle_request(boost::shared_ptr<tcp::socket>socket);
 	void handle_register(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	void handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
+	void handle_send_message(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	
 	void inline print_users() const noexcept; 
+	void inline print_messages() const noexcept; 
 private:
 
 	boost::asio::io_service io_service;
 	tcp::acceptor acceptor;
 	boost::shared_ptr<boost::asio::io_service::work>work;
 	std::vector<boost::shared_ptr<boost::thread> >thread_pool;
+	
+	// remove after DB connection
 	std::map<int, User> users;
+	std::vector<Message> messages; // vector is stupid, but good for now
 };
