@@ -25,6 +25,7 @@ bugs?
 improvements:
 1. disable multiple users in one app
 2. remembder nickname on the client side
+3. currently there are at least two copies of User on the client and on the server side
 
 ideas:
 1. another server with rest api with statistics
