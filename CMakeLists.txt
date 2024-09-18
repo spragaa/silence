@@ -3,6 +3,8 @@ project(chat_application)
 
 set(CMAKE_CXX_STANDARD 20)
 
+add_definitions(-DSOURCE_DIR="${CMAKE_SOURCE_DIR}")
+
 find_package(Boost 1.74 REQUIRED COMPONENTS system thread)
 
 include(FetchContent)

@@ -14,7 +14,7 @@ class Client {
 public:
 
 	Client(const std::string& server_address,
-	       unsigned short server_port);
+	       unsigned short server_port, const std::string& nick);
 
 	void run();
 	User get_user();
@@ -25,8 +25,9 @@ private:
     void inline show_actions();
     std::string read_user_text() const noexcept;
 	std::string receive_response();
+	std::string get_user_data_filename() const noexcept;
 
-private:
+	private:
 
 	boost::asio::io_service io_service;
 	boost::asio::ip::tcp::socket socket;

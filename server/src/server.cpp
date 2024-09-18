@@ -139,11 +139,17 @@ void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohma
     } else {
         User new_user(nickname, password);
         int user_id = new_user.get_id();
+        Timestamp registered_at = new_user.get_registered_timestamp();
         users[user_id] = new_user;
+        
+        auto registered_at_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+            registered_at.time_since_epoch()).count();
+        
         nlohmann::json response = {
             {"status", "success"},
             {"response", "User registered successfully"},
-            {"user_id", user_id}
+            {"user_id", user_id},
+            {"registered_timestamp", registered_at_ns}
         };
         print_users();
         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
@@ -208,14 +214,39 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
     DEBUG_MSG("Message sent from user " + std::to_string(sender_id) + " to user " + std::to_string(receiver_id));
 }
 
+#include <iomanip>
+#include <chrono>
+#include <ctime>
+
 void inline Server::print_users() const noexcept {
     std::cout << "There are " << users.size() << " users registered in the chat application right now" << std::endl;
-    std::cout << "id \t\t" << "nickname \t\t" << "password \t\t\n";
-    
+
+    const int id_width = 10;
+    const int nickname_width = 20;
+    const int password_width = 20;
+    const int timestamp_width = 30;
+
+    std::cout << std::left
+              << std::setw(id_width) << "ID"
+              << std::setw(nickname_width) << "Nickname"
+              << std::setw(password_width) << "Password"
+              << std::setw(timestamp_width) << "Registered At"
+              << std::endl;
+
+    std::cout << std::string(id_width + nickname_width + password_width + timestamp_width, '-') << std::endl;
+
     for (const auto& [id, user] : users) {
-        std::cout << id << "\t\t";
-        std::cout << user.get_nickname() << "\t\t";
-        std::cout << user.get_password() << "\t\t\n";
+        Timestamp registered = user.get_registered_timestamp();
+        auto time_t = std::chrono::system_clock::to_time_t(registered);
+        std::string time_str = std::ctime(&time_t);
+        time_str.pop_back(); // Remove trailing newline
+
+        std::cout << std::left
+                  << std::setw(id_width) << id
+                  << std::setw(nickname_width) << user.get_nickname()
+                  << std::setw(password_width) << user.get_password()
+                  << std::setw(timestamp_width) << time_str
+                  << std::endl;
     }
 }
 

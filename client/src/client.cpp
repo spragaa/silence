@@ -1,11 +1,12 @@
 #include "client.hpp"
 
 Client::Client(const std::string& server_address,
-               unsigned short server_port)
+               unsigned short server_port, const std::string& nick)
 	: io_service()
 	, socket(io_service)
 	, server_address(server_address)
 	, server_port(server_port)
+	, user(nick)
 {
 }
 
@@ -38,28 +39,51 @@ void inline Client::show_actions() {
 }
 
 void Client::run() {
-	try {
+	try {		
 		boost::asio::ip::tcp::resolver resolver(io_service);
 		boost::asio::ip::tcp::resolver::query query(server_address,
 		                                            std::to_string(server_port));
 		boost::asio::ip::tcp::resolver::iterator endpoint_iterator =
 			resolver.resolve(query);
 		boost::asio::connect(socket, endpoint_iterator);
+        
+		std::string user_data_filename = get_user_data_filename();
+        
+        try {
+            user = User::load_user_data_from_json(user_data_filename);
+            std::cout << "User data loaded successfully." << std::endl;
+        } catch (const std::exception& e) {
+            std::cout << "No existing user data found. Please register." << std::endl;
+        }		
 		
 		// TODO: remembder nickname on the client side
-        while (true) {
+		while (true) {
+            bool is_registered = (user.get_id() != 0);
             int action_type = -1;
-            show_actions();
-            
-            while(action_type < 0 || action_type >= 6) {
-                std::cin >> action_type;
-                if (action_type < 0 || action_type >= 6) {
-                    std::cout << "Incorrect action type has been chosen:" << action_type << std::endl;
+        
+            if (!is_registered) {
+                std::cout << "You need to register first." << std::endl;
+                action_type = 0;
+            } else {
+                while (true) {
+                    show_actions();
+                    std::cout << "Choose an action (0-5): ";
+                    std::string input;
+                    std::getline(std::cin, input);
+                    
+                    std::istringstream iss(input);
+                    if (iss >> action_type && iss.eof()) {
+                        if (action_type >= 0 && action_type < 6) {
+                            break;
+                        }
+                    }
+                    std::cout << "Invalid input. Please enter a number between 0 and 5." << std::endl;
                     show_actions();
                 }
+                
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             }
             
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             nlohmann::json request;
             nlohmann::json response;
             
@@ -83,12 +107,18 @@ void Client::run() {
                     if(response["status"] == "success") {
                         std::cout << "Success: " << response["response"] << std::endl;
                         user.set_id(response["user_id"].get<int>());
+                        std::chrono::nanoseconds ns(response["registered_timestamp"].get<int64_t>());
+                        Timestamp registered_timestamp = std::chrono::system_clock::time_point(ns);
+                        user.set_registered_timestamp(registered_timestamp);
                         user.set_nickname(nickname);
                         user.set_password(password);
+                        user.save_user_data_to_json(get_user_data_filename());
+                        std::cout << "Registration successful. You can now use other actions." << std::endl;
                     } else if (response["status"] == "error") {
                         std::cout << "Error: " << response["response"] << std::endl;
+                        std::cout << "Please try registering again." << std::endl;
                     }
-                    
+                                        
                     DEBUG_MSG("Server response: " + response.dump());
                     break;                
                 }
@@ -184,29 +214,12 @@ void Client::run() {
                     break;
                 }
                 default: {
-                    std::cout << "Invalid option." << std::endl;
-                    break;
+                    if (!is_registered) {
+                        std::cout << "You must register before performing other actions." << std::endl;
+                        break;
+                    }
                 }
             }
-
-            // std::string command = read_user_text();
-
-            // if (command == "exit") {
-            //     break;
-            // }
-
-            // std::istringstream command_stream(command);
-            // std::string action;
-            // std::getline(command_stream, action, ':');
-            // std::string data = command.substr(action.length() + 1);
-
-            // nlohmann::json request;
-            // request["type"] = action;
-            // request["data"] = data;
-
-            // boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
-            // nlohmann::json response = receive_response();
-            // std::cout << "Server response: " << response.dump() << std::endl;
 		}
 
 		socket.close();
@@ -245,4 +258,8 @@ std::string Client::receive_response() {
     );
 
     return response;
+}
+
+std::string Client::get_user_data_filename() const noexcept {
+    return std::string(SOURCE_DIR) + "/user_data/" + "user_ " + user.get_nickname() + "_" + server_address + "_" + std::to_string(server_port) + ".json";
 }
