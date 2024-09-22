@@ -2,8 +2,12 @@
 
 Server::Server(unsigned short port, unsigned int thread_pool_size)
 	: acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
-	work(new boost::asio::io_service::work(io_service)), user_metadata_db_connection("host=localhost port=5432 dbname=user_metadata user=postgres password=pass"),
-      user_metadata_db_worker(std::make_unique<pqxx::work>(user_metadata_db_connection)) {
+	work(new boost::asio::io_service::work(io_service)), 
+	user_metadata_db_connection("host=localhost port=5432 dbname=user_metadata user=postgres password=pass"),
+    // user_metadata_db_worker(std::make_unique<pqxx::work>(user_metadata_db_connection)),
+    message_metadata_db_connection("host=localhost port=5432 dbname=message_metadata user=postgres password=pass")
+    // message_metadata_db_worker(std::make_unique<pqxx::work>(user_metadata_db_connection)) 
+    {
 	for (unsigned int i = 0; i < thread_pool_size; ++i) {
 		thread_pool.push_back(boost::make_shared<boost::thread>(boost::bind(&boost::
 		                                                                    asio::
@@ -37,22 +41,46 @@ Server::Server(unsigned short port, unsigned int thread_pool_size)
  //    user_metadata_db_connection = pqxx::connection(connection_str);
  //    user_metadata_db_worker = std::make_unique<pqxx::work>(user_metadata_db_connection);
 
-    try {
-        pqxx::result response = user_metadata_db_worker->exec("SELECT * FROM USERS;");
-        
-        for (size_t i = 0; i < response.size(); i++) {
-            std::cout << "id: " << response[i][0].as<int>() 
-                      << " nickname: " << response[i][1].as<std::string>() 
-                      << " password: " << response[i][2].as<std::string>() 
-                      << " registered timestamp: " << response[i][3].as<std::string>() 
-                      << " last online: " << response[i][4].as<std::string>() 
-                      << " is online: " << response[i][5].as<bool>() 
-                      << std::endl; 
-        }
-    } catch (const std::exception& e) {
-        std::cerr << "Database query failed: " << e.what() << std::endl;
-        throw;
-    }
+ try {
+         pqxx::work user_transaction(user_metadata_db_connection);
+         pqxx::result user_response = user_transaction.exec("SELECT * FROM USERS;");
+         
+         for (size_t i = 0; i < user_response.size(); i++) {
+             std::cout << "id: " << user_response[i][0].as<int>() 
+                       << " nickname: " << user_response[i][1].as<std::string>() 
+                       << " password: " << user_response[i][2].as<std::string>() 
+                       << " registered timestamp: " << user_response[i][3].as<std::string>() 
+                       << " last online: " << user_response[i][4].as<std::string>() 
+                       << " is online: " << user_response[i][5].as<bool>() 
+                       << std::endl; 
+         }
+         user_transaction.commit();
+     } catch (const std::exception& e) {
+         std::cerr << "User database query failed: " << e.what() << std::endl;
+         throw;
+     }
+     
+     try {
+         pqxx::work message_transaction(message_metadata_db_connection);
+         pqxx::result message_response = message_transaction.exec("SELECT * FROM messages;");
+         
+         for (size_t i = 0; i < message_response.size(); i++) {
+             std::cout << "id: " << message_response[i][0].as<int>() 
+                       << " sender_id: " << message_response[i][1].as<int>() 
+                       << " receiver_id: " << message_response[i][2].as<int>() 
+                       << " receiver_nickname: " << message_response[i][3].as<std::string>() 
+                       << " text: " << message_response[i][4].as<std::string>() 
+                       << " deleted: " << message_response[i][5].as<bool>() 
+                       << " created timestamp: " << message_response[i][6].as<std::string>() 
+                       << " deleted timestamp: " << (message_response[i][7].is_null() ? "NULL" : message_response[i][7].as<std::string>()) 
+                       << " last edited timestamp: " << (message_response[i][8].is_null() ? "NULL" : message_response[i][8].as<std::string>()) 
+                       << std::endl; 
+         }
+         message_transaction.commit();
+     } catch (const std::exception& e) {
+         std::cerr << "Message database query failed: " << e.what() << std::endl;
+         throw;
+     }
 }
 
 Server::~Server() {
