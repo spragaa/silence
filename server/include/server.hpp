@@ -55,8 +55,11 @@ private:
 	std::vector<boost::shared_ptr<boost::thread> >thread_pool;
 	
 	pqxx::connection user_metadata_db_connection;
-	std::unique_ptr<pqxx::work> user_metadata_db_worker;
+	// std::unique_ptr<pqxx::work> user_metadata_db_worker;
 	
+	pqxx::connection message_metadata_db_connection;
+	// std::unique_ptr<pqxx::work> message_metadata_db_worker;
+
 	// remove after DB connection
 	std::map<int, User> users;
 	std::vector<Message> messages; // vector is stupid, but good for now
