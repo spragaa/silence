@@ -2,7 +2,8 @@
 
 Server::Server(unsigned short port, unsigned int thread_pool_size)
 	: acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
-	work(new boost::asio::io_service::work(io_service)) {
+	work(new boost::asio::io_service::work(io_service)), user_metadata_db_connection("host=localhost port=5432 dbname=user_metadata user=postgres password=pass"),
+      user_metadata_db_worker(std::make_unique<pqxx::work>(user_metadata_db_connection)) {
 	for (unsigned int i = 0; i < thread_pool_size; ++i) {
 		thread_pool.push_back(boost::make_shared<boost::thread>(boost::bind(&boost::
 		                                                                    asio::
@@ -11,6 +12,47 @@ Server::Server(unsigned short port, unsigned int thread_pool_size)
 		                                                                    &
 		                                                                    io_service)));
 	}
+	
+	// std::string filename = std::string(SOURCE_DIR) + "/params/server_params.json";
+ //    std::ifstream file(filename);
+ //    if (!file.is_open()) {
+ //        std::cerr << "Unable to open file for reading: " << filename << std::endl;
+ //        throw std::runtime_error("Unable to open file for reading: " + filename);
+ //    }
+
+ //    nlohmann::json j;
+ //    file >> j;
+ //    file.close();
+
+ //    auto& db_config = j["user_metadata_db"];
+ //    std::string db_host = db_config["host"].get<std::string>();
+ //    std::string db_port = std::to_string(db_config["port"].get<int>());
+ //    std::string db_name = db_config["dbname"].get<std::string>();
+ //    std::string db_user = db_config["user"].get<std::string>();
+ //    std::string db_password = db_config["password"].get<std::string>();
+
+ //    std::string connection_str = "host=" + db_host + " port=" + db_port + " dbname=" + db_name +
+ //                                 " user=" + db_user + " password=" + db_password;
+
+ //    user_metadata_db_connection = pqxx::connection(connection_str);
+ //    user_metadata_db_worker = std::make_unique<pqxx::work>(user_metadata_db_connection);
+
+    try {
+        pqxx::result response = user_metadata_db_worker->exec("SELECT * FROM USERS;");
+        
+        for (size_t i = 0; i < response.size(); i++) {
+            std::cout << "id: " << response[i][0].as<int>() 
+                      << " nickname: " << response[i][1].as<std::string>() 
+                      << " password: " << response[i][2].as<std::string>() 
+                      << " registered timestamp: " << response[i][3].as<std::string>() 
+                      << " last online: " << response[i][4].as<std::string>() 
+                      << " is online: " << response[i][5].as<bool>() 
+                      << std::endl; 
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Database query failed: " << e.what() << std::endl;
+        throw;
+    }
 }
 
 Server::~Server() {
@@ -198,7 +240,7 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
     
     int receiver_id = receiver_it->first;
     
-            Message new_message(sender_id, receiver_id, message_text);
+    Message new_message(sender_id, receiver_id, message_text);
     
     messages.push_back(new_message);
     print_messages();
@@ -213,10 +255,6 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
     
     DEBUG_MSG("Message sent from user " + std::to_string(sender_id) + " to user " + std::to_string(receiver_id));
 }
-
-#include <iomanip>
-#include <chrono>
-#include <ctime>
 
 void inline Server::print_users() const noexcept {
     std::cout << "There are " << users.size() << " users registered in the chat application right now" << std::endl;
@@ -239,8 +277,8 @@ void inline Server::print_users() const noexcept {
         Timestamp registered = user.get_registered_timestamp();
         auto time_t = std::chrono::system_clock::to_time_t(registered);
         std::string time_str = std::ctime(&time_t);
-        time_str.pop_back(); // Remove trailing newline
-
+        time_str.pop_back();
+        
         std::cout << std::left
                   << std::setw(id_width) << id
                   << std::setw(nickname_width) << user.get_nickname()

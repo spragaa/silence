@@ -15,17 +15,6 @@ User Client::get_user() {
 }
 
 void inline Client::show_actions() {
-    // std::string created_nickname;
-    // if (user.get_nickname().size() != 0) {
-    //     std::cout << user.get_nickname() << ", please choose the action type from the list:\n";
-    // } else {
-    //     std::cout << "To be able to use full functionality of this chat application, you should register first!" << std::endl;
-    //     std::cout << "Create a nickname to your account:";
-    //     std::getline(std::cin, nickname);
-    //     std::cout << std::endl;
-    // }
-    
-    
     // there is always no nickname
     std::cout << user.get_nickname() << ", please select the number of the action you would like to perform now from the list below:" << std::endl;
     std::cout << "0. Register new user" << std::endl;
@@ -71,12 +60,17 @@ void Client::run() {
                     std::string input;
                     std::getline(std::cin, input);
                     
-                    std::istringstream iss(input);
-                    if (iss >> action_type && iss.eof()) {
-                        if (action_type >= 0 && action_type < 6) {
-                            break;
-                        }
+                    //somehow here empty line is printed and nothing happens
+                    try{
+                        action_type = std::stoi(input);
+                    } catch (std::invalid_argument) {
+                        action_type = -1;
                     }
+                    
+                    if (action_type >= 0 && action_type < 6) {
+                        break;
+                    }
+                    
                     std::cout << "Invalid input. Please enter a number between 0 and 5." << std::endl;
                     show_actions();
                 }

@@ -25,7 +25,7 @@ cd ../build || exit
 cmake ..
 debug_echo "'cmake ..' finished"
 
-make client
+make -j$(nproc) client
 debug_echo "'make client' finished"
 
 NICKNAME="noname"

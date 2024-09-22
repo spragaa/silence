@@ -89,7 +89,7 @@ void User::save_user_data_to_json(const std::string& filename) const {
 
     std::ofstream file(filename);
     if (file.is_open()) {
-        file << j.dump(4);  // 4 spaces indent for pretty printing
+        file << j.dump(4);
         file.close();
         DEBUG_MSG("User data saved to " + filename);
     } else {
