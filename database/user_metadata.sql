@@ -1,5 +1,3 @@
--- File: source_dir/database/user_metadata.sql
-
 DROP DATABASE IF EXISTS :db_name;
 DROP USER IF EXISTS :new_user;
 
