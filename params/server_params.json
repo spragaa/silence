@@ -1,0 +1,23 @@
+{
+  "user_metadata_db": {
+    "host": "localhost",
+    "port": 5432,
+    "dbname": "user_metadata",
+    "user": "postgres",
+    "password": "pass"
+  },
+  "message_metada_db": {
+    "host": "localhost",
+    "port": 5432,
+    "dbname": "message_metadata",
+    "user": "postgres",
+    "password": "pass"
+  },
+  "messages_db": {
+    "host": "localhost",
+    "port": 5434,
+    "dbname": "messages",
+    "user": "smth nosql",
+    "password": "pass"
+  }
+}

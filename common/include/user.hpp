@@ -43,5 +43,6 @@ private:
 	std::string nickname;
 	std::string password;	
 	Timestamp registered_timestamp;
-	
+	Timestamp last_online_timestamp;
+	bool is_online;
 };

@@ -25,5 +25,5 @@ cd ../build || exit
 cmake ..
 debug_echo "'cmake ..' finished"
 
-make server
+make -j$(nproc) server
 debug_echo "'make server' finished"
