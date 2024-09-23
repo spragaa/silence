@@ -34,10 +34,6 @@ public:
 	
 private:
 
-    // add more metadata?
-	// registered at
-	// last online
-	// is online?
 	static int user_id_counter;
 	int id;
 	std::string nickname;
