@@ -3,8 +3,13 @@
 #include "server.hpp"
 
 int main() {
-	Server server(55555, 8);
-	server.start();
+    const unsigned short port = 55555;
+    const unsigned int thread_pool_size = 128;
+    const std::string user_db_connection_string = "host=localhost port=5432 dbname=user_metadata user=postgres password=pass";
+    const std::string message_db_connection_string = "host=localhost port=5432 dbname=message_metadata user=postgres password=pass";
 
-	return 0;
+    Server server(port, thread_pool_size, user_db_connection_string, message_db_connection_string);
+    server.start();
+
+    return 0;
 }
