@@ -1,5 +1,8 @@
 add_library(server_lib
     server.cpp
+    db_manager.cpp
+    user_repository.cpp
+    message_repository.cpp
 )
 
 target_link_libraries(server_lib
