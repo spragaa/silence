@@ -27,7 +27,12 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
     \dt - list db realations
     SELECT * FROM USERS;
 
-
+## what to do:
+1. go through commit 8da7e24935c59c4887ac9254a91b7d2e13235537
+2. fix all small inaccuracies
+3. finish CRUD for user and message
+4. rename what needs to be renamed
+    
 ## next steps:
 1. implement request structure
 ~~2. add password and authorization~~
@@ -57,3 +62,4 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
 ## ideas:
 1. another server with rest api with statistics
 2. 
+
