@@ -82,8 +82,7 @@ void Server::handle_request(boost::shared_ptr<tcp::socket> socket) {
                 if (request["type"] == "register") {
                     handle_register(socket, request);
                 } else if (request["type"] == "authorize") {
-                    // handle_authorize(socket, request);
-                    std::cout << "handle_authorize(socket, request";
+                    handle_authorize(socket, request);
                 } else if(request["type"] == "send_message") {
                     std::cout << "handle_authorize(socket, request";
                     // handle_send_message(socket, request);
@@ -122,11 +121,12 @@ void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohma
     std::string password = request["password"];
     
     User new_user(nickname, password);
-    if (user_repository->create(new_user)) {
+    int user_id = user_repository->create(new_user);
+    if (user_id != 0) {
         nlohmann::json response = {
             {"status", "success"},
             {"response", "User registered successfully"},
-            {"user_id", new_user.get_id()}
+            {"user_id", user_id}
         };
         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
     } else {
@@ -136,30 +136,38 @@ void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohma
         };
         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
     }
-    
 }
 
-// void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
-//     std::string nickname = request["nickname"];
-//     std::string password = request["password"];
-    
-//     // auto user = user_repository->findByNickname(nickname);
-//     User user;
-//     if (user && user->check_password(password)) {
-//         nlohmann::json response = {
-//             {"status", "success"},
-//             {"response", "User authorized successfully"},
-//             {"user_id", user->get_id()}
-//         };
-//         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
-//     } else {
-//         nlohmann::json response = {
-//             {"status", "error"},
-//             {"response", "Invalid credentials"}
-//         };
-//         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
-//     }
-// }
+void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
+    std::string nickname = request["nickname"];
+    std::string password = request["password"];
+    int user_id = request["user_id"];
+
+    bool auth_success = user_repository->authorize(user_id, nickname, password);
+
+    if (auth_success) {
+        nlohmann::json response = {
+            {"status", "success"},
+            {"message", "Authorization successful"}
+        };
+        // User user = user_repository.get_user(user_id);
+        // response["user_data"] = {
+        //     {"last_online_timestamp", std::chrono::system_clock::to_time_t(user.get_last_online_timestamp())},
+        //     {"is_online", true}
+        // };
+
+        // user_repository.update_user_status(user_id, true);
+        boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+
+    } else {
+        nlohmann::json response = {
+            {"status", "error"},
+            {"message", "Authorization failed: Invalid credentials"}
+        };
+        boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+        
+    }
+}
 
 // void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
 //     int sender_id = request["sender_id"];
