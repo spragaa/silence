@@ -1,5 +1,7 @@
 #pragma once
 
+#include "debug.hpp"
+
 #include <pqxx/pqxx>
 #include <string>
 #include <memory>

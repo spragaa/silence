@@ -37,7 +37,6 @@ public:
         const std::string& user_db_connection_string,
         const std::string& message_db_connection_string
     );
-    
     ~Server();
 
     void start();

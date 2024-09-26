@@ -26,6 +26,7 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
     \c <db_name> - connect to db
     \dt - list db realations
     SELECT * FROM USERS;
+    SELECT * FROM MESSAGES;
 
 ## what to do:
 1. go through commit 8da7e24935c59c4887ac9254a91b7d2e13235537

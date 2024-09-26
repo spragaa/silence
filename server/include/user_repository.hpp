@@ -4,6 +4,7 @@
 #include "user.hpp"
 #include "db_manager.hpp"
 #include <optional>
+#include <nlohmann/json.hpp>
 
 class UserRepository : public BaseRepository<User> {
 public:
@@ -15,10 +16,13 @@ public:
     bool update(const User& user) override;
     bool remove(int id) override;
 
-    std::optional<User> findByNickname(const std::string& nickname);
+    // std::optional<User> findByNickname(const std::string& nickname);
 
 private:
-    User constructUser(const pqxx::row& row);
+    User construct_user(const nlohmann::json& user_json);
+    nlohmann::json pqxx_result_to_json(const pqxx::result& r) const;
+    
+private:
     // move inside base repo
     std::string connection_name;
 };

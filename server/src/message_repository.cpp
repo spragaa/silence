@@ -1,7 +1,8 @@
 #include "message_repository.hpp"
 
-MessageRepository::MessageRepository(DBManager& db_manager, const std::string& connection_name) : BaseRepository(db_manager), connection_name(connection_name) {}
-
+MessageRepository::MessageRepository(DBManager& db_manager, const std::string& connection_name) : BaseRepository(db_manager), connection_name(connection_name) {
+    DEBUG_MSG("MessageRepository created")
+}
 MessageRepository::~MessageRepository() = default;
 
 bool MessageRepository::create(const Message& message) {
