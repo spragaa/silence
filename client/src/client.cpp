@@ -100,14 +100,23 @@ void Client::run() {
                     std::cout << "Server response status: ";
                     if(response["status"] == "success") {
                         std::cout << "Success: " << response["response"] << std::endl;
-                        user.set_id(response["user_id"].get<int>());
-                        std::chrono::nanoseconds ns(response["registered_timestamp"].get<int64_t>());
-                        Timestamp registered_timestamp = std::chrono::system_clock::time_point(ns);
-                        user.set_registered_timestamp(registered_timestamp);
+                        if (response.contains("user_id") && !response["user_id"].is_null()) {
+                            user.set_id(response["user_id"].get<int>());
+                        } else {
+                            std::cout << "Warning: User ID not provided in the response" << std::endl;
+                        }
+                        if (response.contains("registered_timestamp") && !response["registered_timestamp"].is_null()) {
+                            std::chrono::nanoseconds ns(response["registered_timestamp"].get<int64_t>());
+                            Timestamp registered_timestamp = std::chrono::system_clock::time_point(ns);
+                            user.set_registered_timestamp(registered_timestamp);
+                        } else {
+                            std::cout << "Warning: User ID not provided in the response" << std::endl;
+                        }
+
                         user.set_nickname(nickname);
                         user.set_password(password);
                         user.save_user_data_to_json(get_user_data_filename());
-                        std::cout << "Registration successful. You can now use other actions." << std::endl;
+                        std::cout << "Registration successful. You can now use other actions" << std::endl;
                     } else if (response["status"] == "error") {
                         std::cout << "Error: " << response["response"] << std::endl;
                         std::cout << "Please try registering again." << std::endl;

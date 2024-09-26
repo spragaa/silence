@@ -59,6 +59,7 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
 7. consistent approach in cmake 
 8. refactor server 
 9. read server <-> dbs connection params from jsons
+10. logs levels
 
 ## ideas:
 1. another server with rest api with statistics

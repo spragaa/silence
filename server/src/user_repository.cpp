@@ -9,17 +9,40 @@ UserRepository::~UserRepository() = default;
 bool UserRepository::create(const User& user) {
     try {
         pqxx::work txn(db_manager.get_connection(connection_name));
-        txn.exec_params(
-            "INSERT INTO users (nickname, password, registered_timestamp) "
-            "VALUES ($1, $2, $3)",
+        
+        auto format_timestamp = [](const Timestamp& ts) {
+            auto time_t = std::chrono::system_clock::to_time_t(ts);
+            std::stringstream ss;
+            ss << std::put_time(std::gmtime(&time_t), "%Y-%m-%d %H:%M:%S");
+            return ss.str();
+        };
+
+        pqxx::result r = txn.exec_params(
+            "INSERT INTO users (nickname, password, registered_timestamp, last_online_timestamp, is_online) "
+            "VALUES ($1, $2, $3, $4, $5) RETURNING id",
             user.get_nickname(),
             user.get_password(),
-            std::chrono::system_clock::to_time_t(user.get_registered_timestamp())
+            format_timestamp(user.get_registered_timestamp()),
+            format_timestamp(user.get_last_online_timestamp()),
+            user.is_online()
         );
+        
+        DEBUG_MSG("Executing INSERT INTO users (nickname, password, registered_timestamp, last_online_timestamp, is_online) "
+                  "VALUES ($1, $2, $3, $4, $5) RETURNING id\n"
+                  "for user: " + user.to_json().dump());
+        
+        if (r.empty()) {
+            DEBUG_MSG("[UserRepository::create] Failed to insert user");
+            return false;
+        }
+        
+        int inserted_id = r[0][0].as<int>();
+        DEBUG_MSG("[UserRepository::create] User inserted successfully with id: " + std::to_string(inserted_id));
+        
         txn.commit();
         return true;
     } catch (const std::exception& e) {
-        // add logs
+        DEBUG_MSG("[UserRepository::create] Exception caught: " + std::string(e.what()));
         return false;
     }
 }
@@ -27,12 +50,12 @@ bool UserRepository::create(const User& user) {
 std::optional<User> UserRepository::read(int id) {
     try {
         pqxx::work txn(db_manager.get_connection(connection_name));
-        pqxx::result r = txn.exec_params("SELECT * FROM USERS WHERE id = \$1", id);
+        pqxx::result r = txn.exec_params("SELECT * FROM USERS WHERE id = $1", id);
         DEBUG_MSG("executing SELECT * FROM USERS WHERE id = " + std::to_string(id));
         
         if (r.empty()) {
-            DEBUG_MSG("[UserRepository::read] No user found with id: " + std::to_string(id));
-            DEBUG_MSG("[UserRepository::read] returning std::nullopt");
+            DEBUG_MSG("[UserRepository::read] No user found with id: " + std::to_string(id)
+                      "returning std::nullopt");
             return std::nullopt;
         }
         
@@ -47,7 +70,8 @@ std::optional<User> UserRepository::read(int id) {
         }
     } catch (const std::exception& e) {
         DEBUG_MSG("[UserRepository::read] Exception caught: " + std::string(e.what()));
-        DEBUG_MSG("[UserRepository::read] returning std::nullopt");
+        DEBUG_MSG("[UserRepository::read] No user found with id: " + std::to_string(id)
+                  "returning std::nullopt");
         return std::nullopt;
     }
 }

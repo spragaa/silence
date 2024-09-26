@@ -127,7 +127,6 @@ void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohma
             {"status", "success"},
             {"response", "User registered successfully"},
             {"user_id", new_user.get_id()}
-            // {"registered_timestamp", new_user.get_registered_timestamp()}
         };
         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
     } else {
