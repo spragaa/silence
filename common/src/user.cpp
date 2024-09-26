@@ -57,6 +57,14 @@ void User::set_registered_timestamp(const Timestamp& timestamp) noexcept {
     registered_timestamp = timestamp;
 }
 
+void User::set_last_online_timestamp(const Timestamp& timestamp) noexcept {
+    last_online_timestamp = timestamp;
+}
+
+void User::set_online(const bool is_online) noexcept {
+    online = is_online;
+}
+
 nlohmann::json User::to_json() const {
     nlohmann::json j;
     j["id"] = id;

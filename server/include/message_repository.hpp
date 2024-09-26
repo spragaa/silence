@@ -11,7 +11,7 @@ public:
     MessageRepository(DBManager& db_manager, const std::string& connection_name);
     virtual ~MessageRepository() override;
 
-    bool create(const Message& message) override;
+    int create(const Message& message) override;
     std::optional<Message> read(int id) override;
     bool update(const Message& message) override;
     bool remove(int id) override;

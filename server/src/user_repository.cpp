@@ -6,7 +6,7 @@ UserRepository::UserRepository(DBManager& db_manager, const std::string& connect
 
 UserRepository::~UserRepository() = default;
 
-bool UserRepository::create(const User& user) {
+int UserRepository::create(const User& user) {
     try {
         pqxx::work txn(db_manager.get_connection(connection_name));
         
@@ -40,10 +40,10 @@ bool UserRepository::create(const User& user) {
         DEBUG_MSG("[UserRepository::create] User inserted successfully with id: " + std::to_string(inserted_id));
         
         txn.commit();
-        return true;
+        return inserted_id;
     } catch (const std::exception& e) {
         DEBUG_MSG("[UserRepository::create] Exception caught: " + std::string(e.what()));
-        return false;
+        return 0;
     }
 }
 
@@ -54,8 +54,8 @@ std::optional<User> UserRepository::read(int id) {
         DEBUG_MSG("executing SELECT * FROM USERS WHERE id = " + std::to_string(id));
         
         if (r.empty()) {
-            DEBUG_MSG("[UserRepository::read] No user found with id: " + std::to_string(id)
-                      "returning std::nullopt");
+            DEBUG_MSG("[UserRepository::read] No user found with id: " + std::to_string(id));
+            DEBUG_MSG("returning std::nullopt");
             return std::nullopt;
         }
         
@@ -70,8 +70,8 @@ std::optional<User> UserRepository::read(int id) {
         }
     } catch (const std::exception& e) {
         DEBUG_MSG("[UserRepository::read] Exception caught: " + std::string(e.what()));
-        DEBUG_MSG("[UserRepository::read] No user found with id: " + std::to_string(id)
-                  "returning std::nullopt");
+        DEBUG_MSG("[UserRepository::read] No user found with id: " + std::to_string(id));
+        DEBUG_MSG("returning std::nullopt");
         return std::nullopt;
     }
 }
@@ -118,6 +118,43 @@ bool UserRepository::remove(int id) {
 //         return std::nullopt;
 //     }
 // }
+
+bool UserRepository::authorize(int user_id, const std::string& nickname, const std::string& password) {
+    try {
+        pqxx::work txn(db_manager.get_connection(connection_name));
+        DEBUG_MSG("executing SELECT * FROM users WHERE id = " + std::to_string(user_id) + " AND nickname = " + nickname);
+        
+        pqxx::result r = txn.exec_params(
+            "SELECT * FROM users WHERE id = \$1 AND nickname = \$2",
+            user_id, nickname
+        );
+
+        if (r.empty()) {
+            DEBUG_MSG("[UserRepository::authorize] No user found with id: " + std::to_string(user_id) + " and nickname: " + nickname);
+            DEBUG_MSG("returning false");
+            return false;
+        }
+
+        nlohmann::json json = pqxx_result_to_json(r);
+        DEBUG_MSG("[UserRepository::authorize] response: " + json.dump());
+
+        std::string stored_password = r[0][2].as<std::string>();
+        if (password == stored_password) {
+            DEBUG_MSG("[UserRepository::authorize] Password match for user id: " + std::to_string(user_id));
+            DEBUG_MSG("returning true");
+            return true;
+        }
+
+        DEBUG_MSG("[UserRepository::authorize] Password mismatch for user id: " + std::to_string(user_id));
+        DEBUG_MSG("returning false");
+        return false;
+    } catch (const std::exception& e) {
+        DEBUG_MSG("[UserRepository::authorize] Exception caught: " + std::string(e.what()));
+        DEBUG_MSG("[UserRepository::authorize] Authorization failed for user id: " + std::to_string(user_id));
+        DEBUG_MSG("returning false");
+        return false;
+    }
+}
 
 User UserRepository::construct_user(const nlohmann::json& user_json) {
     User user;

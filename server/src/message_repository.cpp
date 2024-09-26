@@ -5,7 +5,7 @@ MessageRepository::MessageRepository(DBManager& db_manager, const std::string& c
 }
 MessageRepository::~MessageRepository() = default;
 
-bool MessageRepository::create(const Message& message) {
+int MessageRepository::create(const Message& message) {
     try {
         pqxx::work txn(db_manager.get_connection(connection_name));
         txn.exec_params(
@@ -17,10 +17,10 @@ bool MessageRepository::create(const Message& message) {
             std::chrono::system_clock::to_time_t(message.get_created_timestamp())
         );
         txn.commit();
-        return true;
+        return 1;
     } catch (const std::exception& e) {
         // Log the error
-        return false;
+        return 0;
     }
 }
 
