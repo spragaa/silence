@@ -55,6 +55,9 @@ nlohmann::json User::to_json() const {
     j["nickname"] = nickname;
     j["password"] = password;
     j["registered_timestamp"] = registered_timestamp.time_since_epoch().count();
+    j["last_online_timestamp"] = last_online_timestamp.time_since_epoch().count();
+    j["is_online"] = is_online;
+    
     return j;
 }
 
@@ -63,8 +66,19 @@ User User::from_json(const nlohmann::json& j) {
     user.id = j["id"];
     user.nickname = j["nickname"];
     user.password = j["password"];
-    user.registered_timestamp = Timestamp(std::chrono::nanoseconds(j["registered_timestamp"].get<int64_t>()));
+    user.registered_timestamp = parse_timestamp(j["registered_timestamp"]);
+    user.last_online_timestamp = parse_timestamp(j["last_online_timestamp"]);
+    user.is_online = j["is_online"].get<bool>();
+    
     return user;
+}
+
+Timestamp User::parse_timestamp(const std::string& timestamp_str) {
+    std::tm tm = {};
+    std::istringstream ss(timestamp_str);
+    ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
+    auto tp = std::chrono::system_clock::from_time_t(std::mktime(&tm));
+    return std::chrono::time_point_cast<std::chrono::system_clock::duration>(tp);
 }
 
 void User::save_user_data_to_json(const std::string& filename) const {
