@@ -66,8 +66,8 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
 };
 boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
 
+12. add logs with socker info: get_socket_info 
 
-12. 
 ## ideas:
 1. another server with rest api with statistics
 2. 
