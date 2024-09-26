@@ -31,8 +31,9 @@ public:
     
     nlohmann::json to_json() const;
     static User from_json(const nlohmann::json& j);
-	
-private:
+    static Timestamp parse_timestamp(const std::string& timestamp_str);	
+
+    private:
 
 	static int user_id_counter;
 	int id;
