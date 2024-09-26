@@ -19,6 +19,8 @@ public:
 	std::string get_nickname() const noexcept;
 	std::string get_password() const noexcept;
 	Timestamp get_registered_timestamp() const noexcept;
+	Timestamp get_last_online_timestamp() const noexcept;
+	bool is_online() const noexcept;
 	
 	bool check_password(const std::string& pass) noexcept;
 	void set_id(const int& user_id) noexcept;
@@ -41,5 +43,5 @@ public:
 	std::string password;	
 	Timestamp registered_timestamp;
 	Timestamp last_online_timestamp;
-	bool is_online;
+	bool online;
 };

@@ -10,7 +10,7 @@ User::User(const std::string& nick) : User() {
 
 User::User(const std::string& nick, const std::string& pass) : id(user_id_counter++), nickname(
 		nick), password(pass), registered_timestamp(std::chrono::system_clock::now()) {
-		DEBUG_MSG("New user registered,  nickname: " + nickname + ", " + "password: " + password);
+		DEBUG_MSG("New user created,  nickname: " + nickname + ", " + "password: " + password);
 }
 
 int User::get_id() const noexcept {
@@ -27,6 +27,14 @@ std::string User::get_password() const noexcept {
 
 Timestamp User::get_registered_timestamp() const noexcept {
     return registered_timestamp;
+}
+
+Timestamp User::get_last_online_timestamp() const noexcept {
+    return last_online_timestamp;
+}
+
+bool User::is_online() const noexcept {
+    return online;
 }
 
 bool User::check_password(const std::string& pass) noexcept {
@@ -56,7 +64,7 @@ nlohmann::json User::to_json() const {
     j["password"] = password;
     j["registered_timestamp"] = registered_timestamp.time_since_epoch().count();
     j["last_online_timestamp"] = last_online_timestamp.time_since_epoch().count();
-    j["is_online"] = is_online;
+    j["online"] = online;
     
     return j;
 }
@@ -68,7 +76,7 @@ User User::from_json(const nlohmann::json& j) {
     user.password = j["password"];
     user.registered_timestamp = parse_timestamp(j["registered_timestamp"]);
     user.last_online_timestamp = parse_timestamp(j["last_online_timestamp"]);
-    user.is_online = j["is_online"].get<bool>();
+    user.online = j["online"].get<bool>();
     
     return user;
 }
