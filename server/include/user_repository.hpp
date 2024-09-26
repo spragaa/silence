@@ -11,10 +11,12 @@ public:
     UserRepository(DBManager& db_manager, const std::string& connection_name);
     virtual ~UserRepository() override;
 
-    bool create(const User& user) override;
+    int create(const User& user) override;
     std::optional<User> read(int id) override;
     bool update(const User& user) override;
     bool remove(int id) override;
+    
+    bool authorize(int user_id, const std::string& nickname, const std::string& password);
 
     // std::optional<User> findByNickname(const std::string& nickname);
 

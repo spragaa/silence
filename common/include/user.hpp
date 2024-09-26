@@ -27,6 +27,8 @@ public:
 	void set_nickname(const std::string& nick) noexcept;
 	void set_password(const std::string& pass) noexcept;
 	void set_registered_timestamp(const Timestamp& timestamp) noexcept;
+	void set_last_online_timestamp(const Timestamp& timestamp) noexcept;
+	void set_online(const bool is_online) noexcept;
 	
 	void save_user_data_to_json(const std::string& filename) const;
     static User load_user_data_from_json(const std::string& filename);

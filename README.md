@@ -60,7 +60,14 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
 8. refactor server 
 9. read server <-> dbs connection params from jsons
 10. logs levels
+11.         nlohmann::json response = {
+    {"status", "success"},
+    {"message", "Authorization successful"}
+};
+boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
 
+
+12. 
 ## ideas:
 1. another server with rest api with statistics
 2. 

@@ -10,7 +10,7 @@ public:
     BaseRepository() = default;
     virtual ~BaseRepository() = default;
     
-    virtual bool create(const T& entity) = 0;
+    virtual int create(const T& entity) = 0;
     virtual std::optional<T> read(int id) = 0;
     virtual bool update(const T& entity) = 0;
     virtual bool remove(int id) = 0;

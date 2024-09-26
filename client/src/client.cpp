@@ -126,32 +126,57 @@ void Client::run() {
                     break;                
                 }
                 case 1: {
-                    // move somewhere
                     if (user.get_id() == 0) {
                         std::cout << "Error: You need to register first." << std::endl;
                         break;
                     }
                     
                     std::string password;
-                    std::cout << user.get_nickname() << ", please, enter password: ";
+                    std::cout << user.get_nickname() << ", please enter password: ";
                     std::getline(std::cin, password);
                     
-                    request["password"] = password;
+                    nlohmann::json request;
                     request["type"] = "authorize";
+                    request["password"] = password;
                     request["nickname"] = user.get_nickname();
                     request["user_id"] = user.get_id();
-
-                    boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
-                    nlohmann::json response = nlohmann::json::parse(receive_response());
+                
+                    DEBUG_MSG("Sending authorization request: " + request.dump());
+                
+                    try {
+                        boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
+                        DEBUG_MSG("Authorization request sent successfully");
+                
+                        nlohmann::json response = nlohmann::json::parse(receive_response());
                     
-                    std::cout << "Server response status: ";
-                    if(response["status"] == "success") {
-                        std::cout << "Success: " << response["response"] << std::endl;
-                    } else if (response["status"] == "error") {
-                        std::cout << "Error: " << response["response"] << std::endl;
+                        if(response["status"] == "success") {
+                            std::cout << "Success: " << response["message"] << std::endl;
+                            
+                            if (response.contains("user_data") && !response["user_data"].is_null()) {
+                                nlohmann::json user_data = response["user_data"];
+                                if (user_data.contains("last_online_timestamp") && !user_data["last_online_timestamp"].is_null()) {
+                                    std::chrono::nanoseconds ns(user_data["last_online_timestamp"].get<int64_t>());
+                                    Timestamp last_online = std::chrono::system_clock::time_point(ns);
+                                    user.set_last_online_timestamp(last_online);
+                                }
+                                if (user_data.contains("is_online") && !user_data["is_online"].is_null()) {
+                                    user.set_online(user_data["is_online"].get<bool>());
+                                }
+                            }
+                            
+                            user.save_user_data_to_json(get_user_data_filename());
+                            
+                            std::cout << "User data updated and saved" << std::endl;
+                        } else if (response["status"] == "error") {
+                            std::cout << "Error: " << response["message"] << std::endl;
+                        } else {
+                            std::cout << "Unexpected response from server" << std::endl;
+                        }
+                    } catch (const std::exception& e) {
+                        std::cerr << "Exception during authorization: " << e.what() << std::endl;
                     }
                     
-                    DEBUG_MSG("Server response: " + response.dump());
+                    DEBUG_MSG("Authorization process completed");
                     break;                
                 }
                 case 2: {
