@@ -29,11 +29,9 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
     SELECT * FROM MESSAGES;
 
 ## what to do:
-1. go through commit 8da7e24935c59c4887ac9254a91b7d2e13235537
-2. fix all small inaccuracies
-3. finish CRUD for user and message
-4. rename what needs to be renamed
-    
+1. finish CRUD for user_metadata db 
+2. finish CRUD for message_metadata db
+
 ## next steps:
 1. implement request structure
 ~~2. add password and authorization~~
@@ -44,17 +42,21 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
 7. add user_metadata and message_metadata hadling on server side 
 8. add messages db handling on server side 
 9. go through all comments in source code 
+10. tests
+11. auto docs
+12. messenger interface in terminal
+
 
 ## bugs? 
-1. why users id are 1, 3, 5, 7, ... ?
+1. user exp is broken -> try to cover all possible cases
 2. prettier.sh is broken?
 
 ## improvements:
 1. disable multiple users in one app
-2. remembder nickname on the client side
-3. currently there are at least two copies of User on the client and on the server side
+~~2. remembder nickname on the client side~~
+~~3. currently there are at least two copies of User on the client and on the server side~~
 4. move installing of libs, dbs into one script
-5. unify the pathes in the scripts and in the code, so it doesn't matter from where you run the script/code
+5. unify the file paths in the scripts and in the code, so it doesn't matter from where you run the script/code
 6. somehow share debug_message accros scripts
 7. consistent approach in cmake 
 8. refactor server 
@@ -71,4 +73,3 @@ boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
 ## ideas:
 1. another server with rest api with statistics
 2. 
-
