@@ -76,48 +76,69 @@ std::optional<User> UserRepository::read(int id) {
     }
 }
 
+// didn't test
 bool UserRepository::update(const User& user) {
     try {
         pqxx::work txn(db_manager.get_connection(connection_name));
+        
+        auto format_timestamp = [](const Timestamp& ts) {
+            auto time_t = std::chrono::system_clock::to_time_t(ts);
+            std::stringstream ss;
+            ss << std::put_time(std::gmtime(&time_t), "%Y-%m-%d %H:%M:%S");
+            return ss.str();
+        };
+
         pqxx::result r = txn.exec_params(
-            "UPDATE users SET nickname = $1, password = $2 WHERE id = $3",
+            "UPDATE users SET nickname = $1, password = $2, registered_timestamp = $3, "
+            "last_online_timestamp = $4, is_online = $5 WHERE id = $6",
             user.get_nickname(),
             user.get_password(),
+            format_timestamp(user.get_registered_timestamp()),
+            format_timestamp(user.get_last_online_timestamp()),
+            user.is_online(),
             user.get_id()
         );
+        
+        DEBUG_MSG("Executing UPDATE users SET nickname = $1, password = $2, registered_timestamp = $3, "
+                  "last_online_timestamp = $4, is_online = $5 WHERE id = $6\n"
+                  "for user: " + user.to_json().dump());
+        
+        if (r.affected_rows() == 0) {
+            DEBUG_MSG("[UserRepository::update] No user updated");
+            return false;
+        }
+        
+        DEBUG_MSG("[UserRepository::update] User updated successfully with id: " + std::to_string(user.get_id()));
+        
         txn.commit();
-        return r.affected_rows() > 0;
+        return true;
     } catch (const std::exception& e) {
-        // add logs
+        DEBUG_MSG("[UserRepository::update] Exception caught: " + std::string(e.what()));
         return false;
     }
 }
 
+// didn't test
 bool UserRepository::remove(int id) {
     try {
         pqxx::work txn(db_manager.get_connection(connection_name));
         pqxx::result r = txn.exec_params("DELETE FROM users WHERE id = $1", id);
+        DEBUG_MSG("Executing DELETE FROM users WHERE id = $1\n"
+                  "for user_id: " + std::to_string(id));
+
+        
+        if (r.affected_rows() == 0) {
+            DEBUG_MSG("[UserRepository::remove] No user deleted");
+            return false;
+        }
+        
         txn.commit();
-        return r.affected_rows() > 0;
+        return true;
     } catch (const std::exception& e) {
-        // add logs
+        DEBUG_MSG("[UserRepository::remove] Exception caught: " + std::string(e.what()));
         return false;
     }
 }
-
-// std::optional<User> UserRepository::findByNickname(const std::string& nickname) {
-//     try {
-//         pqxx::work txn(db_manager.get_connection(connection_name));
-//         pqxx::result r = txn.exec_params("SELECT * FROM users WHERE nickname = $1", nickname);
-//         if (r.empty()) {
-//             return std::nullopt;
-//         }
-//         return construct_user(r[0]);
-//     } catch (const std::exception& e) {
-//         // add logs
-//         return std::nullopt;
-//     }
-// }
 
 bool UserRepository::authorize(int user_id, const std::string& nickname, const std::string& password) {
     try {
@@ -125,13 +146,12 @@ bool UserRepository::authorize(int user_id, const std::string& nickname, const s
         DEBUG_MSG("executing SELECT * FROM users WHERE id = " + std::to_string(user_id) + " AND nickname = " + nickname);
         
         pqxx::result r = txn.exec_params(
-            "SELECT * FROM users WHERE id = \$1 AND nickname = \$2",
+            "SELECT * FROM users WHERE id = $1 AND nickname = $2",
             user_id, nickname
         );
 
         if (r.empty()) {
             DEBUG_MSG("[UserRepository::authorize] No user found with id: " + std::to_string(user_id) + " and nickname: " + nickname);
-            DEBUG_MSG("returning false");
             return false;
         }
 
@@ -141,7 +161,6 @@ bool UserRepository::authorize(int user_id, const std::string& nickname, const s
         std::string stored_password = r[0][2].as<std::string>();
         if (password == stored_password) {
             DEBUG_MSG("[UserRepository::authorize] Password match for user id: " + std::to_string(user_id));
-            DEBUG_MSG("returning true");
             return true;
         }
 
@@ -151,7 +170,6 @@ bool UserRepository::authorize(int user_id, const std::string& nickname, const s
     } catch (const std::exception& e) {
         DEBUG_MSG("[UserRepository::authorize] Exception caught: " + std::string(e.what()));
         DEBUG_MSG("[UserRepository::authorize] Authorization failed for user id: " + std::to_string(user_id));
-        DEBUG_MSG("returning false");
         return false;
     }
 }

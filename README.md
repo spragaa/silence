@@ -40,11 +40,10 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
 5. receiving messages by receiver user 
 ~~6. add password and authorization~~
 7. add user_metadata and message_metadata hadling on server side 
-8. add messages db handling on server side 
-9. go through all comments in source code 
-10. tests
-11. auto docs
-12. messenger interface in terminal
+8. go through all comments in source code 
+9. tests
+10. auto docs
+11. messenger interface in terminal
 
 
 ## bugs? 
@@ -62,11 +61,11 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
 8. refactor server 
 9. read server <-> dbs connection params from jsons
 10. logs levels
-11.         nlohmann::json response = {
-    {"status", "success"},
-    {"message", "Authorization successful"}
-};
-boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+~~11.         nlohmann::json response = {~~
+    ~~{"status", "success"},~~
+    ~~{"message", "Authorization successful"}~~
+};~~
+~~boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));~~
 
 12. add logs with socker info: get_socket_info 
 
