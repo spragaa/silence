@@ -9,11 +9,11 @@ Server::Server(unsigned short port, unsigned int thread_pool_size,
     : acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
       work(new boost::asio::io_service::work(io_service)) {
           
-    db_manager.add_connection("user_db", user_db_connection_string);
-    db_manager.add_connection("message_db", message_db_connection_string);
+    db_manager.add_connection("user_metadata_db", user_db_connection_string);
+    db_manager.add_connection("message_metadata_db", message_db_connection_string);
           
-    user_repository = std::make_unique<UserMetadataRepository>(db_manager, "user_db");
-    message_repository = std::make_unique<MessageMetadataRepository>(db_manager, "message_db");
+    user_repository = std::make_unique<UserMetadataRepository>(db_manager, "user_metadata_db");
+    message_repository = std::make_unique<MessageMetadataRepository>(db_manager, "message_metadata_db");
           
     for (unsigned int i = 0; i < thread_pool_size; ++i) {
         thread_pool.push_back(boost::make_shared<boost::thread>(

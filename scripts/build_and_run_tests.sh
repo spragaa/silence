@@ -22,8 +22,10 @@ mkdir -p ../build || exit
 
 cd ../build || exit
 
-cmake ..
+cmake -DBUILD_TESTS=ON ..
 debug_echo "'cmake ..' finished"
 
-make -j$(nproc) server
-debug_echo "'make server' finished"
+make -j$(nproc)
+debug_echo "'make tests' finished"
+
+../build/tests/test_server/test_server 

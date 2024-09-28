@@ -1,9 +1,10 @@
 #!/bin/bash
 
+# create_user_metadata_db.sh
+
 DEBUG_MODE=false
 if [[ "\$1" == "--debug" ]]; then
     DEBUG_MODE=true
-    shift
 fi
 
 debug_echo() {
@@ -17,29 +18,16 @@ SUPERUSER="postgres"
 DB_HOST="localhost"
 DB_PORT="5432"
 
-NEW_USER=""
-NEW_USER_PASSWORD=""
+# Use environment variables
+NEW_USER="${DB_NEW_USER}"
+NEW_USER_PASSWORD="${DB_NEW_USER_PASSWORD}"
 
-for arg in "$@"; do
-    case $arg in
-        --user=*)
-        NEW_USER="${arg#*=}"
-        ;;
-        --user_password=*)
-        NEW_USER_PASSWORD="${arg#*=}"
-        ;;
-    esac
-done
-
-if [ -z "$NEW_USER" ] || [ -z "$NEW_USER_PASSWORD" ]; then
-    echo "Error: Both --user and --user_password must be provided."
+if [ -z "$NEW_USER" ] || [ -z "$NEW_USER_PASSWORD" ] || [ -z "$POSTGRES_PASSWORD" ]; then
+    echo "Error: Environment variables not set. Run 'source set_env_variables.sh' first."
     exit 1
 fi
 
 DB_NAME="user_metadata"
-
-read -s -p "Enter password for postgres user: " POSTGRES_PASSWORD
-echo
 
 export PGPASSWORD="$POSTGRES_PASSWORD"
 
