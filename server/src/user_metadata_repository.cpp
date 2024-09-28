@@ -189,7 +189,7 @@ nlohmann::json UserMetadataRepository::pqxx_result_to_json(const pqxx::result& r
     j["last_online_timestamp"] = r[0][4].as<std::string>();
     
     std::string is_online_str = r[0][5].as<std::string>();
-    j["is_online"] = (is_online_str == "t");
+    j["online"] = (is_online_str == "t");
 
     return j;
 }
