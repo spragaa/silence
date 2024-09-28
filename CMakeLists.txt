@@ -3,6 +3,7 @@ project(chat_application)
 
 set(CMAKE_CXX_STANDARD 20)
 
+option(BUILD_TESTS "Build the test suite" OFF)
 add_definitions(-DSOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
 find_package(Boost 1.74 REQUIRED COMPONENTS system thread)
@@ -24,3 +25,16 @@ FetchContent_MakeAvailable(libpqxx)
 add_subdirectory(common)
 add_subdirectory(server)
 add_subdirectory(client)
+
+if(BUILD_TESTS)
+    enable_testing()
+    
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG release-1.12.1
+    )
+    FetchContent_MakeAvailable(googletest)
+    
+    add_subdirectory(tests)
+endif()

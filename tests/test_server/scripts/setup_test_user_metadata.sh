@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# create_message_metadata_db.sh
+# create_test_user_metadata_db.sh
 
 DEBUG_MODE=false
 if [[ "\$1" == "--debug" ]]; then
@@ -27,20 +27,20 @@ if [ -z "$NEW_USER" ] || [ -z "$NEW_USER_PASSWORD" ] || [ -z "$POSTGRES_PASSWORD
     exit 1
 fi
 
-DB_NAME="message_metadata"
+DB_NAME="test_user_metadata"
 
 export PGPASSWORD="$POSTGRES_PASSWORD"
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-SQL_FILE="$SCRIPT_DIR/../database/message_metadata.sql"
+SQL_FILE="$SCRIPT_DIR/../database/test_user_metadata.sql"
 
 psql -U $SUPERUSER -h $DB_HOST -p $DB_PORT -v db_name="$DB_NAME" -v new_user="$NEW_USER" -v new_user_password="'$NEW_USER_PASSWORD'" -f "$SQL_FILE"
 
 unset PGPASSWORD
 
 if [ $? -eq 0 ]; then
-    debug_echo "message_metadata database and table created successfully!"
+    debug_echo "test_user_metadata database and table created successfully!"
 else
     debug_echo "Error: Failed to create database and table."
     exit 1

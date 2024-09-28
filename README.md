@@ -29,7 +29,7 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
     SELECT * FROM MESSAGES;
 
 ## what to do:
-1. finish CRUD for user_metadata db 
+~~1. finish CRUD for user_metadata db~~ 
 2. finish CRUD for message_metadata db
 3. unit tests foR user_metadata db 
 4. unit tests foR message_metadata db
@@ -51,7 +51,8 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
 ## bugs? 
 1. user exp is broken -> try to cover all possible cases
 2. prettier.sh is broken?
-
+3. does it even make sense to use --clean in cmake? 
+4. is it possib le to simplify setup_db scripts? 
 ## improvements:
 1. disable multiple users in one app
 ~~2. remembder nickname on the client side~~
@@ -70,7 +71,8 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
 ~~boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));~~
 
 12. add logs with socker info: get_socket_info 
-
+13. there must some kind of script/config that will create env variables to work with psql flawlessly (postgres user, user_pass, postgres_pass and so on)
+it is annoying to type them every time 
 ## ideas:
 1. another server with rest api with statistics
 2. 
