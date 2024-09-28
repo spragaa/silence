@@ -1,11 +1,11 @@
-#include "message_repository.hpp"
+#include "message_metadata_repository.hpp"
 
-MessageRepository::MessageRepository(DBManager& db_manager, const std::string& connection_name) : BaseRepository(db_manager), connection_name(connection_name) {
-    DEBUG_MSG("MessageRepository created")
+MessageMetadataRepository::MessageMetadataRepository(DBManager& db_manager, const std::string& connection_name) : BaseRepository(db_manager), connection_name(connection_name) {
+    DEBUG_MSG("MessageMetadataRepository created")
 }
-MessageRepository::~MessageRepository() = default;
+MessageMetadataRepository::~MessageMetadataRepository() = default;
 
-int MessageRepository::create(const Message& message) {
+int MessageMetadataRepository::create(const Message& message) {
     try {
         pqxx::work txn(db_manager.get_connection(connection_name));
         txn.exec_params(
@@ -24,7 +24,7 @@ int MessageRepository::create(const Message& message) {
     }
 }
 
-std::optional<Message> MessageRepository::read(int id) {
+std::optional<Message> MessageMetadataRepository::read(int id) {
     try {
         pqxx::work txn(db_manager.get_connection(connection_name));
         pqxx::result r = txn.exec_params("SELECT * FROM messages WHERE id = $1", id);
@@ -38,7 +38,7 @@ std::optional<Message> MessageRepository::read(int id) {
     }
 }
 
-bool MessageRepository::update(const Message& message) {
+bool MessageMetadataRepository::update(const Message& message) {
     try {
         pqxx::work txn(db_manager.get_connection(connection_name));
         pqxx::result r = txn.exec_params(
@@ -56,7 +56,7 @@ bool MessageRepository::update(const Message& message) {
     }
 }
 
-bool MessageRepository::remove(int id) {
+bool MessageMetadataRepository::remove(int id) {
     try {
         pqxx::work txn(db_manager.get_connection(connection_name));
         pqxx::result r = txn.exec_params(
@@ -73,7 +73,7 @@ bool MessageRepository::remove(int id) {
     }
 }
 
-Message MessageRepository::constructMessage(const pqxx::row& row) {
+Message MessageMetadataRepository::constructMessage(const pqxx::row& row) {
     Message msg(
         row["sender_id"].as<int>(),
         row["receiver_id"].as<int>(),
