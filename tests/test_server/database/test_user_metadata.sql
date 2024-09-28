@@ -1,7 +1,4 @@
 DROP DATABASE IF EXISTS :db_name;
-DROP USER IF EXISTS :new_user;
-
-CREATE USER :new_user WITH PASSWORD :'new_user_password';
 
 DROP DATABASE IF EXISTS :db_name;
 CREATE DATABASE :db_name;

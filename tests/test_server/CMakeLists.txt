@@ -9,6 +9,8 @@ target_link_libraries(test_server
     common_lib
     gtest
     gtest_main
+    nlohmann_json::nlohmann_json
+    pqxx
 )
 
 target_include_directories(test_server

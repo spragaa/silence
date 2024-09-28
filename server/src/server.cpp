@@ -159,7 +159,6 @@ void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohm
         response["response"] = "Authorization failed: Invalid credentials";
     }
     boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
-    
 }
 
 // void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
