@@ -12,8 +12,8 @@ Server::Server(unsigned short port, unsigned int thread_pool_size,
     db_manager.add_connection("user_db", user_db_connection_string);
     db_manager.add_connection("message_db", message_db_connection_string);
           
-    user_repository = std::make_unique<UserRepository>(db_manager, "user_db");
-    message_repository = std::make_unique<MessageRepository>(db_manager, "message_db");
+    user_repository = std::make_unique<UserMetadataRepository>(db_manager, "user_db");
+    message_repository = std::make_unique<MessageMetadataRepository>(db_manager, "message_db");
           
     for (unsigned int i = 0; i < thread_pool_size; ++i) {
         thread_pool.push_back(boost::make_shared<boost::thread>(

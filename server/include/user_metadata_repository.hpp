@@ -6,10 +6,10 @@
 #include <optional>
 #include <nlohmann/json.hpp>
 
-class UserRepository : public BaseRepository<User> {
+class UserMetadataRepository : public BaseRepository<User> {
 public:
-    UserRepository(DBManager& db_manager, const std::string& connection_name);
-    virtual ~UserRepository() override;
+    UserMetadataRepository(DBManager& db_manager, const std::string& connection_name);
+    virtual ~UserMetadataRepository() override;
 
     int create(const User& user) override;
     std::optional<User> read(int id) override;

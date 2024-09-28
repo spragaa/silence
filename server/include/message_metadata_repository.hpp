@@ -6,10 +6,10 @@
 #include <vector>
 #include <optional>
 
-class MessageRepository : public BaseRepository<Message> {
+class MessageMetadataRepository : public BaseRepository<Message> {
 public:
-    MessageRepository(DBManager& db_manager, const std::string& connection_name);
-    virtual ~MessageRepository() override;
+    MessageMetadataRepository(DBManager& db_manager, const std::string& connection_name);
+    virtual ~MessageMetadataRepository() override;
 
     int create(const Message& message) override;
     std::optional<Message> read(int id) override;
