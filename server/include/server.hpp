@@ -3,8 +3,8 @@
 #include "debug.hpp"
 #include "user.hpp"
 #include "message.hpp"
-#include "user_repository.hpp"
-#include "message_repository.hpp"
+#include "user_metadata_repository.hpp"
+#include "message_metadata_repository.hpp"
 #include "db_manager.hpp"
 
 #include <iostream>
@@ -55,6 +55,6 @@ private:
     std::vector<boost::shared_ptr<boost::thread>> thread_pool;
 
     DBManager db_manager;
-    std::unique_ptr<UserRepository> user_repository;
-    std::unique_ptr<MessageRepository> message_repository;
+    std::unique_ptr<UserMetadataRepository> user_repository;
+    std::unique_ptr<MessageMetadataRepository> message_repository;
 };
