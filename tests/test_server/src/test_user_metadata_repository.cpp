@@ -11,10 +11,8 @@ protected:
         repo = std::make_unique<UserMetadataRepository>(db_manager, "test_user_metadata");
     }
 
-    // void TearDown() override {
-    // }
 };
 
-TEST_F(UserMetadataRepositoryTests, AddUser) {
-    ASSERT_TRUE(1 == 1);
+TEST_F(UserMetadataRepositoryTests, read_user) {
+    
 }
