@@ -30,15 +30,15 @@ export PGPASSWORD="$POSTGRES_PASSWORD"
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-SQL_FILE="$SCRIPT_DIR/../database/test_message_metadata.sql"
+SQL_FILE="$SCRIPT_DIR/../database/drop_test_message_metadata.sql"
 
 psql -U $SUPERUSER -h $DB_HOST -p $DB_PORT -v db_name="$DB_NAME" -v new_user="$NEW_USER" -v new_user_password="'$NEW_USER_PASSWORD'" -f "$SQL_FILE"
 
 unset PGPASSWORD
 
 if [ $? -eq 0 ]; then
-    debug_echo "test_message_metadata database and table created successfully!"
+    debug_echo "dropped test_message_metadata successfully!"
 else
-    debug_echo "Error: Failed to create database and table."
+    debug_echo "Error: Failed to drop database and table"
     exit 1
 fi

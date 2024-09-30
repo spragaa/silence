@@ -66,9 +66,33 @@ std::optional<Timestamp>Message::get_last_edited_timestamp() const noexcept {
 	return std::nullopt;
 }
 
-// void Message::set_id(const int& msg_id) noexcept {
-//     id = msg_id;
-// }
+void Message::set_id(const int& msg_id) noexcept {
+    id = msg_id;
+}
+
+void Message::set_text(const std::string& t) noexcept {
+    text = t;
+}
+
+void Message::set_sender(const int& s) noexcept {
+    sender_id = s;
+}
+
+void Message::set_created_timestamp(const Timestamp& timestamp) noexcept {
+    created_timestamp = timestamp;
+}
+
+void Message::set_last_edited_timestamp(const Timestamp& timestamp) noexcept {
+    last_edited_timestamp = timestamp;
+}
+
+void Message::set_deleted_timestamp(const Timestamp& timestamp) noexcept {
+    deleted_timestamp = timestamp;
+}
+
+void Message::set_deleted(const bool& d) noexcept {
+    deleted = d;
+}
 
 // bool Message::operator<(const Message& other) const {
 //     return id < other.id;

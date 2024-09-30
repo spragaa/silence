@@ -1,5 +1,4 @@
 #include "user_metadata_repository.hpp"
-#include "message_metadata_repository.hpp"
 
 #include <gtest/gtest.h>
 #include <stdio.h>

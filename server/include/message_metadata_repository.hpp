@@ -19,7 +19,7 @@ public:
     std::vector<Message> getMessagesBetweenUsers(int user1_id, int user2_id);
 
 private:
-    Message constructMessage(const pqxx::row& row);
+    Message construct_message(const pqxx::row& row);
     // move inside base repo
     std::string connection_name;
 };

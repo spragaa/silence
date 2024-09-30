@@ -30,9 +30,14 @@ public:
 	std::optional<Timestamp>get_deleted_timestamp() const noexcept;
 	std::optional<Timestamp>get_last_edited_timestamp() const noexcept;
 	
-	// void set_id(const int& msg_id) noexcept;
-	// void set_text(const std::string& t) noexcept;
-	// void set_sender(const std::string& t) noexcept;
+	void set_id(const int& msg_id) noexcept;
+	void set_text(const std::string& t) noexcept;
+	void set_sender(const int& t) noexcept;
+	void set_created_timestamp(const Timestamp& timestamp) noexcept;
+	void set_last_edited_timestamp(const Timestamp& timestamp) noexcept;
+	void set_deleted_timestamp(const Timestamp& timestamp) noexcept;
+	void set_deleted(const bool& d) noexcept;
+	
 	// bool operator < (const Message& other) const;
 
     nlohmann::json to_json() const;
@@ -44,7 +49,6 @@ private:
 	int id;
 	int sender_id;
 	int receiver_id;
-	std::string reveiver_nickname;
 	std::string text;
 	bool deleted;
 
