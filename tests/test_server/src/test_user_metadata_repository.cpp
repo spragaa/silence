@@ -154,3 +154,50 @@ TEST_F(UserMetadataRepositoryTests, update_non_existing_user) {
     std::optional<User> user = repo->read(user_id);
     ASSERT_FALSE(user.has_value());
 }
+
+TEST_F(UserMetadataRepositoryTests, authorize_existing_user) {
+    int user_id = 2;
+    std::string nickname = "george_hotz";
+    std::string password = "george_hotz_pass";
+
+    bool is_authorized = repo->authorize(user_id, nickname, password);
+    ASSERT_TRUE(is_authorized);
+}
+
+TEST_F(UserMetadataRepositoryTests, authorize_non_existing_user) {
+    int user_id = 2;
+    std::string nickname = "george_hotz";
+    std::string password = "wrong_pass";
+
+    bool is_authorized = repo->authorize(user_id, nickname, password);
+    ASSERT_FALSE(is_authorized);
+}
+
+// construct_user is private within this context
+// TEST_F(UserMetadataRepositoryTests, construct_user) {
+//     nlohmann::json user_json = {
+//         {"id", 1},
+//         {"nickname", "test_user"},
+//         {"password", "test_password"},
+//         {"registered_timestamp", "2024-09-28 15:30:00"},
+//         {"last_online_timestamp", "2024-09-28 15:30:00"},
+//         {"online", true}
+//     };
+
+//     User constructed_user = repo->construct_user(user_json);
+
+//     EXPECT_EQ(constructed_user.get_id(), 1);
+//     EXPECT_EQ(constructed_user.get_nickname(), "test_user");
+//     EXPECT_EQ(constructed_user.get_password(), "test_password");
+//     EXPECT_TRUE(constructed_user.is_online());
+
+//     auto to_string = [](const Timestamp& ts) {
+//         auto time_t = std::chrono::system_clock::to_time_t(ts);
+//         std::stringstream ss;
+//         ss << std::put_time(std::gmtime(&time_t), "%Y-%m-%d %H:%M:%S");
+//         return ss.str();
+//     };
+
+//     EXPECT_EQ(to_string(constructed_user.get_registered_timestamp()), "2024-09-28 15:30:00");
+//     EXPECT_EQ(to_string(constructed_user.get_last_online_timestamp()), "2024-09-28 15:30:00");
+// }
