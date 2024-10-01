@@ -22,12 +22,12 @@ public:
 private:
 
 	void        send_message(const std::string& message);
-    void inline show_actions();
-    std::string read_user_text() const noexcept;
+	void inline show_actions();
+	std::string read_user_text() const noexcept;
 	std::string receive_response();
 	std::string get_user_data_filename() const noexcept;
 
-	private:
+private:
 
 	boost::asio::io_service io_service;
 	boost::asio::ip::tcp::socket socket;
