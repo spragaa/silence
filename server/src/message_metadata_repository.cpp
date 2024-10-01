@@ -67,8 +67,8 @@ bool MessageMetadataRepository::update(const Message& message) {
         std::string formatted_time = ss.str();
         
         pqxx::result r = txn.exec_params(
-            "UPDATE messages SET text = \$1, last_edited_timestamp = \$2 "
-            "WHERE id = \$3",
+            "UPDATE messages SET text = $1, last_edited_timestamp = $2 "
+            "WHERE id = $3",
             message.get_text(),
             formatted_time,
             message.get_id()
@@ -99,8 +99,8 @@ bool MessageMetadataRepository::remove(int id) {
         std::string formatted_time = ss.str();
         
         pqxx::result r = txn.exec_params(
-            "UPDATE messages SET deleted = TRUE, deleted_timestamp = \$1 "
-            "WHERE id = \$2",
+            "UPDATE messages SET deleted = TRUE, deleted_timestamp = $1 "
+            "WHERE id = $2",
             formatted_time,
             id
         );
