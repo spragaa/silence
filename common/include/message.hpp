@@ -12,7 +12,7 @@
 class Message {
 public:
 
-    // Message();
+	// Message();
 	Message(
 		const int sender_id,
 		const int receiver_id,
@@ -20,7 +20,7 @@ public:
 
 		// const std::optional<Media> & media
 		);
-	
+
 	bool                    is_deleted() const noexcept;
 	int                     get_id() const noexcept;
 	int                     get_sender_id() const noexcept;
@@ -29,7 +29,7 @@ public:
 	Timestamp               get_created_timestamp() const noexcept;
 	std::optional<Timestamp>get_deleted_timestamp() const noexcept;
 	std::optional<Timestamp>get_last_edited_timestamp() const noexcept;
-	
+
 	void set_id(const int& msg_id) noexcept;
 	void set_text(const std::string& t) noexcept;
 	void set_sender(const int& t) noexcept;
@@ -37,12 +37,12 @@ public:
 	void set_last_edited_timestamp(const Timestamp& timestamp) noexcept;
 	void set_deleted_timestamp(const Timestamp& timestamp) noexcept;
 	void set_deleted(const bool& d) noexcept;
-	
+
 	// bool operator < (const Message& other) const;
 
-    nlohmann::json to_json() const;
-    static Message from_json(const nlohmann::json& j);
-	
+	nlohmann::json to_json() const;
+	static Message from_json(const nlohmann::json& j);
+
 private:
 
 	static int message_id_counter;
