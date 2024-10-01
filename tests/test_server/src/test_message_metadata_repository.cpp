@@ -60,5 +60,9 @@ TEST_F(MessageMetadataRepositoryTests, remove_message) {
     ASSERT_TRUE(is_removed);
 
     std::optional<Message> deleted_message = repo->read(message_id);
-    ASSERT_FALSE(deleted_message.has_value());
+    ASSERT_TRUE(deleted_message.has_value());
+    EXPECT_EQ(deleted_message->get_text(), "To be deleted");
+    EXPECT_EQ(deleted_message->get_sender_id(), 1);
+    EXPECT_EQ(deleted_message->get_receiver_id(), 2);
+    EXPECT_EQ(deleted_message->is_deleted(), true);    
 }
