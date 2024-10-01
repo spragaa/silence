@@ -76,3 +76,8 @@ it is annoying to type them every time
 ## ideas:
 1. another server with rest api with statistics
 2. 
+
+## codecov:
+cmake -DBUILD_TESTS=ON -DENABLE_COVERAGE=ON -DENABLE_SERVER_COVERAGE=ON -DENABLE_CLIENT_COVERAGE=ON ..
+make coverage_clean
+xdg-open coverage_report/index.html
