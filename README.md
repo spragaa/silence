@@ -30,9 +30,9 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
 
 ## what to do:
 ~~1. finish CRUD for user_metadata db~~ 
-2. finish CRUD for message_metadata db
-3. unit tests foR user_metadata db 
-4. unit tests foR message_metadata db
+~~2. finish CRUD for message_metadata db~~
+~~3. unit tests foR user_metadata db~~ 
+~~4. unit tests foR message_metadata db~~
 
 ## next steps:
 1. implement request structure

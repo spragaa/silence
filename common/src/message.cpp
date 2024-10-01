@@ -67,31 +67,31 @@ std::optional<Timestamp>Message::get_last_edited_timestamp() const noexcept {
 }
 
 void Message::set_id(const int& msg_id) noexcept {
-    id = msg_id;
+	id = msg_id;
 }
 
 void Message::set_text(const std::string& t) noexcept {
-    text = t;
+	text = t;
 }
 
 void Message::set_sender(const int& s) noexcept {
-    sender_id = s;
+	sender_id = s;
 }
 
 void Message::set_created_timestamp(const Timestamp& timestamp) noexcept {
-    created_timestamp = timestamp;
+	created_timestamp = timestamp;
 }
 
 void Message::set_last_edited_timestamp(const Timestamp& timestamp) noexcept {
-    last_edited_timestamp = timestamp;
+	last_edited_timestamp = timestamp;
 }
 
 void Message::set_deleted_timestamp(const Timestamp& timestamp) noexcept {
-    deleted_timestamp = timestamp;
+	deleted_timestamp = timestamp;
 }
 
 void Message::set_deleted(const bool& d) noexcept {
-    deleted = d;
+	deleted = d;
 }
 
 // bool Message::operator<(const Message& other) const {
@@ -99,32 +99,32 @@ void Message::set_deleted(const bool& d) noexcept {
 // }
 
 nlohmann::json Message::to_json() const {
-    nlohmann::json j;
-    j["id"] = id;
-    j["sender_id"] = sender_id;
-    j["receiver_id"] = receiver_id;
-    j["text"] = text;
-    j["deleted"] = deleted;
-    j["created_timestamp"] = created_timestamp.time_since_epoch().count();
-    if (deleted_timestamp) {
-        j["deleted_timestamp"] = deleted_timestamp->time_since_epoch().count();
-    }
-    if (last_edited_timestamp) {
-        j["last_edited_timestamp"] = last_edited_timestamp->time_since_epoch().count();
-    }
-    return j;
+	nlohmann::json j;
+	j["id"] = id;
+	j["sender_id"] = sender_id;
+	j["receiver_id"] = receiver_id;
+	j["text"] = text;
+	j["deleted"] = deleted;
+	j["created_timestamp"] = created_timestamp.time_since_epoch().count();
+	if (deleted_timestamp) {
+		j["deleted_timestamp"] = deleted_timestamp->time_since_epoch().count();
+	}
+	if (last_edited_timestamp) {
+		j["last_edited_timestamp"] = last_edited_timestamp->time_since_epoch().count();
+	}
+	return j;
 }
 
 Message Message::from_json(const nlohmann::json& j) {
-    Message msg(j["sender_id"], j["receiver_id"], j["text"]);
-    msg.id = j["id"];
-    msg.deleted = j["deleted"];
-    msg.created_timestamp = Timestamp(std::chrono::nanoseconds(j["created_timestamp"]));
-    if (j.contains("deleted_timestamp")) {
-        msg.deleted_timestamp = Timestamp(std::chrono::nanoseconds(j["deleted_timestamp"]));
-    }
-    if (j.contains("last_edited_timestamp")) {
-        msg.last_edited_timestamp = Timestamp(std::chrono::nanoseconds(j["last_edited_timestamp"]));
-    }
-    return msg;
+	Message msg(j["sender_id"], j["receiver_id"], j["text"]);
+	msg.id = j["id"];
+	msg.deleted = j["deleted"];
+	msg.created_timestamp = Timestamp(std::chrono::nanoseconds(j["created_timestamp"]));
+	if (j.contains("deleted_timestamp")) {
+		msg.deleted_timestamp = Timestamp(std::chrono::nanoseconds(j["deleted_timestamp"]));
+	}
+	if (j.contains("last_edited_timestamp")) {
+		msg.last_edited_timestamp = Timestamp(std::chrono::nanoseconds(j["last_edited_timestamp"]));
+	}
+	return msg;
 }
