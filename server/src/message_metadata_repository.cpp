@@ -27,15 +27,15 @@ int MessageMetadataRepository::create(const Message& message) {
 		txn.commit();
 
 		if (r.empty()) {
-			DEBUG_MSG("[MessageMetadataRepository::create] Failed to insert message");
+			ERROR_MSG("[MessageMetadataRepository::create] Failed to insert message");
 			return 0;
 		}
 
 		int inserted_id = r[0][0].as<int>();
-		DEBUG_MSG("[MessageMetadataRepository::create] Message inserted successfully with id: " + std::to_string(inserted_id));
+		INFO_MSG("[MessageMetadataRepository::create] Message inserted successfully with id: " + std::to_string(inserted_id));
 		return inserted_id;
 	} catch (const std::exception& e) {
-		DEBUG_MSG("[MessageMetadataRepository::create] Exception caught: " + std::string(e.what()));
+		ERROR_MSG("[MessageMetadataRepository::create] Exception caught: " + std::string(e.what()));
 		return 0;
 	}
 }
@@ -45,13 +45,13 @@ std::optional<Message> MessageMetadataRepository::read(int id) {
 		pqxx::work txn(db_manager.get_connection(connection_name));
 		pqxx::result r = txn.exec_params("SELECT * FROM messages WHERE id = $1", id);
 		if (r.empty()) {
-			DEBUG_MSG("[MessageMetadataRepository::read] No message found with id: " + std::to_string(id));
+			WARN_MSG("[MessageMetadataRepository::read] No message found with id: " + std::to_string(id));
 			return std::nullopt;
 		}
-		DEBUG_MSG("[MessageMetadataRepository::read] Message found with id: " + std::to_string(id));
+		INFO_MSG("[MessageMetadataRepository::read] Message found with id: " + std::to_string(id));
 		return construct_message(r[0]);
 	} catch (const std::exception& e) {
-		DEBUG_MSG("[MessageMetadataRepository::read] Exception caught: " + std::string(e.what()));
+		ERROR_MSG("[MessageMetadataRepository::read] Exception caught: " + std::string(e.what()));
 		return std::nullopt;
 	}
 }
@@ -76,14 +76,14 @@ bool MessageMetadataRepository::update(const Message& message) {
 		txn.commit();
 
 		if (r.affected_rows() == 0) {
-			DEBUG_MSG("[MessageMetadataRepository::update] No message updated");
+			WARN_MSG("[MessageMetadataRepository::update] No message updated");
 			return false;
 		}
 
-		DEBUG_MSG("[MessageMetadataRepository::update] Message updated successfully with id: " + std::to_string(message.get_id()));
+		INFO_MSG("[MessageMetadataRepository::update] Message updated successfully with id: " + std::to_string(message.get_id()));
 		return true;
 	} catch (const std::exception& e) {
-		DEBUG_MSG("[MessageMetadataRepository::update] Exception caught: " + std::string(e.what()));
+		ERROR_MSG("[MessageMetadataRepository::update] Exception caught: " + std::string(e.what()));
 		return false;
 	}
 }
@@ -107,14 +107,14 @@ bool MessageMetadataRepository::remove(int id) {
 		txn.commit();
 
 		if (r.affected_rows() == 0) {
-			DEBUG_MSG("[MessageMetadataRepository::remove] No message deleted");
+			WARN_MSG("[MessageMetadataRepository::remove] No message deleted");
 			return false;
 		}
 
-		DEBUG_MSG("[MessageMetadataRepository::remove] Message deleted successfully with id: " + std::to_string(id));
+		INFO_MSG("[MessageMetadataRepository::remove] Message deleted successfully with id: " + std::to_string(id));
 		return true;
 	} catch (const std::exception& e) {
-		DEBUG_MSG("[MessageMetadataRepository::remove] Exception caught: " + std::string(e.what()));
+		ERROR_MSG("[MessageMetadataRepository::remove] Exception caught: " + std::string(e.what()));
 		return false;
 	}
 }

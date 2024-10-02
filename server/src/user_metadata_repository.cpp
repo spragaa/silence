@@ -1,7 +1,7 @@
 #include "user_metadata_repository.hpp"
 
 UserMetadataRepository::UserMetadataRepository(DBManager& db_manager, const std::string& connection_name) : BaseRepository(db_manager), connection_name(connection_name) {
-	DEBUG_MSG("UserMetadataRepository created")
+	DEBUG_MSG("UserMetadataRepository created");
 }
 
 UserMetadataRepository::~UserMetadataRepository() = default;
@@ -32,17 +32,17 @@ int UserMetadataRepository::create(const User& user) {
 		          "for user: " + user.to_json().dump());
 
 		if (r.empty()) {
-			DEBUG_MSG("[UserMetadataRepository::create] Failed to insert user");
+			WARN_MSG("[UserMetadataRepository::create] Failed to insert user");
 			return false;
 		}
 
 		int inserted_id = r[0][0].as<int>();
-		DEBUG_MSG("[UserMetadataRepository::create] User inserted successfully with id: " + std::to_string(inserted_id));
+		INFO_MSG("[UserMetadataRepository::create] User inserted successfully with id: " + std::to_string(inserted_id));
 
 		txn.commit();
 		return inserted_id;
 	} catch (const std::exception& e) {
-		DEBUG_MSG("[UserMetadataRepository::create] Exception caught: " + std::string(e.what()));
+		ERROR_MSG("[UserMetadataRepository::create] Exception caught: " + std::string(e.what()));
 		return 0;
 	}
 }
@@ -54,24 +54,24 @@ std::optional<User> UserMetadataRepository::read(int id) {
 		DEBUG_MSG("executing SELECT * FROM USERS WHERE id = " + std::to_string(id));
 
 		if (r.empty()) {
-			DEBUG_MSG("[UserMetadataRepository::read] No user found with id: " + std::to_string(id));
-			DEBUG_MSG("returning std::nullopt");
+			WARN_MSG("[UserMetadataRepository::read] No user found with id: " + std::to_string(id));
+			WARN_MSG("returning std::nullopt");
 			return std::nullopt;
 		}
 
 		nlohmann::json json = pqxx_result_to_json(r);
-		DEBUG_MSG("[UserMetadataRepository::read] response: " + json.dump());
+		INFO_MSG("[UserMetadataRepository::read] response: " + json.dump());
 
 		try {
 			return construct_user(json);
 		} catch (const std::exception& e) {
-			DEBUG_MSG("[UserMetadataRepository::read] Error in construct_user: " + std::string(e.what()));
+			ERROR_MSG("[UserMetadataRepository::read] Error in construct_user: " + std::string(e.what()));
 			return std::nullopt;
 		}
 	} catch (const std::exception& e) {
-		DEBUG_MSG("[UserMetadataRepository::read] Exception caught: " + std::string(e.what()));
-		DEBUG_MSG("[UserMetadataRepository::read] No user found with id: " + std::to_string(id));
-		DEBUG_MSG("returning std::nullopt");
+		ERROR_MSG("[UserMetadataRepository::read] Exception caught: " + std::string(e.what()));
+		WARN_MSG("[UserMetadataRepository::read] No user found with id: " + std::to_string(id));
+		WARN_MSG("returning std::nullopt");
 		return std::nullopt;
 	}
 }
@@ -104,16 +104,16 @@ bool UserMetadataRepository::update(const User& user) {
 		          "for user: " + user.to_json().dump());
 
 		if (r.affected_rows() == 0) {
-			DEBUG_MSG("[UserMetadataRepository::update] No user updated");
+			WARN_MSG("[UserMetadataRepository::update] No user updated");
 			return false;
 		}
 
-		DEBUG_MSG("[UserMetadataRepository::update] User updated successfully with id: " + std::to_string(user.get_id()));
+		INFO_MSG("[UserMetadataRepository::update] User updated successfully with id: " + std::to_string(user.get_id()));
 
 		txn.commit();
 		return true;
 	} catch (const std::exception& e) {
-		DEBUG_MSG("[UserMetadataRepository::update] Exception caught: " + std::string(e.what()));
+		ERROR_MSG("[UserMetadataRepository::update] Exception caught: " + std::string(e.what()));
 		return false;
 	}
 }
@@ -128,14 +128,14 @@ bool UserMetadataRepository::remove(int id) {
 
 
 		if (r.affected_rows() == 0) {
-			DEBUG_MSG("[UserMetadataRepository::remove] No user deleted");
+			WARN_MSG("[UserMetadataRepository::remove] No user deleted");
 			return false;
 		}
 
 		txn.commit();
 		return true;
 	} catch (const std::exception& e) {
-		DEBUG_MSG("[UserMetadataRepository::remove] Exception caught: " + std::string(e.what()));
+		ERROR_MSG("[UserMetadataRepository::remove] Exception caught: " + std::string(e.what()));
 		return false;
 	}
 }
@@ -151,7 +151,7 @@ bool UserMetadataRepository::authorize(int user_id, const std::string& nickname,
 			);
 
 		if (r.empty()) {
-			DEBUG_MSG("[UserMetadataRepository::authorize] No user found with id: " + std::to_string(user_id) + " and nickname: " + nickname);
+			WARN_MSG("[UserMetadataRepository::authorize] No user found with id: " + std::to_string(user_id) + " and nickname: " + nickname);
 			return false;
 		}
 
@@ -160,16 +160,16 @@ bool UserMetadataRepository::authorize(int user_id, const std::string& nickname,
 
 		std::string stored_password = r[0][2].as<std::string>();
 		if (password == stored_password) {
-			DEBUG_MSG("[UserMetadataRepository::authorize] Password match for user id: " + std::to_string(user_id));
+			INFO_MSG("[UserMetadataRepository::authorize] Password match for user id: " + std::to_string(user_id));
 			return true;
 		}
 
-		DEBUG_MSG("[UserMetadataRepository::authorize] Password mismatch for user id: " + std::to_string(user_id));
-		DEBUG_MSG("returning false");
+		INFO_MSG("[UserMetadataRepository::authorize] Password mismatch for user id: " + std::to_string(user_id));
+		INFO_MSG("returning false");
 		return false;
 	} catch (const std::exception& e) {
-		DEBUG_MSG("[UserMetadataRepository::authorize] Exception caught: " + std::string(e.what()));
-		DEBUG_MSG("[UserMetadataRepository::authorize] Authorization failed for user id: " + std::to_string(user_id));
+		ERROR_MSG("[UserMetadataRepository::authorize] Exception caught: " + std::string(e.what()));
+		WARN_MSG("[UserMetadataRepository::authorize] Authorization failed for user id: " + std::to_string(user_id));
 		return false;
 	}
 }

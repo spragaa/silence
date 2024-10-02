@@ -2,7 +2,6 @@
 
 DEBUG_MODE=false
 CLEAN_MODE=false
-EXTRA_ARGS=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -15,8 +14,8 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         *)
-            EXTRA_ARGS="$EXTRA_ARGS $1"
-            shift
+            echo "Unknown option: $1"
+            exit 1
             ;;
     esac
 done
@@ -30,26 +29,21 @@ debug_echo() {
 
 if [ "$CLEAN_MODE" = true ]; then
     debug_echo "Cleaning build directory..."
-    rm -rf ../build/server
+    rm -rf ../build/*
 fi
 
-mkdir -p ../build || exit
+mkdir -p ../build
 cd ../build || exit
 
 if [ "$DEBUG_MODE" = true ]; then
-    debug_echo "Running CMake with DDEBUG=ON"
+    debug_echo "Running CMake with DEBUG=ON"
     cmake -DDEBUG=ON ..
 else
-    debug_echo "Running CMake with DDEBUG=OFF"
+    debug_echo "Running CMake with DEBUG=OFF"
     cmake -DDEBUG=OFF ..
 fi
 
 debug_echo "'cmake ..' finished"
 
-make -j$(nproc) server
-debug_echo "'make server' finished"
-
-SERVER_ARGS="$EXTRA_ARGS"
-
-debug_echo "Executing server with arguments: $SERVER_ARGS"
-eval "../build/server/server $SERVER_ARGS"
+make -j$(nproc)
+debug_echo "'make -j$(nproc)' finished"

@@ -13,6 +13,14 @@ if(ENABLE_COVERAGE)
 endif()
 
 option(BUILD_TESTS "Build the test suite" OFF)
+option(DEBUG "Build with debug logs" OFF)
+
+if(DEBUG)
+    add_compile_definitions(DEBUG_LEVEL=1)
+else()
+    add_compile_definitions(DEBUG_LEVEL=0)
+endif()
+
 add_definitions(-DSOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
 find_package(Boost 1.74 REQUIRED COMPONENTS system thread)
