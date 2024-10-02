@@ -12,7 +12,7 @@ class MessageMetadataRepositoryTestEnvironment : public ::testing::Environment {
 	}
 
 	void TearDown() override {
-		DEBUG_MSG("Cleaning MessageMetadataRepositoryTestEnvironment...");
+		INFO_MSG("Cleaning MessageMetadataRepositoryTestEnvironment...");
 		DEBUG_MSG("Executing " + std::string(SOURCE_DIR) + "/tests/test_server/scripts/drop_test_message_metadata.sh");
 		system((std::string(SOURCE_DIR) + "/tests/test_server/scripts/drop_test_message_metadata.sh").c_str());
 	}

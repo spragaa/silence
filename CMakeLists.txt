@@ -4,6 +4,14 @@ project(chat_application)
 set(CMAKE_CXX_STANDARD 20)
 
 option(BUILD_TESTS "Build the test suite" OFF)
+option(DEBUG "Build with debug logs" OFF)
+
+if(DEBUG)
+    add_compile_definitions(DEBUG_LEVEL=1)
+else()
+    add_compile_definitions(DEBUG_LEVEL=0)
+endif()
+
 add_definitions(-DSOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
 find_package(Boost 1.74 REQUIRED COMPONENTS system thread)
@@ -38,3 +46,4 @@ if(BUILD_TESTS)
     
     add_subdirectory(tests)
 endif()
+

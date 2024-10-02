@@ -11,6 +11,10 @@ bash build_server.sh --debug && bash run_server.sh
 ```
 
 bash setup_user_metadata.sh --user=spraga --user_password=spraga
+./build_and_run_server.sh --clean --debug
+./build_and_run_client.sh --debug --clean --nickname=spraga --password=spraga
+
+find . -name '*.*pp' | xargs wc -l
 
 ## unify and put into a script: 
 sudo chmod 755 /home/logi/myself/programming/cpp/chat_application/scripts
@@ -27,6 +31,13 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
     \dt - list db realations
     SELECT * FROM USERS;
     SELECT * FROM MESSAGES;
+
+## today
+1. organize scripts
+2. add proper logging levels 
+3. refactor existing code do use new logging levels
+4. clear pr with codecov
+5. correct client args
 
 ## what to do:
 ~~1. finish CRUD for user_metadata db~~ 

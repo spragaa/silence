@@ -145,7 +145,7 @@ void Client::run() {
 
 						try {
 							boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
-							DEBUG_MSG("Authorization request sent successfully");
+							INFO_MSG("Authorization request sent successfully");
 
 							nlohmann::json response = nlohmann::json::parse(receive_response());
 
@@ -176,7 +176,7 @@ void Client::run() {
 							std::cerr << "Exception during authorization: " << e.what() << std::endl;
 						}
 
-						DEBUG_MSG("Authorization process completed");
+						INFO_MSG("Authorization process completed");
 						break;
 					}
 					case 2: {
@@ -226,7 +226,7 @@ void Client::run() {
 							std::cout << "Error: " << response["message"] << std::endl;
 						}
 
-						DEBUG_MSG("Server response: " + response.dump());
+						INFO_MSG("Server response: " + response.dump());
 
 						break;
 					}

@@ -11,7 +11,7 @@ User::User(const std::string& nick) : User() {
 
 User::User(const std::string& nick, const std::string& pass) : id(user_id_counter++), nickname(
 		nick), password(pass), registered_timestamp(std::chrono::system_clock::now()) {
-	DEBUG_MSG("New user created,  nickname: " + nickname + ", " + "password: " + password);
+	INFO_MSG("New user created,  nickname: " + nickname + ", " + "password: " + password);
 }
 
 int User::get_id() const noexcept {
@@ -109,12 +109,12 @@ void User::save_user_data_to_json(const std::string& filename) const {
 			if (std::filesystem::create_directories(dir)) {
 				DEBUG_MSG("Created directory: " + dir.string());
 			} else {
-				DEBUG_MSG("Failed to create directory: " + dir.string());
+				ERROR_MSG("Failed to create directory: " + dir.string());
 				return;
 			}
 		}
 	} catch (const std::filesystem::filesystem_error& e) {
-		DEBUG_MSG("Filesystem error: " + std::string(e.what()));
+		ERROR_MSG("Filesystem error: " + std::string(e.what()));
 		return;
 	}
 
