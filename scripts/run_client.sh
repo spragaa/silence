@@ -1,19 +1,14 @@
 #!/bin/bash
 
 DEBUG_MODE=false
-CLEAN_MODE=false
 NICKNAME="noname"
 PASSWORD=""
 EXTRA_ARGS=""
 
 while [[ $# -gt 0 ]]; do
-    case "$1" in
+    case "\$1" in
         --debug)
             DEBUG_MODE=true
-            shift
-            ;;
-        --clean)
-            CLEAN_MODE=true
             shift
             ;;
         --nickname=*)
@@ -21,7 +16,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --nickname)
-            NICKNAME="$2"
+            NICKNAME="\$2"
             shift 2
             ;;
         --password=*)
@@ -29,11 +24,11 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --password)
-            PASSWORD="$2"
+            PASSWORD="\$2"
             shift 2
             ;;
         *)
-            EXTRA_ARGS="$EXTRA_ARGS $1"
+            EXTRA_ARGS="$EXTRA_ARGS \$1"
             shift
             ;;
     esac
@@ -42,30 +37,9 @@ done
 debug_echo() {
     if [ "$DEBUG_MODE" = true ]; then
         local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-        echo "[DEBUG] [$timestamp] $1"
+        echo "[DEBUG] [$timestamp] \$1"
     fi
 }
-
-if [ "$CLEAN_MODE" = true ]; then
-    debug_echo "Cleaning build directory..."
-    rm -rf ../build/client
-fi
-
-mkdir -p ../build || exit
-cd ../build || exit
-
-if [ "$DEBUG_MODE" = true ]; then
-    debug_echo "Running CMake with DDEBUG=ON"
-    cmake -DDEBUG=ON ..
-else
-    debug_echo "Running CMake with DDEBUG=OFF"
-    cmake -DDEBUG=OFF ..
-fi
-
-debug_echo "'cmake ..' finished"
-
-make -j$(nproc) client
-debug_echo "'make client' finished"
 
 CLIENT_ARGS="--nickname=\"$NICKNAME\""
 if [ -n "$PASSWORD" ]; then

@@ -29,7 +29,7 @@ Server::~Server() {
 }
 
 void Server::start() {
-	DEBUG_MSG("Server started")
+	INFO_MSG("Server started");
 	start_request_handling();
 
 	while (true) {
