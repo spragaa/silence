@@ -1,16 +1,8 @@
 #!/bin/bash
 
-DEBUG_MODE=false
-if [[ "$1" == "--debug" ]]; then
-    DEBUG_MODE=true
-    shift
-fi
-
 debug_echo() {
-    if [ "$DEBUG_MODE" = true ]; then
-        local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-        echo "[DEBUG] [$timestamp] $1"
-    fi
+    local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+    echo "[DEBUG] [$timestamp] $1"
 }
 
 if [[ "$1" == "--clean" ]]; then
@@ -22,7 +14,7 @@ mkdir -p ../build || exit
 
 cd ../build || exit
 
-cmake -DBUILD_TESTS=ON ..
+cmake -DBUILD_TESTS=ON -DDEBUG=ON ..
 debug_echo "'cmake ..' finished"
 
 make -j$(nproc)
