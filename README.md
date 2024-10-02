@@ -1,4 +1,4 @@
-# chat_application
+# chat_application (IN PROGRESS)
 
 ## usage
 ```bash
