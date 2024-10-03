@@ -12,12 +12,10 @@
 class Message {
 public:
 
-	// Message();
 	Message(
 		const int sender_id,
 		const int receiver_id,
 		const std::string& text
-
 		// const std::optional<Media> & media
 		);
 
@@ -38,8 +36,6 @@ public:
 	void set_deleted_timestamp(const Timestamp& timestamp) noexcept;
 	void set_deleted(const bool& d) noexcept;
 
-	// bool operator < (const Message& other) const;
-
 	nlohmann::json to_json() const;
 	static Message from_json(const nlohmann::json& j);
 
@@ -51,7 +47,6 @@ private:
 	int receiver_id;
 	std::string text;
 	bool deleted;
-
 	// std::optional<Media> media;
 
 	Timestamp created_timestamp;

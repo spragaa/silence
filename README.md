@@ -1,5 +1,9 @@
 # chat_application (IN PROGRESS)
 
+## today
+1. implement user and message unit tests 
+2. remove usage of id_counter in message and user class 
+
 ## usage
 ```bash
 bash setup_user_metadata.sh --user=spraga --user_password=spraga
@@ -24,26 +28,28 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
     SELECT * FROM USERS;
     SELECT * FROM MESSAGES;
 
-## known bugs
+## known bugs + bugs suggestions
 1. user exp is broken -> try to cover all possible cases
 2. prettier.sh is broken?
 3. does it even make sense to use --clean in cmake? 
 4. is it possib le to simplify setup_db scripts? 
-
+5. is test_message_database even creates? 
 
 ## next steps:
-1. implement request structure
-~~2. add password and authorization~~
-~~3. user registration and authorization (nearly there, save user nickname on client side)~~ 
-~~4. sending messages to the server (done)~~
-5. receiving messages by receiver user 
-~~6. add password and authorization~~
-7. add user_metadata and message_metadata hadling on server side 
-8. go through all comments in source code 
-9. tests
-10. auto docs
-11. messenger interface in terminal
+~~1. add password and authorization~~
+~~2. user registration and authorization (nearly there, save user nickname on client side)~~ 
+~~3. sending messages to the server (done)~~
+4. receiving messages by receiver user 
+~~5. add password and authorization~~
+6. add user_metadata and message_metadata hadling on server side 
+7. tests
+8. auto docs
+9. messenger interface in terminal
 
+## refactoring stuff
+1. unify the way to compare Timestamps, parse them from/to string, int, json and pqxx::response
+2. go through all comments in source code 
+3. implement request structure
 
 ## to do:
 1. disable multiple users in one app
