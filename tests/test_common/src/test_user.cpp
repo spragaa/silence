@@ -65,3 +65,24 @@ TEST_F(UserTests, to_json_test) {
     // EXPECT_EQ(u_registered_timestamp, u.parse_timestamp(json["registered_timestamp"]));
     // EXPECT_EQ(u_last_online_timestamp, u.parse_timestamp(json["online_timestamp"]));
 }
+
+// TEST_F(UserTests, from_json_test) {
+// to do  
+// }
+
+TEST_F(UserTests, check_password_test) {
+    std::string primeagen = "primeagen";
+    std::string primeagen_pass = "primeagen_pass";
+    
+    User u(primeagen, primeagen_pass);
+    
+    bool is_pass_correct = u.check_password(primeagen_pass);
+    EXPECT_TRUE(is_pass_correct);
+    
+    is_pass_correct = u.check_password("dummy password");
+    EXPECT_FALSE(is_pass_correct);
+}
+
+// TEST_F(UserTests, save_user_data_to_json_test) {
+    
+// }
