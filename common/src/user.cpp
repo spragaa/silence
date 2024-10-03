@@ -10,7 +10,7 @@ User::User(const std::string& nick) : User() {
 }
 
 User::User(const std::string& nick, const std::string& pass) : id(user_id_counter++), nickname(
-		nick), password(pass), registered_timestamp(std::chrono::system_clock::now()) {
+		nick), password(pass), registered_timestamp(std::chrono::system_clock::now()), online(true) {
 	INFO_MSG("New user created,  nickname: " + nickname + ", " + "password: " + password);
 }
 

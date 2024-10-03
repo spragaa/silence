@@ -118,7 +118,6 @@ bool UserMetadataRepository::update(const User& user) {
 	}
 }
 
-// didn't test
 bool UserMetadataRepository::remove(int id) {
 	try {
 		pqxx::work txn(db_manager.get_connection(connection_name));

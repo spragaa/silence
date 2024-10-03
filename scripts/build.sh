@@ -37,10 +37,10 @@ cd ../build || exit
 
 if [ "$DEBUG_MODE" = true ]; then
     debug_echo "Running CMake with DEBUG=ON"
-    cmake -DDEBUG=ON ..
+    cmake -DDEBUG=ON -DBUILD_TESTS=ON ..
 else
     debug_echo "Running CMake with DEBUG=OFF"
-    cmake -DDEBUG=OFF ..
+    cmake -DDEBUG=OFF -DBUILD_TESTS=ON ..
 fi
 
 debug_echo "'cmake ..' finished"

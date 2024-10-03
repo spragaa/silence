@@ -1,10 +1,10 @@
 #pragma once
 
+#include "common.hpp"
+
 #include <string>
 #include <iostream>
 #include <boost/asio.hpp>
-
-using Timestamp = std::chrono::time_point<std::chrono::system_clock>;
 
 std::string get_current_timestamp();
 std::string get_socket_info(boost::asio::ip::tcp::socket& socket);

@@ -94,10 +94,6 @@ void Message::set_deleted(const bool& d) noexcept {
 	deleted = d;
 }
 
-// bool Message::operator<(const Message& other) const {
-//     return id < other.id;
-// }
-
 nlohmann::json Message::to_json() const {
 	nlohmann::json j;
 	j["id"] = id;
