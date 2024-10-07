@@ -1,6 +1,7 @@
 add_executable(test_common
     main.cpp
     src/test_user.cpp
+    src/test_message.cpp
 )
 
 target_link_libraries(test_common
