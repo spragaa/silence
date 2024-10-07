@@ -35,16 +35,17 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
 4. is it possib le to simplify setup_db scripts? 
 5. is test_message_database even creates? 
 
-## next steps:
+## goals:
 ~~1. add password and authorization~~
 ~~2. user registration and authorization (nearly there, save user nickname on client side)~~ 
 ~~3. sending messages to the server (done)~~
 4. receiving messages by receiver user 
 ~~5. add password and authorization~~
-6. add user_metadata and message_metadata hadling on server side 
+~~6. add user_metadata and message_metadata hadling on server side~~
 7. tests
 8. auto docs
 9. messenger interface in terminal
+10. asymetric cryptosystem realization
 
 ## refactoring stuff
 1. unify the way to compare Timestamps, parse them from/to string, int, json and pqxx::response
@@ -75,4 +76,4 @@ it is annoying to type them every time
 
 ## ideas?
 1. another server with rest api with statistics
-2. lb?
+2. addd lb support?
