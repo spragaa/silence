@@ -84,8 +84,8 @@ void Server::handle_request(boost::shared_ptr<tcp::socket> socket) {
 				} else if (request["type"] == "authorize") {
 					handle_authorize(socket, request);
 				} else if(request["type"] == "send_message") {
-					std::cout << "handle_authorize(socket, request";
 					// handle_send_message(socket, request);
+					handle_authorize(socket, request);
 				} else {
 					nlohmann::json response = {
 						{"status", "error"},
