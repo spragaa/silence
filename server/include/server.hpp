@@ -37,7 +37,7 @@ public:
 	       unsigned int thread_pool_size,
 	       const std::string& user_db_connection_string, // add metadata to name
 	       const std::string& message_db_connection_string, // add metadata to name
-		   const std::string& message_text_db_connection_string
+	       const std::string& message_text_db_connection_string
 	       );
 	~Server();
 
@@ -45,7 +45,7 @@ public:
 
 private:
 	void start_request_handling();
-	// should I move these into RequestHandlerClas? 
+	// should I move these into RequestHandlerClas?
 	void handle_accept(boost::shared_ptr<tcp::socket> socket, const boost::system::error_code& error);
 	void handle_request(boost::shared_ptr<tcp::socket> socket);
 	void handle_register(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
@@ -61,7 +61,7 @@ private:
 	// user_metadata, message_metadata - PostgresSQL
 	// message_text - Redis
 	// media_files - ???????
-	// 
+	//
 	// rename DBManager to postgres db manager
 	DBManager db_manager;
 	// add metadata to name
