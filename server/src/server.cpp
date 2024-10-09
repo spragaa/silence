@@ -84,8 +84,8 @@ void Server::handle_request(boost::shared_ptr<tcp::socket> socket) {
 				} else if (request["type"] == "authorize") {
 					handle_authorize(socket, request);
 				} else if(request["type"] == "send_message") {
-					// handle_send_message(socket, request);
-					handle_authorize(socket, request);
+				    DEBUG_MSG(request.dump());
+				// handle_send_message(socket, request);
 				} else {
 					nlohmann::json response = {
 						{"status", "error"},
@@ -161,35 +161,38 @@ void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohm
 	boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
 }
 
-// void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
-//     int sender_id = request["sender_id"];
-//     std::string receiver_nickname = request["receiver_nickname"];
-//     std::string message_text = request["message_text"];
+void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
+    int sender_id = request["sender_id"];
+    std::string receiver_nickname = request["receiver_nickname"];
+    std::string message_text = request["message_text"];
 
-//     // auto receiver = user_repository->findByNickname(receiver_nickname);
-//     User user;
-//     if (!receiver) {
-//         nlohmann::json response = {
-//             {"status", "error"},
-//             {"response", "Receiver not found"}
-//         };
-//         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
-//         return;
-//     }
+    int receiver_id = user_repository->get_id(receiver_nickname);
+    if (receiver_id != 0) {
+        nlohmann::json response = {
+            {"status", "error"},
+            {"response", "Receiver not found"}
+        };
+        boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+        return;
+    }
 
-//     Message new_message(sender_id, receiver->get_id(), message_text);
-//     if (message_repository->create(new_message)) {
-//         nlohmann::json response = {
-//             {"status", "success"},
-//             {"response", "Message sent successfully"},
-//             {"message_id", new_message.get_id()}
-//         };
-//         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
-//     } else {
-//         nlohmann::json response = {
-//             {"status", "error"},
-//             {"response", "Failed to send message"}
-//         };
-//         boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
-//     }
-// }
+    Message new_message(MessageMetadata(sender_id, receiver_id), MessageText(message_text));
+    nlohmann::json response = new_message.to_json();
+    DEBUG_MSG(response.dump());
+    boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+    
+    // if (message_repository->create(new_message)) {
+    //     nlohmann::json response = {
+    //         {"status", "success"},
+    //         {"response", "Message sent successfully"},
+    //         {"message_id", new_message.get_id()}
+    //     };
+    //     boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+    // } else {
+    //     nlohmann::json response = {
+    //         {"status", "error"},
+    //         {"response", "Failed to send message"}
+    //     };
+    //     boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+    // }
+}

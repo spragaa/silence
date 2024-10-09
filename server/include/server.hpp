@@ -43,6 +43,7 @@ public:
 
 private:
 	void start_request_handling();
+	// should I move these into RequestHandlerClas? 
 	void handle_accept(boost::shared_ptr<tcp::socket> socket, const boost::system::error_code& error);
 	void handle_request(boost::shared_ptr<tcp::socket> socket);
 	void handle_register(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
