@@ -13,6 +13,6 @@ public:
 	Message from_json(const nlohmann::json& j);
 
 private:
-    MessageMetadata msg_metadata;
-    MessageText msg_text;
+	MessageMetadata msg_metadata;
+	MessageText msg_text;
 };
