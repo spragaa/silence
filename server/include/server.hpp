@@ -3,9 +3,10 @@
 #include "debug.hpp"
 #include "user.hpp"
 #include "message.hpp"
+#include "db_manager.hpp"
 #include "user_metadata_repository.hpp"
 #include "message_metadata_repository.hpp"
-#include "db_manager.hpp"
+#include "message_text_repository.hpp"
 
 #include <iostream>
 #include <ostream>
@@ -34,8 +35,9 @@ class Server : public boost::enable_shared_from_this<Server> {
 public:
 	Server(unsigned short port,
 	       unsigned int thread_pool_size,
-	       const std::string& user_db_connection_string,
-	       const std::string& message_db_connection_string
+	       const std::string& user_db_connection_string, // add metadata to name
+	       const std::string& message_db_connection_string, // add metadata to name
+		   const std::string& message_text_db_connection_string
 	       );
 	~Server();
 
@@ -55,7 +57,16 @@ private:
 	boost::shared_ptr<boost::asio::io_service::work> work;
 	std::vector<boost::shared_ptr<boost::thread> > thread_pool;
 
+	// ??? implement some kind of db manager, that will manage all 4 dbs
+	// user_metadata, message_metadata - PostgresSQL
+	// message_text - Redis
+	// media_files - ???????
+	// 
+	// rename DBManager to postgres db manager
 	DBManager db_manager;
+	// add metadata to name
 	std::unique_ptr<UserMetadataRepository> user_repository;
+	// add metadata to name
 	std::unique_ptr<MessageMetadataRepository> message_repository;
+	std::unique_ptr<MessageTextRepository> message_text_repository;
 };

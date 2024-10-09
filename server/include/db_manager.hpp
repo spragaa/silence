@@ -7,6 +7,7 @@
 #include <memory>
 #include <unordered_map>
 
+// rename to postgre db manager
 class DBManager {
 public:
 	DBManager() = default;

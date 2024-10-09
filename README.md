@@ -28,6 +28,16 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
     SELECT * FROM USERS;
     SELECT * FROM MESSAGES;
 
+## some redis stuff
+`redis-cli`
+`redis-cli -a <password>` if set
+
+or `redis-cli`
+   `AUTH <username> <password>`
+
+now it is `AUTH default spraga`
+
+    
 ## known bugs + bugs suggestions
 1. user exp is broken -> try to cover all possible cases
 2. prettier.sh is broken?
