@@ -192,8 +192,8 @@ void Client::run() {
 					// to open chat, it makes request to the server to get last M messages
 					// to do so, server find last M messages where receiver or/and sender is A and B in the messages table
 					//
-					// ? on the client side I would like to have chats list ? --> chat class, but I don't think that we need it 
-					// on the server side --> check how fast does the find last M messages query works in LARGE dbs 
+					// ? on the client side I would like to have chats list ? --> chat class, but I don't think that we need it
+					// on the server side --> check how fast does the find last M messages query works in LARGE dbs
 					case 3: {
 						// move somewhere
 						if (user.get_id() == 0) {
