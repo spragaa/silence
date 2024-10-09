@@ -35,6 +35,13 @@ sudo chmod 644 /home/logi/myself/programming/cpp/chat_application/database/user_
 4. is it possib le to simplify setup_db scripts? 
 5. is test_message_database even creates? 
 
+## short term goals:
+0. split Message class into MessageMetadata and MessageText
+1. find the best db for message storage
+2. implement connetion to message db class
+3. implement CRUD operrations for message db class
+4. implement unit tests for CRUD operrations for message db class 
+
 ## goals:
 ~~1. add password and authorization~~
 ~~2. user registration and authorization (nearly there, save user nickname on client side)~~ 

@@ -76,7 +76,6 @@ std::optional<User> UserMetadataRepository::read(int id) {
 	}
 }
 
-// didn't test
 bool UserMetadataRepository::update(const User& user) {
 	try {
 		pqxx::work txn(db_manager.get_connection(connection_name));
@@ -170,6 +169,35 @@ bool UserMetadataRepository::authorize(int user_id, const std::string& nickname,
 		ERROR_MSG("[UserMetadataRepository::authorize] Exception caught: " + std::string(e.what()));
 		WARN_MSG("[UserMetadataRepository::authorize] Authorization failed for user id: " + std::to_string(user_id));
 		return false;
+	}
+}
+
+// test neeeded
+int UserMetadataRepository::get_id(const std::string& nickname) {
+	try {
+		pqxx::work txn(db_manager.get_connection(connection_name));
+		DEBUG_MSG("executing SELECT * FROM users WHERE nickname = " + nickname);
+
+		pqxx::result r = txn.exec_params(
+			"SELECT * FROM users WHERE nickname = $1",
+			nickname
+			);
+
+		if (r.empty()) {
+			WARN_MSG("[UserMetadataRepository::get_id] No user found with nickname: " + nickname);
+			return 0;
+		}
+
+		nlohmann::json json = pqxx_result_to_json(r);
+		DEBUG_MSG("[UserMetadataRepository::get_id] response: " + json.dump());
+
+		int user_id = r[0][0].as<int>();
+		INFO_MSG("[UserMetadataRepository::get_id] User with nickname: " + nickname + " has been found, id: " + std::to_string(user_id));
+		return user_id;
+	} catch (const std::exception& e) {
+		ERROR_MSG("[UserMetadataRepository::get_id] Exception caught: " + std::string(e.what()));
+		WARN_MSG("[UserMetadataRepository::get_id] Failed to found user with nickname: " + nickname);
+		return 0;
 	}
 }
 
