@@ -187,12 +187,13 @@ void Client::run() {
 					}
 					// A sends a message to B
 					// on server we store a message from A to B with all needed metadata
-					// client has its own copy of the message stored,
+					// client has its own copy of the message stored for some time,
 					// lets say that client can store only last N messages
-					// to open chat, it make request to the server to get last M messages
+					// to open chat, it makes request to the server to get last M messages
 					// to do so, server find last M messages where receiver or/and sender is A and B in the messages table
 					//
-					// ? on the client side I would like to have chats list ?
+					// ? on the client side I would like to have chats list ? --> chat class, but I don't think that we need it 
+					// on the server side --> check how fast does the find last M messages query works in LARGE dbs 
 					case 3: {
 						// move somewhere
 						if (user.get_id() == 0) {
@@ -217,14 +218,14 @@ void Client::run() {
 						boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
 						nlohmann::json response = nlohmann::json::parse(receive_response());
 
-						if(response["status"] == "success") {
-							std::cout << "Message sent successfully." << std::endl;
-							Message received_message = Message::from_json(response["message"]);
-							messages.push_back(received_message);
-							DEBUG_MSG("Message added: " + received_message.to_json().dump());
-						} else if (response["status"] == "error") {
-							std::cout << "Error: " << response["message"] << std::endl;
-						}
+						// if(response["status"] == "success") {
+						// 	std::cout << "Message sent successfully." << std::endl;
+						// 	Message received_message = Message::from_json(response["message"]);
+						// 	messages.push_back(received_message);
+						// 	DEBUG_MSG("Message added: " + received_message.to_json().dump());
+						// } else if (response["status"] == "error") {
+						// 	std::cout << "Error: " << response["message"] << std::endl;
+						// }
 
 						INFO_MSG("Server response: " + response.dump());
 
