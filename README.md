@@ -46,11 +46,13 @@ now it is `AUTH default spraga`
 5. is test_message_database even creates? 
 
 ## short term goals:
-0. split Message class into MessageMetadata and MessageText
-1. find the best db for message storage
-2. implement connetion to message db class
-3. implement CRUD operrations for message db class
-4. implement unit tests for CRUD operrations for message db class 
+~~0. split Message class into MessageMetadata and MessageText~~
+~~1. find the best db for message storage~~ not sure if its THE best, but I've found one)
+~~2. implement connetion to message db class~~
+3. make the decision on message id hadling -> adjust the implementation and then continue with the next steps
+4. implement CRUD operrations for message db class
+5. implement unit tests for CRUD operrations for message text db class
+6. fix message metadata crud tests if broken
 
 ## goals:
 ~~1. add password and authorization~~

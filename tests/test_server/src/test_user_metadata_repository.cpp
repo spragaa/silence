@@ -1,7 +1,6 @@
 #include "user_metadata_repository.hpp"
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 class UserMetadataRepositoryTests : public ::testing::Test {
 protected:

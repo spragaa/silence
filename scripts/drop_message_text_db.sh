@@ -13,6 +13,6 @@ systemctl stop redis-server
 rm -f $REDIS_CONFIG_FILE
 rm -rf $REDIS_DATA_DIR
 
-echo "Redis production server teardown complete."
-echo "Note: Redis has been stopped and configuration removed."
+echo "Redis production server teardown complete"
+echo "Note: Redis has been stopped and configuration removed"
 echo "If you want to completely remove Redis, run this command: 'sudo apt-get remove --purge -y redis-server'"

@@ -26,7 +26,6 @@ appendfsync everysec
 # spraga is super strong pass, 46.1 billion light-years to crack it, trust me
 requirepass spraga
 
-# in similar test script this should be different?
 bind 127.0.0.1
 EOF
 
@@ -35,5 +34,5 @@ chmod 640 $REDIS_CONFIG_FILE
 
 systemctl restart redis-server
 
-echo "Redis production server setup complete."
+echo "Redis production server setup complete"
 echo "Please ensure to change the default password in $REDIS_CONFIG_FILE"

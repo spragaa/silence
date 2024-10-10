@@ -17,8 +17,8 @@ int MessageMetadataRepository::create(const MessageMetadata& message) {
 		std::string formatted_time = ss.str();
 
 		pqxx::result r = txn.exec_params(
-			"INSERT INTO messages (sender_id, receiver_id, text, created_timestamp) "
-			"VALUES ($1, $2, $3, $4) RETURNING id",
+			"INSERT INTO messages (sender_id, receiver_id, created_timestamp) "
+			"VALUES ($1, $2, $3) RETURNING id",
 			message.get_sender_id(),
 			message.get_receiver_id(),
 			formatted_time

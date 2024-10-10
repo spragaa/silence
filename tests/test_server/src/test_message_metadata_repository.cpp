@@ -1,7 +1,6 @@
 #include "message_metadata_repository.hpp"
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 class MessageMetadataRepositoryTests : public ::testing::Test {
 protected:

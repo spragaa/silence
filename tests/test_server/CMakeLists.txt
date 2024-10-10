@@ -2,6 +2,7 @@ add_executable(test_server
     main.cpp
     src/test_user_metadata_repository.cpp
     src/test_message_metadata_repository.cpp
+    src/test_message_text_repository.cpp
 )
 
 target_link_libraries(test_server
@@ -11,6 +12,8 @@ target_link_libraries(test_server
     gtest_main
     nlohmann_json::nlohmann_json
     pqxx
+    redis++
+    hiredis
 )
 
 target_include_directories(test_server
@@ -19,6 +22,8 @@ target_include_directories(test_server
     PUBLIC ${CMAKE_SOURCE_DIR}/server/include
     PRIVATE ${nlohmann_json_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/thirdparty/libpqxx
+    ${redis_plus_plus_SOURCE_DIR}/src/sw/redis++/
+    ${hiredis_SOURCE_DIR}
 )
 
 include(GoogleTest)
