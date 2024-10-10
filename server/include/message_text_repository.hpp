@@ -2,8 +2,7 @@
 
 #include "debug.hpp"
 #include "message_text.hpp"
-// #include "/home/logi/myself/programming/cpp/chat_application/build/_deps/redis_plus_plus-src/src/sw/redis++/redis++.h""
-#include <sw/redis++/redis++.h>
+#include <redis++.h>
 
 #include <memory>
 #include <string>
@@ -18,7 +17,7 @@ public:
 	bool remove(int id);
 
 private:
-	sw::redis::ConnectionOptions parseConnectionString(const std::string& connection_string);
+	sw::redis::ConnectionOptions parse_config_string(const std::string& connection_string);
 	int get_next_id();
 
 private:
