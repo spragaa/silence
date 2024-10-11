@@ -179,11 +179,11 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 		return;
 	}
 
-	Message new_message(MessageMetadata(sender_id, receiver_id), MessageText(message_text));
+	Message new_message(sender_id, receiver_id, message_text);
 	nlohmann::json response = new_message.to_json();
 	DEBUG_MSG(response.dump());
 	boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
-
+	
 	// if (message_repository->create(new_message)) {
 	//     nlohmann::json response = {
 	//         {"status", "success"},

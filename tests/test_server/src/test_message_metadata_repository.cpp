@@ -14,10 +14,10 @@ protected:
 };
 
 TEST_F(MessageMetadataRepositoryTests, create_message) {
-	MessageMetadata message(1, 2);
+	MessageMetadata message(100, 1, 2);
 	int message_id = repo->create(message);
 
-	ASSERT_GT(message_id, 0);
+	ASSERT_EQ(message_id, 100);
 
 	std::optional<MessageMetadata> retrieved_message = repo->read(message_id);
 	ASSERT_TRUE(retrieved_message.has_value());
@@ -51,10 +51,10 @@ TEST_F(MessageMetadataRepositoryTests, read_non_existing_message) {
 // }
 
 TEST_F(MessageMetadataRepositoryTests, remove_message) {
-	MessageMetadata message(1, 2);
+	MessageMetadata message(100, 1, 2);
 	int message_id = repo->create(message);
 
-	ASSERT_GT(message_id, 0);
+	ASSERT_EQ(message_id, 100);
 
 	bool is_removed = repo->remove(message_id);
 	ASSERT_TRUE(is_removed);

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# create_message_metadata_db.sh
-
 DEBUG_MODE=false
 if [[ "\$1" == "--debug" ]]; then
     DEBUG_MODE=true
@@ -18,7 +16,6 @@ SUPERUSER="postgres"
 DB_HOST="localhost"
 DB_PORT="5432"
 
-# Use environment variables
 NEW_USER="${DB_NEW_USER}"
 NEW_USER_PASSWORD="${DB_NEW_USER_PASSWORD}"
 

@@ -38,7 +38,7 @@ public:
 	static Timestamp parse_timestamp(const std::string& timestamp_str);
 
 private:
-	// rm this logic
+	// should rm this logic, or should I?
 	static int user_id_counter;
 	int id;
 	std::string nickname;

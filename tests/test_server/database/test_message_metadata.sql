@@ -19,10 +19,10 @@ GRANT ALL PRIVILEGES ON TABLE messages TO :new_user;
 GRANT USAGE, SELECT ON SEQUENCE messages_id_seq TO :new_user;
 
 INSERT INTO messages (sender_id, receiver_id) VALUES
-(1, 2,),
-(2, 1,),
-(3, 4,),
-(4, 3,);
+(1, 2),
+(2, 1),
+(3, 4),
+(4, 3);
 
 DROP ROLE IF EXISTS logi;
 

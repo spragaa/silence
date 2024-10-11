@@ -9,13 +9,11 @@
 
 class MessageText {
 public:
+    MessageText() = default;
+	MessageText(const int& id, const std::string& text);
 
-	MessageText(
-		const std::string& text
-		);
-
-	int                     get_id() const noexcept;
-	std::string             get_text() const noexcept;
+	int get_id() const noexcept;
+	std::string get_text() const noexcept;
 
 	void set_id(const int& msg_id) noexcept;
 	void set_text(const std::string& t) noexcept;

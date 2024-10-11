@@ -1,9 +1,10 @@
 #include "message_metadata.hpp"
 
 MessageMetadata::MessageMetadata(
-	const int sender_id,
-	const int receiver_id
-	) : id(0),
+	const int& id, 
+    const int& sender_id,
+	const int& receiver_id
+	) : id(id),
 	sender_id(sender_id),
 	receiver_id(receiver_id),
 	deleted(false),
@@ -88,7 +89,7 @@ nlohmann::json MessageMetadata::to_json() const {
 }
 
 MessageMetadata MessageMetadata::from_json(const nlohmann::json& j) {
-	MessageMetadata msg(j["sender_id"], j["receiver_id"]);
+	MessageMetadata msg(j["id"], j["sender_id"], j["receiver_id"]);
 	msg.id = j["id"];
 	msg.deleted = j["deleted"];
 	msg.created_timestamp = Timestamp(std::chrono::nanoseconds(j["created_timestamp"]));

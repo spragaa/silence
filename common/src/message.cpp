@@ -1,7 +1,9 @@
 #include "message.hpp"
 
-Message::Message(const MessageMetadata& msg_metadata, const MessageText& msg_text) :
-	msg_metadata(msg_metadata), msg_text(msg_text)
+int Message::message_id_counter = 1;
+
+Message::Message(const int& sender_id, const int& receiver_id, const std::string& text) :    
+	msg_metadata(message_id_counter, sender_id, receiver_id), msg_text(message_id_counter++, text)
 {
 }
 
@@ -11,4 +13,8 @@ nlohmann::json Message::to_json() const {
 	j.update(msg_text.to_json());
 
 	return j;
+}
+
+int Message::get_id() const {
+    return msg_metadata.get_id();
 }
