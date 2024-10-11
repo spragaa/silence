@@ -7,14 +7,15 @@
 #include <optional>
 #include <nlohmann/json.hpp>
 
-// class Media;
-
 class MessageMetadata {
 public:
 
+    MessageMetadata() = default;
+
 	MessageMetadata(
-		const int sender_id,
-		const int receiver_id
+	    const int& id,
+		const int& sender_id,
+		const int& receiver_id
 		);
 
 	bool                    is_deleted() const noexcept;

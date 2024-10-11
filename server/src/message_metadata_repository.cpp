@@ -17,8 +17,9 @@ int MessageMetadataRepository::create(const MessageMetadata& message) {
 		std::string formatted_time = ss.str();
 
 		pqxx::result r = txn.exec_params(
-			"INSERT INTO messages (sender_id, receiver_id, created_timestamp) "
-			"VALUES ($1, $2, $3) RETURNING id",
+			"INSERT INTO messages (id, sender_id, receiver_id, created_timestamp) "
+			"VALUES ($1, $2, $3, $4) RETURNING id",
+			message.get_id(),
 			message.get_sender_id(),
 			message.get_receiver_id(),
 			formatted_time
@@ -66,8 +67,8 @@ bool MessageMetadataRepository::update(const MessageMetadata& message) {
 		std::string formatted_time = ss.str();
 
 		pqxx::result r = txn.exec_params(
-			"UPDATE messages SET text = $1, last_edited_timestamp = $2 "
-			"WHERE id = $3",
+			"UPDATE messages SET last_edited_timestamp = $1 "
+			"WHERE id = $2",
 			formatted_time,
 			message.get_id()
 			);
@@ -84,6 +85,7 @@ bool MessageMetadataRepository::update(const MessageMetadata& message) {
 		ERROR_MSG("[MessageMetadataRepository::update] Exception caught: " + std::string(e.what()));
 		return false;
 	}
+	DEBUG_MSG("[MessageMetadataRepository::update] DUMMY");
 }
 
 bool MessageMetadataRepository::remove(int id) {
@@ -126,10 +128,10 @@ std::chrono::system_clock::time_point parse_timestamp(const std::string& timesta
 
 MessageMetadata MessageMetadataRepository::construct_message(const pqxx::row& row) {
 	MessageMetadata msg(
-		row["sender_id"].as<int>(),
+	    row["id"].as<int>(),
+ 	    row["sender_id"].as<int>(),
 		row["receiver_id"].as<int>()
 		);
-	msg.set_id(row["id"].as<int>());
 	msg.set_deleted(row["deleted"].as<bool>());
 	msg.set_created_timestamp(parse_timestamp(row["created_timestamp"].as<std::string>()));
 	if (!row["deleted_timestamp"].is_null())

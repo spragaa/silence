@@ -1,9 +1,5 @@
 # chat_application (IN PROGRESS)
 
-## today
-1. implement user and message unit tests 
-2. remove usage of id_counter in message and user class 
-
 ## usage
 ```bash
 bash setup_user_metadata.sh --user=spraga --user_password=spraga
@@ -91,7 +87,7 @@ now it is `AUTH default spraga`
 13. there must some kind of script/config that will create env variables to work with psql flawlessly (postgres user, user_pass, postgres_pass and so on)
 it is annoying to type them every time 
 14. .github/worflows/autotests.yaml, gl hf :)))
-
+15. rewrite logs in scripts and .sql files
 
 ## ideas?
 1. another server with rest api with statistics

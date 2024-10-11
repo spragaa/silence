@@ -1,9 +1,7 @@
 #include "message_text.hpp"
 
-MessageText::MessageText(
-	const std::string& text
-	) : id(0),
-	text(text)
+MessageText::MessageText(const int& id, const std::string& text) :
+	id(id), text(text)
 {
 }
 
@@ -31,7 +29,7 @@ nlohmann::json MessageText::to_json() const {
 }
 
 MessageText MessageText::from_json(const nlohmann::json& j) {
-	MessageText msg(j["text"]);
+	MessageText msg(j["id"], j["text"]);
 	msg.id = j["id"];
 	msg.text = j["text"];
 	return msg;
