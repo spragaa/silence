@@ -10,4 +10,4 @@ rm -f $TEST_REDIS_CONFIG_FILE
 rm -rf $TEST_REDIS_DATA_DIR
 
 echo "Redis test server teardown complete"
-echo "Test Redis server has been stopped and test data removed
+echo "Test Redis server has been stopped and test data removed"
