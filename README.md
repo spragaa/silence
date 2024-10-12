@@ -96,6 +96,7 @@ it is annoying to type them every time
 18. notifications
 19. media
 20. store some amount of chat data on client side
+21. add handshake, message framing, and control frames (ping/pong)
 
 ## ideas?
 1. another server with rest api with statistics

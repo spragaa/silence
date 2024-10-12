@@ -7,6 +7,7 @@
 class Message {
 public:
 
+    Message() = default;
 	Message(const int& sender_id, const int& receiver_id, const std::string& text);
 
 	nlohmann::json to_json() const;
