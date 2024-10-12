@@ -8,7 +8,6 @@ REDIS_LOG_FILE="/var/log/redis/redis-server.log"
 mkdir -p $REDIS_DATA_DIR
 chown redis:redis $REDIS_DATA_DIR
 
-# create Redis config file
 cat > $REDIS_CONFIG_FILE << EOF
 port $REDIS_PORT
 dir $REDIS_DATA_DIR

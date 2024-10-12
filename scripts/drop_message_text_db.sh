@@ -1,17 +1,17 @@
 #!/bin/bash
 
+REDIS_PORT=6379
 REDIS_CONFIG_FILE="/etc/redis/redis.conf"
 REDIS_DATA_DIR="/var/lib/redis"
+REDIS_PASSWORD="spraga"
 
-systemctl stop redis-server
-
-# backup data for future, mb create second db with backup, do we even need this teardown script?
-# BACKUP_DIR="/path/to/backup/directory"
-# mkdir -p $BACKUP_DIR
-# cp -R $REDIS_DATA_DIR $BACKUP_DIR/redis_data_backup_$(date +%Y%m%d_%H%M%S)
+redis-cli -p $REDIS_PORT -a $REDIS_PASSWORD FLUSHALL
+redis-cli -p $REDIS_PORT -a $REDIS_PASSWORD shutdown
 
 rm -f $REDIS_CONFIG_FILE
 rm -rf $REDIS_DATA_DIR
+
+rm -f /var/log/redis/redis-server.log
 
 echo "Redis production server teardown complete"
 echo "Note: Redis has been stopped and configuration removed"
