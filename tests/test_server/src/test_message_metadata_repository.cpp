@@ -51,10 +51,10 @@ TEST_F(MessageMetadataRepositoryTests, read_non_existing_message) {
 // }
 
 TEST_F(MessageMetadataRepositoryTests, remove_message) {
-	MessageMetadata message(100, 1, 2);
+	MessageMetadata message(666, 1, 2);
 	int message_id = repo->create(message);
 
-	ASSERT_EQ(message_id, 100);
+	ASSERT_EQ(message_id, 666);
 
 	bool is_removed = repo->remove(message_id);
 	ASSERT_TRUE(is_removed);

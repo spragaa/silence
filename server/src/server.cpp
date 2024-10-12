@@ -87,8 +87,7 @@ void Server::handle_request(boost::shared_ptr<tcp::socket> socket) {
 				} else if (request["type"] == "authorize") {
 					handle_authorize(socket, request);
 				} else if(request["type"] == "send_message") {
-					DEBUG_MSG(request.dump());
-					// handle_send_message(socket, request);
+					handle_send_message(socket, request);
 				} else {
 					nlohmann::json response = {
 						{"status", "error"},
@@ -180,6 +179,10 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 	}
 
 	Message new_message(sender_id, receiver_id, message_text);
+	// send message_to the receiver (how to handle offline and online user?)
+	// write metadata to db
+	// write text to db
+	
 	nlohmann::json response = new_message.to_json();
 	DEBUG_MSG(response.dump());
 	boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
