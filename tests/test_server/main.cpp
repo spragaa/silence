@@ -7,9 +7,11 @@
 int main(int argc, char** argv) {
 	::testing::InitGoogleTest(&argc, argv);
 	
-	::testing::AddGlobalTestEnvironment(new MessageTextRepositoryTestEnvironment);
 	::testing::AddGlobalTestEnvironment(new MessageMetadataRepositoryTestEnvironment);
 	::testing::AddGlobalTestEnvironment(new UserMetadataRepositoryTestEnvironment);
+	
+	// cannot setup redis db for testing along side with production db :(
+	// ::testing::AddGlobalTestEnvironment(new MessageTextRepositoryTestEnvironment);
 	
 	return RUN_ALL_TESTS();
 }
