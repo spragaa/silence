@@ -12,8 +12,11 @@ public:
 	nlohmann::json to_json() const;
 	Message from_json(const nlohmann::json& j);
 	int get_id() const;
+	MessageText get_text() const;
+	MessageMetadata get_metadata() const;
+	
 private:
     static int message_id_counter;
-    MessageMetadata msg_metadata;
-	MessageText msg_text;
+    MessageMetadata metadata;
+	MessageText text;
 };
