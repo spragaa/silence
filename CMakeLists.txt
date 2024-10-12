@@ -31,6 +31,7 @@ FetchContent_Declare(
     GIT_TAG 7.9.2
 )
 FetchContent_MakeAvailable(libpqxx)
+set(SKIP_BUILD_TEST ON)
 
 FetchContent_Declare(
     hiredis

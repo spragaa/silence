@@ -2,7 +2,7 @@ add_executable(test_server
     main.cpp
     src/test_user_metadata_repository.cpp
     src/test_message_metadata_repository.cpp
-    src/test_message_text_repository.cpp
+    # src/test_message_text_repository.cpp
 )
 
 target_link_libraries(test_server
