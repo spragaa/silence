@@ -65,10 +65,11 @@ private:
 	// rename DBManager to postgres db manager
 	DBManager db_manager;
 	// add metadata to name
-	std::unique_ptr<UserMetadataRepository> user_repository;
+	std::unique_ptr<UserMetadataRepository> user_repo;
 	// add metadata to name
-	std::unique_ptr<MessageMetadataRepository> message_repository;
-	std::unique_ptr<MessageTextRepository> message_text_repository;
+	std::unique_ptr<MessageMetadataRepository> msg_metadata_repo;
+	std::unique_ptr<MessageTextRepository> msg_text_repo;
 	
-	std::set<int> connected_users;
+	// storing a socket might be overhead? we don't need the local ip and local port, do we?
+	std::map<int, boost::shared_ptr<tcp::socket>> connected_clients;
 };
