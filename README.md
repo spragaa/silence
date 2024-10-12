@@ -34,21 +34,24 @@ or `redis-cli`
 now it is `AUTH default spraga`
 
     
-## known bugs + bugs suggestions
+## known bugs / suggestions / issues
 1. user exp is broken -> try to cover all possible cases
 2. prettier.sh is broken?
 3. does it even make sense to use --clean in cmake? 
 4. is it possib le to simplify setup_db scripts? 
 5. is test_message_database even creates? 
+6. couldn't setup another intance of redis db for testing purposes -> test_message_text_repository - crap 
 
 ## short term goals:
 ~~0. split Message class into MessageMetadata and MessageText~~
 ~~1. find the best db for message storage~~ not sure if its THE best, but I've found one)
 ~~2. implement connetion to message db class~~
-3. make the decision on message id hadling -> adjust the implementation and then continue with the next steps
-4. implement CRUD operrations for message db class
-5. implement unit tests for CRUD operrations for message text db class
-6. fix message metadata crud tests if broken
+~~3. make the decision on message id hadling -> adjust the implementation and then continue with the next steps~~
+~~4. implement CRUD operrations for message db class~~
+~~5. implement unit tests for CRUD operrations for message text db class~~ but they are not running yet ;)
+~~6. fix message metadata crud tests and user tests~~
+6. handle message sending on server side (save to both dbs)
+7. message statuses (created, sent, undelivered, delivered, read, unread)
 
 ## goals:
 ~~1. add password and authorization~~
@@ -88,7 +91,15 @@ now it is `AUTH default spraga`
 it is annoying to type them every time 
 14. .github/worflows/autotests.yaml, gl hf :)))
 15. rewrite logs in scripts and .sql files
+16. read status
+17. online status
+18. notifications
+19. media
+20. store some amount of chat data on client side
 
 ## ideas?
 1. another server with rest api with statistics
 2. addd lb support?
+3. consistent hashring/hashing
+
+[[]]

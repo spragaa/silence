@@ -69,4 +69,6 @@ private:
 	// add metadata to name
 	std::unique_ptr<MessageMetadataRepository> message_repository;
 	std::unique_ptr<MessageTextRepository> message_text_repository;
+	
+	std::set<int> connected_users;
 };
