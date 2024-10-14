@@ -131,9 +131,11 @@ void Server::handle_request(boost::shared_ptr<tcp::socket> socket) {
 }
 
 void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
+    DEBUG_MSG("[Server::handle_register] Received request: " + request.dump());
 	std::string nickname = request["nickname"];
 	std::string password = request["password"];
-
+	
+	
 	User new_user(nickname, password);
 	int user_id = user_repo->create(new_user);
 	nlohmann::json response;
@@ -147,6 +149,7 @@ void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohma
 		response["response"] =  "Failed to register user";
 	}
 
+	DEBUG_MSG("[Server::handle_register] Sending response: " + response.dump());
 	boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
 }
 
@@ -175,6 +178,7 @@ void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohm
 		response["status"] = "success";
 		response["response"] = "Authorization failed: Invalid credentials";
 	}
+	DEBUG_MSG("[Server::handle_authorize] Sending request: " + request.dump());
 	boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
 }
 

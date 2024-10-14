@@ -7,6 +7,7 @@ User::User() : id(0), nickname(""), password("") {
 
 User::User(const std::string& nick) : User() {
 	nickname = nick;
+	INFO_MSG("New user created, nickname: " + nickname);
 }
 
 User::User(const std::string& nick, const std::string& pass) : id(user_id_counter++), nickname(
@@ -84,8 +85,9 @@ User User::from_json(const nlohmann::json& j) {
 	user.id = j["id"];
 	user.nickname = j["nickname"];
 	user.password = j["password"];
-	user.registered_timestamp = parse_timestamp(j["registered_timestamp"]);
-	user.last_online_timestamp = parse_timestamp(j["last_online_timestamp"]);
+	// Exception in Client::run() : [json.exception.type_error.302] type must be string, but is number
+	// user.registered_timestamp = parse_timestamp(j["registered_timestamp"]);
+	// user.last_online_timestamp = parse_timestamp(j["last_online_timestamp"]);
 	user.online = j["online"].get<bool>();
 
 	return user;
