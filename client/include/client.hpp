@@ -26,7 +26,12 @@ private:
 	std::string read_user_text() const noexcept;
 	std::string receive_response();
 	std::string get_user_data_filename() const noexcept;
-
+	
+	bool is_registered() const noexcept;
+    void register_user();
+    void authorize_user();
+    void handle_user_actions();
+	
 private:
 
 	boost::asio::io_service io_service;
@@ -35,4 +40,5 @@ private:
 	unsigned short server_port;
 	User user;
 	std::vector<Message> messages; // vector is stupid, but good for now
+	bool is_authorized;
 };
