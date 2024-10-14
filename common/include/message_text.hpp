@@ -9,7 +9,7 @@
 
 class MessageText {
 public:
-    MessageText() = default;
+	MessageText() = default;
 	MessageText(const int& id, const std::string& text);
 
 	int get_id() const noexcept;

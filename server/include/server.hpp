@@ -69,7 +69,7 @@ private:
 	// add metadata to name
 	std::unique_ptr<MessageMetadataRepository> msg_metadata_repo;
 	std::unique_ptr<MessageTextRepository> msg_text_repo;
-	
+
 	// storing a socket might be overhead? we don't need the local ip and local port, do we?
-	std::map<int, boost::shared_ptr<tcp::socket>> connected_clients;
+	std::map<int, boost::shared_ptr<tcp::socket> > connected_clients;
 };
