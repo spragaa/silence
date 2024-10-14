@@ -39,10 +39,10 @@ sw::redis::ConnectionOptions MessageTextRepository::parse_config_string(const st
             options.db = std::stoi(matches[5].str());
         }
     } else {
-        throw std::invalid_argument("[MessageTextRepository::parse_config_string] Invalid connection string format");
+        ERROR_MSG("[MessageTextRepository::parse_config_string] Invalid connection string format");
     }
 
-    DEBUG_MSG("[MessageTextRepository::parseConnectionString] Parsed successfully!");
+    INFO_MSG("[MessageTextRepository::parseConnectionString] Parsed successfully!");
 
     return options;
 }
@@ -51,7 +51,7 @@ int MessageTextRepository::create(const MessageText& msg) {
     try {
         std::string key = std::to_string(msg.get_id());
         std::string value = msg.get_text();
-        DEBUG_MSG("[MessageTextRepository::create] Attempting to set key: " + key + " with value: " + value);
+        INFO_MSG("[MessageTextRepository::create] Attempting to set key: " + key + " with value: " + value);
         redis->set(key, value);
         
         auto result = redis->get(key);
@@ -75,10 +75,10 @@ std::optional<MessageText> MessageTextRepository::read(int id) {
     try {
         auto result = redis->get(std::to_string(id));
         if (result) {
-            DEBUG_MSG("[MessageTextRepository::read] Successfully read message with id: " + std::to_string(id));
+            INFO_MSG("[MessageTextRepository::read] Successfully read message with id: " + std::to_string(id));
             return MessageText(id, *result);
         } else {
-            DEBUG_MSG("[MessageTextRepository::read] No message found with id: " + std::to_string(id));
+            WARN_MSG("[MessageTextRepository::read] No message found with id: " + std::to_string(id));
             return std::nullopt;
         }
     } catch (const sw::redis::Error& e) {
@@ -96,10 +96,10 @@ bool MessageTextRepository::update(const MessageText& message) {
         auto exists = redis->exists(key);
         if (exists) {
             redis->set(key, message.get_text());
-            DEBUG_MSG("[MessageTextRepository::update] Successfully updated message with id: " + key);
+            INFO_MSG("[MessageTextRepository::update] Successfully updated message with id: " + key);
             return true;
         } else {
-            DEBUG_MSG("[MessageTextRepository::update] No message found with id: " + key);
+            WARN_MSG("[MessageTextRepository::update] No message found with id: " + key);
             return false;
         }
     } catch (const sw::redis::Error& e) {
@@ -116,10 +116,10 @@ bool MessageTextRepository::remove(int id) {
         auto key = std::to_string(id);
         auto removed = redis->del(key);
         if (removed > 0) {
-            DEBUG_MSG("[MessageTextRepository::remove] Successfully removed message with id: " + key);
+            INFO_MSG("[MessageTextRepository::remove] Successfully removed message with id: " + key);
             return true;
         } else {
-            DEBUG_MSG("[MessageTextRepository::remove] No message found with id: " + key);
+            WARN_MSG("[MessageTextRepository::remove] No message found with id: " + key);
             return false;
         }
     } catch (const sw::redis::Error& e) {
