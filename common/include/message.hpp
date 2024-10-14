@@ -7,7 +7,7 @@
 class Message {
 public:
 
-    Message() = default;
+	Message() = default;
 	Message(const int& sender_id, const int& receiver_id, const std::string& text);
 
 	nlohmann::json to_json() const;
@@ -15,9 +15,9 @@ public:
 	int get_id() const;
 	MessageText get_text() const;
 	MessageMetadata get_metadata() const;
-	
+
 private:
-    static int message_id_counter;
-    MessageMetadata metadata;
+	static int message_id_counter;
+	MessageMetadata metadata;
 	MessageText text;
 };

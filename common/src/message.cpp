@@ -3,7 +3,7 @@
 int Message::message_id_counter = 1;
 
 // mutex is probably needed, but it will create a bottleneck
-Message::Message(const int& sender_id, const int& receiver_id, const std::string& text) :    
+Message::Message(const int& sender_id, const int& receiver_id, const std::string& text) :
 	metadata(message_id_counter, sender_id, receiver_id), text(message_id_counter++, text)
 {
 }
@@ -17,13 +17,13 @@ nlohmann::json Message::to_json() const {
 }
 
 int Message::get_id() const {
-    return metadata.get_id();
+	return metadata.get_id();
 }
 
 MessageText Message::get_text() const {
-    return text;
+	return text;
 }
 
 MessageMetadata Message::get_metadata() const {
-    return metadata;
+	return metadata;
 }
