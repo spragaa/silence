@@ -51,7 +51,9 @@ now it is `AUTH default spraga`
 ~~5. implement unit tests for CRUD operrations for message text db class~~ but they are not running yet ;)
 ~~6. fix message metadata crud tests and user tests~~
 6. handle message sending on server side (save to both dbs)
-7. message statuses (created, sent, undelivered, delivered, read, unread)
+7. move registration and authorization on client side to separate functions
+8. send requests in one thread and receive responses on another thread
+9. message statuses (created, sent, undelivered, delivered, read, unread)
 
 ## goals:
 ~~1. add password and authorization~~
