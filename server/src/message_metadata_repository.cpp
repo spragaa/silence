@@ -128,8 +128,8 @@ std::chrono::system_clock::time_point parse_timestamp(const std::string& timesta
 
 MessageMetadata MessageMetadataRepository::construct_message(const pqxx::row& row) {
 	MessageMetadata msg(
-	    row["id"].as<int>(),
- 	    row["sender_id"].as<int>(),
+		row["id"].as<int>(),
+		row["sender_id"].as<int>(),
 		row["receiver_id"].as<int>()
 		);
 	msg.set_deleted(row["deleted"].as<bool>());

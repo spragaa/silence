@@ -1,8 +1,8 @@
 #include "message_metadata.hpp"
 
 MessageMetadata::MessageMetadata(
-	const int& id, 
-    const int& sender_id,
+	const int& id,
+	const int& sender_id,
 	const int& receiver_id
 	) : id(id),
 	sender_id(sender_id),

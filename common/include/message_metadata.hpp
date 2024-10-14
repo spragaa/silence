@@ -10,10 +10,10 @@
 class MessageMetadata {
 public:
 
-    MessageMetadata() = default;
+	MessageMetadata() = default;
 
 	MessageMetadata(
-	    const int& id,
+		const int& id,
 		const int& sender_id,
 		const int& receiver_id
 		);
