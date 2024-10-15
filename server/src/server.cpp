@@ -175,7 +175,7 @@ void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohm
 		// "New user connected" in handle authorize may be counterintuitive?
 		DEBUG_MSG("[Server::handle_authorize] New user connected, with id: " + std::to_string(user_id) + " on socket: " + get_socket_info(*socket));
 	} else {
-		response["status"] = "success";
+		response["status"] = "error";
 		response["response"] = "Authorization failed: Invalid credentials";
 	}
 	DEBUG_MSG("[Server::handle_authorize] Sending request: " + request.dump());
@@ -204,6 +204,7 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 		sender_response["status"] = "error";
 		sender_response["response"] = "Failed to save message into db/s";
 		boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
+		return;
 	}
 
 	sender_response["status"] = "success";

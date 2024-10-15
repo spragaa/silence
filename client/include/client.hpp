@@ -6,8 +6,11 @@
 
 #include <iostream>
 #include <string>
+#include <queue>
 #include <vector>
 #include <boost/asio.hpp>
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
 #include <nlohmann/json.hpp>
 
 class Client {
@@ -30,12 +33,21 @@ private:
 	bool is_registered() const noexcept;
 	void register_user();
 	void authorize_user();
-	void handle_user_actions();
+	void handle_user_interaction();
+
+	void start_async_read();
+	void handle_async_read(const boost::system::error_code& error, size_t bytes_transferred);
+	void async_write(const std::string& message);
+	void handle_async_write(const boost::system::error_code& error);
+	void process_server_message(const std::string& message);
 
 private:
 
 	boost::asio::io_service io_service;
+	boost::thread io_thread;
 	boost::asio::ip::tcp::socket socket;
+	boost::asio::streambuf read_buffer;
+	std::queue<std::string> write_queue;
 	std::string server_address;
 	unsigned short server_port;
 	User user;

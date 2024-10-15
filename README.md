@@ -51,7 +51,7 @@ now it is `AUTH default spraga`
 ~~5. implement unit tests for CRUD operrations for message text db class~~ but they are not running yet ;)
 ~~6. fix message metadata crud tests and user tests~~
 6. handle message sending on server side (save to both dbs)
-7. move registration and authorization on client side to separate functions
+~~7. move registration and authorization on client side to separate functions~~
 8. send requests in one thread and receive responses on another thread
 9. message statuses (created, sent, undelivered, delivered, read, unread)
 
@@ -83,11 +83,7 @@ now it is `AUTH default spraga`
 ~~8. refactor server~~ 
 9. read server <-> dbs connection params from jsons
 ~~10. logs levels~~
-~~11.         nlohmann::json response = {~~
-    ~~{"status", "success"},~~
-    ~~{"message", "Authorization successful"}~~
-};~~
-~~boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));~~
+~~11. refactor declarations and definitions of nlohmann::json response and request
 12. add logs with socker info: get_socket_info 
 13. there must some kind of script/config that will create env variables to work with psql flawlessly (postgres user, user_pass, postgres_pass and so on)
 it is annoying to type them every time 
@@ -105,4 +101,6 @@ it is annoying to type them every time
 2. addd lb support?
 3. consistent hashring/hashing
 
-[[]]
+## name ideas
+1. silence 
+2. 

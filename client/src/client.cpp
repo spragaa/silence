@@ -25,9 +25,9 @@ User Client::get_user() {
 
 void inline Client::show_actions() {
 	std::cout << user.get_nickname() << ", please select the number of the action you would like to perform now from the list below:" << std::endl;
-	std::cout << "2. Get list of chats" << std::endl;
-	std::cout << "3. Send message" << std::endl;
-	std::cout << "4. Get offline messages" << std::endl;
+	std::cout << "0. Send message" << std::endl;
+	std::cout << "1. Get list of chats" << std::endl;
+	std::cout << "2. Get offline messages" << std::endl;
 	std::cout << "5. Exit" << std::endl;
 
 	std::cout << "Input: ";
@@ -125,7 +125,76 @@ void Client::authorize_user() {
 	INFO_MSG("[Client::authorize_user()] Authorization process completed");
 }
 
-void Client::handle_user_actions() {
+void Client::start_async_read() {
+    DEBUG_MSG("[Client::start_async_read] Async read has been started");
+
+    boost::asio::async_read_until(socket, read_buffer, "\r\n\r\n",
+	                              boost::bind(&Client::handle_async_read, this,
+	                                          boost::asio::placeholders::error,
+	                                          boost::asio::placeholders::bytes_transferred));
+}
+
+void Client::handle_async_read(const boost::system::error_code& error, size_t bytes_transferred) {
+	DEBUG_MSG("[Client::handle_async_read] Started handling responses!");
+    if (!error) {
+		std::string message(boost::asio::buffers_begin(read_buffer.data()),
+		                    boost::asio::buffers_begin(read_buffer.data()) + bytes_transferred);
+		read_buffer.consume(bytes_transferred);
+		DEBUG_MSG("[Client::handle_async_read] Read: " + message);
+		  
+		process_server_message(message);
+
+		start_async_read();
+	} else {
+		ERROR_MSG("[Client::handle_async_read] " + error.message());
+	}
+}
+
+void Client::async_write(const std::string& message) {
+	bool write_in_progress = !write_queue.empty();
+	write_queue.push(message);
+	DEBUG_MSG("[Client::async_write] Write: " + message);
+	
+	if (!write_in_progress) {
+		boost::asio::async_write(socket,
+		                         boost::asio::buffer(write_queue.front() + "\r\n\r\n"),
+		                         boost::bind(&Client::handle_async_write, this,
+		                                     boost::asio::placeholders::error));
+	}
+}
+
+void Client::handle_async_write(const boost::system::error_code& error) {
+	if (!error) {
+		write_queue.pop();
+		if (!write_queue.empty()) {
+			boost::asio::async_write(socket,
+			                         boost::asio::buffer(write_queue.front() + "\r\n\r\n"),
+			                         boost::bind(&Client::handle_async_write, this,
+			                                     boost::asio::placeholders::error));
+		}
+	} else {
+		ERROR_MSG("[Client::handle_async_write] Error: " + error.message());
+	}
+}
+
+void Client::process_server_message(const std::string& message) {
+	try {
+		nlohmann::json json_message = nlohmann::json::parse(message);
+		DEBUG_MSG("[Client::process_server_message] Parsed response: " + json_message.dump());
+
+		if (json_message["type"] == "receive_msg") {
+			std::cout << "Received message from " << json_message["sender_nickname"] << ": " << json_message["message_text"] << std::endl;
+		} else {
+			DEBUG_MSG("[Client::process_server_message] Received message: " + message);
+		}
+	} catch (const nlohmann::json::parse_error& e) {
+		ERROR_MSG("[Client::process_server_message] Failed to parse message: " + std::string(e.what()));
+	}
+}
+
+void Client::handle_user_interaction() {
+	DEBUG_MSG("[Client::handle_user_interaction()] Starting interaction with user!");
+
 	while (true) {
 		show_actions();
 		int action_type = -1;
@@ -148,21 +217,41 @@ void Client::handle_user_actions() {
 			std::cout << "Invalid input. Please enter a number between 0 and 5." << std::endl;
 		}
 
+		// my idea is to use request statuses???
+		// after client registered or/and authorized
+		// client adds another thread (potentially more),
+		// main thread is sending requests, and new thread is receiving responses
+		//
 		switch (action_type) {
-				case 0:
-					std::cout << "You are already registered and authorized." << std::endl;
-					break;
+				case 0: {
+					std::cout << "Enter recipient's nickname: ";
+					std::string recipient;
+					std::getline(std::cin, recipient);
+					std::cout << "Enter your message: ";
+					std::string message_text;
+					std::getline(std::cin, message_text);
+
+					nlohmann::json message;
+					message["type"] = "send_message";
+					message["sender_id"] = user.get_id();
+					message["receiver_nickname"] = recipient;
+					message["message_text"] = message_text;
+
+					async_write(message.dump());
+					DEBUG_MSG("CASE 0");
+				}
+				break;
 				case 1:
-					std::cout << "You are already authorized" << std::endl;
+					DEBUG_MSG("CASE 1");
 					break;
 				case 2:
-					std::cout << "TODO: Implement get list of chats" << std::endl;
+					DEBUG_MSG("CASE 2");
 					break;
 				case 3:
-					std::cout << "TODO: Implement send message" << std::endl;
+					DEBUG_MSG("CASE 3");
 					break;
 				case 4:
-					std::cout << "TODO: Implement get offline messages" << std::endl;
+					DEBUG_MSG("CASE 4");
 					break;
 				case 5:
 					std::cout << "Exiting..." << std::endl;
@@ -179,6 +268,9 @@ void Client::run() {
 		boost::asio::ip::tcp::resolver::query query(server_address, std::to_string(server_port));
 		boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
 		boost::asio::connect(socket, endpoint_iterator);
+		io_thread = boost::thread([this]() {
+			io_service.run();
+		});
 
 		while (!is_registered()) {
 			WARN_MSG("[Client::run()] No existing user data found. Please register.");
@@ -213,8 +305,10 @@ void Client::run() {
 
 		INFO_MSG("[Client::run()] User authorized successfully");
 		INFO_MSG("[Client::run()] Now you can start messaging!");
-		handle_user_actions();
+		start_async_read();
+		handle_user_interaction();
 
+		io_thread.join();
 		socket.close();
 	} catch (const std::exception& e) {
 		ERROR_MSG("[Client::run()] " + std::string(e.what()));
