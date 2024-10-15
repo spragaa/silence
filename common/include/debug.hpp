@@ -27,3 +27,5 @@ std::string get_socket_info(boost::asio::ip::tcp::socket& socket);
 #define ERROR_MSG(msg) std::cout << RED << "[ERROR] [" << get_current_timestamp() << "] " << msg << RESET << std::endl;
 
 #define FATAL_MSG(msg) std::cout << RED << "[FATAL] [" << get_current_timestamp() << "] " << msg << RESET << std::endl;
+
+// add USER_MSG?
