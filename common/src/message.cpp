@@ -1,5 +1,7 @@
 #include "message.hpp"
 
+// idea of using id here is stupid, or implemented incorrectly
+// for example, on each run message_id_counter = 1, but messsage db isn't reset  
 int Message::message_id_counter = 1;
 
 // mutex is probably needed, but it will create a bottleneck
