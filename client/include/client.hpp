@@ -18,6 +18,7 @@ public:
 
 	Client(const std::string& server_address,
 	       unsigned short server_port, const std::string& nick);
+	~Client();
 
 	void run();
 	User get_user();
@@ -39,12 +40,15 @@ private:
 	void handle_async_read(const boost::system::error_code& error, size_t bytes_transferred);
 	void async_write(const std::string& message);
 	void handle_async_write(const boost::system::error_code& error);
+	void do_write();
 	void process_server_message(const std::string& message);
+	bool is_connected();
 
 private:
 
 	boost::asio::io_service io_service;
-	boost::thread io_thread;
+	std::unique_ptr<boost::asio::io_service::work> work;
+	std::vector<std::thread> io_threads;
 	boost::asio::ip::tcp::socket socket;
 	boost::asio::streambuf read_buffer;
 	std::queue<std::string> write_queue;

@@ -8,7 +8,7 @@ void DBManager::add_connection(const std::string& name, const std::string& conne
 pqxx::connection& DBManager::get_connection(const std::string& name) {
 	auto it = connections.find(name);
 	if (it == connections.end()) {
-		throw std::runtime_error("Database connection not found: " + name);
+		FATAL_MSG("[DBManager::get_connection()] Database connection not found " + name);
 	}
 	return *(it->second);
 }
