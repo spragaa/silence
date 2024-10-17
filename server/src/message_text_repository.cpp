@@ -17,7 +17,7 @@ MessageTextRepository::MessageTextRepository(const std::string& connection_strin
 		redis = std::make_unique<sw::redis::Redis>(connection_options);
 		INFO_MSG("[MessageTextRepository::MessageTextRepository] Successfully connected to message_text Redis database");
 	} catch (const std::exception& e) {
-		std::cerr << "[MessageTextRepository::MessageTextRepository] Error: " << e.what() << std::endl;
+		ERROR_MSG("[MessageTextRepository::MessageTextRepository] " +  std::string(e.what()));
 		FATAL_MSG("[MessageTextRepository::MessageTextRepository] Failed to connect to Redis database");
 	}
 }

@@ -80,6 +80,7 @@ void Server::handle_request(boost::shared_ptr<tcp::socket> socket) {
 				}
 			}
 			DEBUG_MSG("[Server::handle_authorize] Client removed from connected list: " + get_socket_info(*socket));
+			DEBUG_MSG("[Server::handle_authorize] Currently, there are " + std::to_string(connected_clients.size()) + " users connected");
 
 			break;
 		} else if (error) {
@@ -123,7 +124,7 @@ void Server::handle_request(boost::shared_ptr<tcp::socket> socket) {
 		}
 
 		if (error) {
-			throw std::runtime_error("Error while sending response: " + error.message());
+			ERROR_MSG("[Server::handle_request] While sending response" + std::string(error.message()))
 		}
 
 		request_buf.consume(request_buf.size());
@@ -174,6 +175,7 @@ void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohm
 		connected_clients[user_id] = socket;
 		// "New user connected" in handle authorize may be counterintuitive?
 		DEBUG_MSG("[Server::handle_authorize] New user connected, with id: " + std::to_string(user_id) + " on socket: " + get_socket_info(*socket));
+		DEBUG_MSG("[Server::handle_authorize] Currently, there are " + std::to_string(connected_clients.size()) + " users connected");
 	} else {
 		response["status"] = "error";
 		response["response"] = "Authorization failed: Invalid credentials";
@@ -215,8 +217,8 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 
 	for(auto it = connected_clients.begin(); it != connected_clients.end(); ++it) {
 		if (it->first == receiver_id) {
-			receiver_response["type"] = "receive_msg";
 			receiver_response.update(new_msg.to_json());
+			receiver_response["type"] = "receive_msg";
 
 			DEBUG_MSG("[Server::handle_send_message] Response for receiver: " + receiver_response.dump());
 			boost::asio::write(*(it->second), boost::asio::buffer(receiver_response.dump() + "\r\n\r\n"));
