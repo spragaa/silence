@@ -4,6 +4,7 @@ Client::Client(const std::string& server_address,
                unsigned short server_port, const std::string& nick)
 	: io_service()
 	, socket(io_service)
+	, work(new boost::asio::io_service::work(io_service))
 	, server_address(server_address)
 	, server_port(server_port)
 	, user(nick)
@@ -16,6 +17,16 @@ Client::Client(const std::string& server_address,
 		user = User();
 		user.set_nickname(nick);
 		DEBUG_MSG("[Client::Client] Temporary user created with nickname: '" + user.get_nickname() + "'");
+	}
+}
+
+Client::~Client() {
+	work.reset();
+	io_service.stop();
+	for (auto& thread : io_threads) {
+		if (thread.joinable()) {
+			thread.join();
+		}
 	}
 }
 
@@ -126,38 +137,59 @@ void Client::authorize_user() {
 }
 
 void Client::start_async_read() {
-    DEBUG_MSG("[Client::start_async_read] Async read has been started");
+	DEBUG_MSG("[Client::start_async_read] Async read has been started");
 
-    boost::asio::async_read_until(socket, read_buffer, "\r\n\r\n",
-	                              boost::bind(&Client::handle_async_read, this,
-	                                          boost::asio::placeholders::error,
-	                                          boost::asio::placeholders::bytes_transferred));
+	io_service.post([this]() {
+		boost::asio::async_read_until(socket, read_buffer, "\r\n\r\n",
+		                              boost::bind(&Client::handle_async_read, this,
+		                                          boost::asio::placeholders::error,
+		                                          boost::asio::placeholders::bytes_transferred));
+	});
 }
 
 void Client::handle_async_read(const boost::system::error_code& error, size_t bytes_transferred) {
-	DEBUG_MSG("[Client::handle_async_read] Started handling responses!");
-    if (!error) {
+	if (!error) {
 		std::string message(boost::asio::buffers_begin(read_buffer.data()),
 		                    boost::asio::buffers_begin(read_buffer.data()) + bytes_transferred);
 		read_buffer.consume(bytes_transferred);
 		DEBUG_MSG("[Client::handle_async_read] Read: " + message);
-		  
+
 		process_server_message(message);
 
 		start_async_read();
+	} else if (error == boost::asio::error::eof) {
+		ERROR_MSG("[Client::handle_async_read] Server closed connection");
+		// disconnect
 	} else {
 		ERROR_MSG("[Client::handle_async_read] " + error.message());
+		// reconnect or handle error correcrlty
 	}
 }
 
+bool Client::is_connected() {
+	return socket.is_open();
+}
+
 void Client::async_write(const std::string& message) {
-	bool write_in_progress = !write_queue.empty();
-	write_queue.push(message);
-	DEBUG_MSG("[Client::async_write] Write: " + message);
-	
-	if (!write_in_progress) {
+	if (!is_connected()) {
+		ERROR_MSG("[Client::async_write] Not connected to server");
+		return;
+	}
+
+	io_service.post([this, message]() {
+		bool write_in_progress = !write_queue.empty();
+		write_queue.push(message + "\r\n\r\n");
+
+		if (!write_in_progress) {
+			do_write();
+		}
+	});
+}
+
+void Client::do_write() {
+	if (!write_queue.empty()) {
 		boost::asio::async_write(socket,
-		                         boost::asio::buffer(write_queue.front() + "\r\n\r\n"),
+		                         boost::asio::buffer(write_queue.front()),
 		                         boost::bind(&Client::handle_async_write, this,
 		                                     boost::asio::placeholders::error));
 	}
@@ -166,14 +198,11 @@ void Client::async_write(const std::string& message) {
 void Client::handle_async_write(const boost::system::error_code& error) {
 	if (!error) {
 		write_queue.pop();
-		if (!write_queue.empty()) {
-			boost::asio::async_write(socket,
-			                         boost::asio::buffer(write_queue.front() + "\r\n\r\n"),
-			                         boost::bind(&Client::handle_async_write, this,
-			                                     boost::asio::placeholders::error));
-		}
+		do_write();
 	} else {
-		ERROR_MSG("[Client::handle_async_write] Error: " + error.message());
+		ERROR_MSG("[Client::handle_async_write] " + error.message());
+		// recconect
+		// inform user
 	}
 }
 
@@ -181,12 +210,6 @@ void Client::process_server_message(const std::string& message) {
 	try {
 		nlohmann::json json_message = nlohmann::json::parse(message);
 		DEBUG_MSG("[Client::process_server_message] Parsed response: " + json_message.dump());
-
-		if (json_message["type"] == "receive_msg") {
-			std::cout << "Received message from " << json_message["sender_nickname"] << ": " << json_message["message_text"] << std::endl;
-		} else {
-			DEBUG_MSG("[Client::process_server_message] Received message: " + message);
-		}
 	} catch (const nlohmann::json::parse_error& e) {
 		ERROR_MSG("[Client::process_server_message] Failed to parse message: " + std::string(e.what()));
 	}
@@ -268,9 +291,13 @@ void Client::run() {
 		boost::asio::ip::tcp::resolver::query query(server_address, std::to_string(server_port));
 		boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
 		boost::asio::connect(socket, endpoint_iterator);
-		io_thread = boost::thread([this]() {
-			io_service.run();
-		});
+
+		unsigned int thread_count = std::thread::hardware_concurrency();
+		for (unsigned int i = 0; i < thread_count; ++i) {
+			io_threads.emplace_back([this]() {
+				io_service.run();
+			});
+		}
 
 		while (!is_registered()) {
 			WARN_MSG("[Client::run()] No existing user data found. Please register.");
@@ -308,7 +335,10 @@ void Client::run() {
 		start_async_read();
 		handle_user_interaction();
 
-		io_thread.join();
+		work.reset();
+		for (auto& thread : io_threads) {
+			thread.join();
+		}
 		socket.close();
 	} catch (const std::exception& e) {
 		ERROR_MSG("[Client::run()] " + std::string(e.what()));
@@ -334,8 +364,7 @@ std::string Client::receive_response() {
 	boost::asio::read_until(socket, response_buf, "\r\n\r\n", error);
 
 	if (error && (error != boost::asio::error::eof)) {
-		throw std::runtime_error(
-				  "Error while receiving response: " + error.message());
+		ERROR_MSG("[Client::receive_response()] While receiving response: " + std::string(error.message()));
 	}
 
 	std::istream response_stream(&response_buf);
