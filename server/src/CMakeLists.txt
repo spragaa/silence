@@ -1,6 +1,6 @@
 add_library(server_lib
     server.cpp
-    db_manager.cpp
+    postgres_db_manager.cpp
     user_metadata_repository.cpp
     message_metadata_repository.cpp
     message_text_repository.cpp

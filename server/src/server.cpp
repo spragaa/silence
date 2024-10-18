@@ -4,32 +4,23 @@
 #include <iostream>
 
 Server::Server(unsigned short port, unsigned int thread_pool_size,
-               const std::string& user_db_connection_string,
-               const std::string& message_db_connection_string,
+               const std::string& user_metadata_db_connection_string,
+               const std::string& msg_text_db_connection_string,
                const std::string& message_text_db_connection_string
                )
 	: acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
 	work(new boost::asio::io_service::work(io_service)) {
 
-	db_manager.add_connection("user_metadata_db", user_db_connection_string);
-	db_manager.add_connection("message_metadata_db", message_db_connection_string);
+	postgres_db_manager.add_connection("user_metadata_db", user_metadata_db_connection_string);
+	postgres_db_manager.add_connection("message_metadata_db", msg_text_db_connection_string);
 
-	user_repo = std::make_unique<UserMetadataRepository>(db_manager, "user_metadata_db");
-	msg_metadata_repo = std::make_unique<MessageMetadataRepository>(db_manager, "message_metadata_db");
+	user_repo = std::make_unique<UserMetadataRepository>(postgres_db_manager, "user_metadata_db");
+	msg_metadata_repo = std::make_unique<MessageMetadataRepository>(postgres_db_manager, "message_metadata_db");
 	msg_text_repo = std::make_unique<MessageTextRepository>(message_text_db_connection_string);
-
-	// not used for now, will do
-	for (unsigned int i = 0; i < thread_pool_size; ++i) {
-		thread_pool.push_back(boost::make_shared<boost::thread>(
-								  boost::bind(&boost::asio::io_service::run, &io_service)));
-	}
 }
 
 Server::~Server() {
 	io_service.stop();
-	for (auto& thread : thread_pool) {
-		thread->join();
-	}
 }
 
 void Server::start() {

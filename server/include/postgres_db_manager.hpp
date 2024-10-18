@@ -8,10 +8,10 @@
 #include <unordered_map>
 
 // rename to postgre db manager
-class DBManager {
+class PostgresDBManager {
 public:
-	DBManager() = default;
-	~DBManager() = default;
+	PostgresDBManager() = default;
+	~PostgresDBManager() = default;
 
 	void add_connection(const std::string& name, const std::string& connection_string);
 	pqxx::connection& get_connection(const std::string& name);

@@ -1,14 +1,14 @@
 #pragma once
 
-#include "base_repository.hpp"
+#include "base_metadata_repository.hpp"
 #include "message_metadata.hpp"
-#include "db_manager.hpp"
+#include "postgres_db_manager.hpp"
 #include <vector>
 #include <optional>
 
 class MessageMetadataRepository : public BaseRepository<MessageMetadata> {
 public:
-	MessageMetadataRepository(DBManager& db_manager, const std::string& connection_name);
+	MessageMetadataRepository(PostgresDBManager& postgres_db_manager, const std::string& connection_name);
 	virtual ~MessageMetadataRepository() override;
 
 	int create(const MessageMetadata& message) override;

@@ -3,7 +3,7 @@
 #include "debug.hpp"
 #include "user.hpp"
 #include "message.hpp"
-#include "db_manager.hpp"
+#include "postgres_db_manager.hpp"
 #include "user_metadata_repository.hpp"
 #include "message_metadata_repository.hpp"
 #include "message_text_repository.hpp"
@@ -35,8 +35,8 @@ class Server : public boost::enable_shared_from_this<Server> {
 public:
 	Server(unsigned short port,
 	       unsigned int thread_pool_size,
-	       const std::string& user_db_connection_string, // add metadata to name
-	       const std::string& message_db_connection_string, // add metadata to name
+	       const std::string& user_metadata_db_connection_string, // add metadata to name
+	       const std::string& msg_text_db_connection_string, // add metadata to name
 	       const std::string& message_text_db_connection_string
 	       );
 	~Server();
@@ -55,21 +55,11 @@ private:
 	boost::asio::io_service io_service;
 	tcp::acceptor acceptor;
 	boost::shared_ptr<boost::asio::io_service::work> work;
-	std::vector<boost::shared_ptr<boost::thread> > thread_pool;
 
-	// ??? implement some kind of db manager, that will manage all 4 dbs
-	// user_metadata, message_metadata - PostgresSQL
-	// message_text - Redis
-	// media_files - ???????
-	//
-	// rename DBManager to postgres db manager
-	DBManager db_manager;
-	// add metadata to name
+	PostgresDBManager postgres_db_manager;
 	std::unique_ptr<UserMetadataRepository> user_repo;
-	// add metadata to name
 	std::unique_ptr<MessageMetadataRepository> msg_metadata_repo;
 	std::unique_ptr<MessageTextRepository> msg_text_repo;
 
-	// storing a socket might be overhead? we don't need the local ip and local port, do we?
 	std::map<int, boost::shared_ptr<tcp::socket> > connected_clients;
 };

@@ -18,6 +18,7 @@
 ### short term goals:
 
 ### to do:
+- implement some kind of db manager, that will manage all 4 dbs
 - is int enough for id? -> probably not 
 - message statuses (created, sent, undelivered, delivered, read, unread)
 - disable multiple users in one app
