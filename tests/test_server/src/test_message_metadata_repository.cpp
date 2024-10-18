@@ -5,11 +5,11 @@
 class MessageMetadataRepositoryTests : public ::testing::Test {
 protected:
 	std::unique_ptr<MessageMetadataRepository> repo;
-	DBManager db_manager;
+	PostgresDBManager postgres_db_manager;
 
 	void SetUp() override {
-		db_manager.add_connection("test_message_metadata", "host=localhost port=5432 dbname=test_message_metadata user=postgres password=pass");
-		repo = std::make_unique<MessageMetadataRepository>(db_manager, "test_message_metadata");
+		postgres_db_manager.add_connection("test_message_metadata", "host=localhost port=5432 dbname=test_message_metadata user=postgres password=pass");
+		repo = std::make_unique<MessageMetadataRepository>(postgres_db_manager, "test_message_metadata");
 	}
 };
 

@@ -1,14 +1,14 @@
 #pragma once
 
-#include "base_repository.hpp"
+#include "base_metadata_repository.hpp"
 #include "user.hpp"
-#include "db_manager.hpp"
+#include "postgres_db_manager.hpp"
 #include <optional>
 #include <nlohmann/json.hpp>
 
 class UserMetadataRepository : public BaseRepository<User> {
 public:
-	UserMetadataRepository(DBManager& db_manager, const std::string& connection_name);
+	UserMetadataRepository(PostgresDBManager& postgres_db_manager, const std::string& connection_name);
 	virtual ~UserMetadataRepository() override;
 
 	int create(const User& user) override;

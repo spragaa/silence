@@ -1,6 +1,6 @@
 #include "message_metadata_repository.hpp"
 
-MessageMetadataRepository::MessageMetadataRepository(DBManager& db_manager, const std::string& connection_name) : BaseRepository(db_manager), connection_name(connection_name) {
+MessageMetadataRepository::MessageMetadataRepository(PostgresDBManager& postgres_db_manager, const std::string& connection_name) : BaseRepository(postgres_db_manager), connection_name(connection_name) {
 	DEBUG_MSG("MessageMetadataRepository created");
 }
 
@@ -8,7 +8,7 @@ MessageMetadataRepository::~MessageMetadataRepository() = default;
 
 int MessageMetadataRepository::create(const MessageMetadata& message) {
 	try {
-		pqxx::work txn(db_manager.get_connection(connection_name));
+		pqxx::work txn(postgres_db_manager.get_connection(connection_name));
 
 		std::stringstream ss;
 		auto time_point = message.get_created_timestamp();
@@ -41,7 +41,7 @@ int MessageMetadataRepository::create(const MessageMetadata& message) {
 
 std::optional<MessageMetadata> MessageMetadataRepository::read(int id) {
 	try {
-		pqxx::work txn(db_manager.get_connection(connection_name));
+		pqxx::work txn(postgres_db_manager.get_connection(connection_name));
 		pqxx::result r = txn.exec_params("SELECT * FROM messages WHERE id = $1", id);
 		if (r.empty()) {
 			WARN_MSG("[MessageMetadataRepository::read] No message found with id: " + std::to_string(id));
@@ -57,7 +57,7 @@ std::optional<MessageMetadata> MessageMetadataRepository::read(int id) {
 
 bool MessageMetadataRepository::update(const MessageMetadata& message) {
 	try {
-		pqxx::work txn(db_manager.get_connection(connection_name));
+		pqxx::work txn(postgres_db_manager.get_connection(connection_name));
 
 		std::stringstream ss;
 		auto time_point = message.get_last_edited_timestamp().value_or(std::chrono::system_clock::now());
@@ -89,7 +89,7 @@ bool MessageMetadataRepository::update(const MessageMetadata& message) {
 
 bool MessageMetadataRepository::remove(int id) {
 	try {
-		pqxx::work txn(db_manager.get_connection(connection_name));
+		pqxx::work txn(postgres_db_manager.get_connection(connection_name));
 
 		std::stringstream ss;
 		auto time_point = std::chrono::system_clock::now();
