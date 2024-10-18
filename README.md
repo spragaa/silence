@@ -22,9 +22,10 @@
 
 ### short term goals:
 - fix message ids
-- merge message_metadata and user_metadata dbs into one with different tables 
+- merge message_metadata and user_metadata dbs into one with different tables?
 
 ### to do:
+- is int enough for id? -> probably not 
 - message statuses (created, sent, undelivered, delivered, read, unread)
 - disable multiple users in one app
 - move installing of libs, dbs into one script
@@ -35,6 +36,7 @@
 - there must some kind of script/config that will create env variables to work with psql flawlessly (postgres user, user_pass, postgres_pass and so on) it is annoying to type them every time - what?!    :)
 - add handshake, message framing, and control frames (ping/pong)
 - messenger interface in terminal
+- most of the runtime errors (db interactions, request/response hadling) should not prevent server/client from running
 
 ### refactoring 
 - unify the way to compare Timestamps, parse them from/to string, int, json and pqxx::response

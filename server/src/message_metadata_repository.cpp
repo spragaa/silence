@@ -17,12 +17,11 @@ int MessageMetadataRepository::create(const MessageMetadata& message) {
 		std::string formatted_time = ss.str();
 
 		pqxx::result r = txn.exec_params(
-			"INSERT INTO messages (id, sender_id, receiver_id, created_timestamp) "
-			"VALUES ($1, $2, $3, $4) RETURNING id",
-			message.get_id(),
-			message.get_sender_id(),
-			message.get_receiver_id(),
-			formatted_time
+    			"INSERT INTO messages (sender_id, receiver_id, created_timestamp) "
+    			"VALUES ($1, $2, $3) RETURNING id",
+    			message.get_sender_id(),
+    			message.get_receiver_id(),
+    			formatted_time
 			);
 		txn.commit();
 
@@ -67,10 +66,10 @@ bool MessageMetadataRepository::update(const MessageMetadata& message) {
 		std::string formatted_time = ss.str();
 
 		pqxx::result r = txn.exec_params(
-			"UPDATE messages SET last_edited_timestamp = $1 "
-			"WHERE id = $2",
-			formatted_time,
-			message.get_id()
+    			"UPDATE messages SET last_edited_timestamp = $1 "
+    			"WHERE id = $2",
+    			formatted_time,
+    			message.get_id()
 			);
 		txn.commit();
 
@@ -99,10 +98,10 @@ bool MessageMetadataRepository::remove(int id) {
 		std::string formatted_time = ss.str();
 
 		pqxx::result r = txn.exec_params(
-			"UPDATE messages SET deleted = TRUE, deleted_timestamp = $1 "
-			"WHERE id = $2",
-			formatted_time,
-			id
+    			"UPDATE messages SET deleted = TRUE, deleted_timestamp = $1 "
+    			"WHERE id = $2",
+    			formatted_time,
+    			id
 			);
 		txn.commit();
 
