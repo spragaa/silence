@@ -38,11 +38,11 @@ public:
 
 private:
 
-	int id;
-	int sender_id;
-	int receiver_id;
-	bool deleted;
-	Timestamp created_timestamp;
-	std::optional<Timestamp>deleted_timestamp;
-	std::optional<Timestamp>last_edited_timestamp;
+	int _id;
+	int _sender_id;
+	int _receiver_id;
+	bool _deleted;
+	Timestamp _created_timestamp;
+	std::optional<Timestamp> _deleted_timestamp;
+	std::optional<Timestamp> _last_edited_timestamp;
 };

@@ -12,10 +12,16 @@
 - addd lb support?
 - consistent hashring/hashing
 - hash passwords and mb more/all info
+- mb my own json wrapper
+- mb my own 'pistache'
 
 ## to do
 
 ### short term goals:
+- refactor server
+- design and implement file server :)
+- client -> server -> file server, maybe there is way to skip server and pass data directly to file server?
+
 
 ### to do:
 - implement some kind of db manager, that will manage all 4 dbs
@@ -36,7 +42,6 @@
 - unify the way to compare Timestamps, parse them from/to string, int, json and pqxx::response
 - go through all comments in source code 
 - implement request structure
-- refactor server
 - refactor client 
 
 ## questions?
@@ -68,3 +73,4 @@
 - receiving messages by receiver user 
 - handle message sending on server side (save to both dbs)
 - fix message ids
+- add _member or m_member everywhere???

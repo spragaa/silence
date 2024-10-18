@@ -23,6 +23,6 @@ public:
 
 private:
 
-	int id;
-	std::string text;
+	int _id;
+	std::string _text;
 };

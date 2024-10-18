@@ -1,6 +1,6 @@
 #include "user_metadata_repository.hpp"
 
-UserMetadataRepository::UserMetadataRepository(PostgresDBManager& postgres_db_manager, const std::string& connection_name) : BaseRepository(postgres_db_manager), connection_name(connection_name) {
+UserMetadataRepository::UserMetadataRepository(PostgresDBManager& postgres_db_manager, const std::string& connection_name) : BaseRepository(postgres_db_manager), _connection_name(connection_name) {
 	DEBUG_MSG("UserMetadataRepository created");
 }
 
@@ -8,7 +8,7 @@ UserMetadataRepository::~UserMetadataRepository() = default;
 
 int UserMetadataRepository::create(const User& user) {
 	try {
-		pqxx::work txn(postgres_db_manager.get_connection(connection_name));
+		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 
 		auto format_timestamp = [](const Timestamp& ts) {
 									auto time_t = std::chrono::system_clock::to_time_t(ts);
@@ -49,7 +49,7 @@ int UserMetadataRepository::create(const User& user) {
 
 std::optional<User> UserMetadataRepository::read(int id) {
 	try {
-		pqxx::work txn(postgres_db_manager.get_connection(connection_name));
+		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 		pqxx::result r = txn.exec_params("SELECT * FROM USERS WHERE id = $1", id);
 		DEBUG_MSG("executing SELECT * FROM USERS WHERE id = " + std::to_string(id));
 
@@ -78,7 +78,7 @@ std::optional<User> UserMetadataRepository::read(int id) {
 
 bool UserMetadataRepository::update(const User& user) {
 	try {
-		pqxx::work txn(postgres_db_manager.get_connection(connection_name));
+		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 
 		auto format_timestamp = [](const Timestamp& ts) {
 									auto time_t = std::chrono::system_clock::to_time_t(ts);
@@ -119,7 +119,7 @@ bool UserMetadataRepository::update(const User& user) {
 
 bool UserMetadataRepository::remove(int id) {
 	try {
-		pqxx::work txn(postgres_db_manager.get_connection(connection_name));
+		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 		pqxx::result r = txn.exec_params("DELETE FROM users WHERE id = $1", id);
 		DEBUG_MSG("Executing DELETE FROM users WHERE id = $1\n"
 		          "for user_id: " + std::to_string(id));
@@ -140,7 +140,7 @@ bool UserMetadataRepository::remove(int id) {
 
 bool UserMetadataRepository::authorize(int user_id, const std::string& nickname, const std::string& password) {
 	try {
-		pqxx::work txn(postgres_db_manager.get_connection(connection_name));
+		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 		DEBUG_MSG("executing SELECT * FROM users WHERE id = " + std::to_string(user_id) + " AND nickname = " + nickname);
 
 		pqxx::result r = txn.exec_params(
@@ -175,7 +175,7 @@ bool UserMetadataRepository::authorize(int user_id, const std::string& nickname,
 // test neeeded
 int UserMetadataRepository::get_id(const std::string& nickname) {
 	try {
-		pqxx::work txn(postgres_db_manager.get_connection(connection_name));
+		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 		DEBUG_MSG("executing SELECT * FROM users WHERE nickname = " + nickname);
 
 		pqxx::result r = txn.exec_params(
