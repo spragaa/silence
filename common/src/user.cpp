@@ -1,94 +1,94 @@
 #include "user.hpp"
 
-int User::user_id_counter = 1;
+int User::_user_id_counter = 1;
 
-User::User() : id(0), nickname(""), password("") {
+User::User() : _id(0), _nickname(""), _password("") {
 }
 
 User::User(const std::string& nick) : User() {
-	nickname = nick;
-	INFO_MSG("New user created, nickname: " + nickname);
+	_nickname = nick;
+	INFO_MSG("New user created, nickname: " + _nickname);
 }
 
-User::User(const std::string& nick, const std::string& pass) : id(user_id_counter++), nickname(
-		nick), password(pass), registered_timestamp(std::chrono::system_clock::now()), online(true) {
+User::User(const std::string& nick, const std::string& pass) : _id(_user_id_counter++), _nickname(
+		nick), _password(pass), _registered_timestamp(std::chrono::system_clock::now()), _online(true) {
 	// this log is missleading in case user already exists
-	INFO_MSG("New user created, nickname: " + nickname + ", " + "password: " + password);
+	INFO_MSG("New user created, nickname: " + _nickname + ", " + "password: " + _password);
 }
 
 int User::get_id() const noexcept {
-	return id;
+	return _id;
 }
 
 std::string User::get_nickname() const noexcept {
-	return nickname;
+	return _nickname;
 }
 
 std::string User::get_password() const noexcept {
-	return password;
+	return _password;
 }
 
 Timestamp User::get_registered_timestamp() const noexcept {
-	return registered_timestamp;
+	return _registered_timestamp;
 }
 
 Timestamp User::get_last_online_timestamp() const noexcept {
-	return last_online_timestamp;
+	return _last_online_timestamp;
 }
 
 bool User::is_online() const noexcept {
-	return online;
+	return _online;
 }
 
 bool User::check_password(const std::string& pass) noexcept {
-	return pass == password;
+	return pass == _password;
 }
 
 void User::set_id(const int& user_id) noexcept {
-	id = user_id;
+	_id = user_id;
 }
 
 void User::set_nickname(const std::string& nick) noexcept {
-	nickname = nick;
+	_nickname = nick;
 }
 
 void User::set_password(const std::string& pass) noexcept {
-	password = pass;
+	_password = pass;
 }
 
 void User::set_registered_timestamp(const Timestamp& timestamp) noexcept {
-	registered_timestamp = timestamp;
+	_registered_timestamp = timestamp;
 }
 
 void User::set_last_online_timestamp(const Timestamp& timestamp) noexcept {
-	last_online_timestamp = timestamp;
+	_last_online_timestamp = timestamp;
 }
 
 void User::set_online(const bool is_online) noexcept {
-	online = is_online;
+	_online = is_online;
 }
 
 nlohmann::json User::to_json() const {
 	nlohmann::json j;
-	j["id"] = id;
-	j["nickname"] = nickname;
-	j["password"] = password;
-	j["registered_timestamp"] = registered_timestamp.time_since_epoch().count();
-	j["last_online_timestamp"] = last_online_timestamp.time_since_epoch().count();
-	j["online"] = online;
+	j["id"] = _id;
+	j["nickname"] = _nickname;
+	j["password"] = _password;
+	j["registered_timestamp"] = _registered_timestamp.time_since_epoch().count();
+	j["last_online_timestamp"] = _last_online_timestamp.time_since_epoch().count();
+	j["online"] = _online;
 
 	return j;
 }
 
 User User::from_json(const nlohmann::json& j) {
 	User user;
-	user.id = j["id"];
-	user.nickname = j["nickname"];
-	user.password = j["password"];
+	user._id = j["id"];
+	user._nickname = j["nickname"];
+	user._password = j["password"];
 	// Exception in Client::run() : [json.exception.type_error.302] type must be string, but is number
-	// user.registered_timestamp = parse_timestamp(j["registered_timestamp"]);
-	// user.last_online_timestamp = parse_timestamp(j["last_online_timestamp"]);
-	user.online = j["online"].get<bool>();
+	// user._registered_timestamp = parse_timestamp(j["registered_timestamp"]);
+	// user._last_online_timestamp = parse_timestamp(j["last_online_timestamp"]);
+	user._online = j["online"].get<bool>();
 
 	return user;
 }

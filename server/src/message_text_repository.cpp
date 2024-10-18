@@ -14,7 +14,7 @@ MessageTextRepository::MessageTextRepository(const std::string& connection_strin
 		          ", Password: " + connection_options.password +
 		          ", DB: " + std::to_string(connection_options.db));
 
-		redis = std::make_unique<sw::redis::Redis>(connection_options);
+		_redis = std::make_unique<sw::redis::Redis>(connection_options);
 		INFO_MSG("[MessageTextRepository::MessageTextRepository] Successfully connected to message_text Redis database");
 	} catch (const std::exception& e) {
 		ERROR_MSG("[MessageTextRepository::MessageTextRepository] " +  std::string(e.what()));
@@ -48,34 +48,34 @@ sw::redis::ConnectionOptions MessageTextRepository::parse_config_string(const st
 }
 
 int MessageTextRepository::create(const MessageText& msg) {
-    try {
-        std::string value = msg.get_text();
-        INFO_MSG("[MessageTextRepository::create] Attempting to insert value: " + value);
+	try {
+		std::string value = msg.get_text();
+		INFO_MSG("[MessageTextRepository::create] Attempting to insert value: " + value);
 
-        long long new_id = redis->incr("message_id_counter");
-        std::string key = std::to_string(new_id);
+		long long new_id = _redis->incr("message_id_counter");
+		std::string key = std::to_string(new_id);
 
-        redis->set(key, value);
-        auto result = redis->get(key);
-        if (!result) {
-            ERROR_MSG("[MessageTextRepository::create] Verification failed. Unable to retrieve set value");
-            return 0;
-        }
+		_redis->set(key, value);
+		auto result = _redis->get(key);
+		if (!result) {
+			ERROR_MSG("[MessageTextRepository::create] Verification failed. Unable to retrieve set value");
+			return 0;
+		}
 
-        DEBUG_MSG("[MessageTextRepository::create] MessageText created successfully: " + value + " with id: " + key);
-        return static_cast<int>(new_id);
-    } catch(const sw::redis::Error& e) {
-        ERROR_MSG("[MessageTextRepository::create] Redis error: " + std::string(e.what()));
-        return 0;
-    } catch(const std::exception& e) {
-        ERROR_MSG("[MessageTextRepository::create] " + std::string(e.what()));
-        return 0;
-    }
+		DEBUG_MSG("[MessageTextRepository::create] MessageText created successfully: " + value + " with id: " + key);
+		return static_cast<int>(new_id);
+	} catch(const sw::redis::Error& e) {
+		ERROR_MSG("[MessageTextRepository::create] Redis error: " + std::string(e.what()));
+		return 0;
+	} catch(const std::exception& e) {
+		ERROR_MSG("[MessageTextRepository::create] " + std::string(e.what()));
+		return 0;
+	}
 }
 
 std::optional<MessageText> MessageTextRepository::read(int id) {
 	try {
-		auto result = redis->get(std::to_string(id));
+		auto result = _redis->get(std::to_string(id));
 		if (result) {
 			INFO_MSG("[MessageTextRepository::read] Successfully read message with id: " + std::to_string(id));
 			return MessageText(id, *result);
@@ -95,9 +95,9 @@ std::optional<MessageText> MessageTextRepository::read(int id) {
 bool MessageTextRepository::update(const MessageText& message) {
 	try {
 		auto key = std::to_string(message.get_id());
-		auto exists = redis->exists(key);
+		auto exists = _redis->exists(key);
 		if (exists) {
-			redis->set(key, message.get_text());
+			_redis->set(key, message.get_text());
 			INFO_MSG("[MessageTextRepository::update] Successfully updated message with id: " + key);
 			return true;
 		} else {
@@ -116,7 +116,7 @@ bool MessageTextRepository::update(const MessageText& message) {
 bool MessageTextRepository::remove(int id) {
 	try {
 		auto key = std::to_string(id);
-		auto removed = redis->del(key);
+		auto removed = _redis->del(key);
 		if (removed > 0) {
 			INFO_MSG("[MessageTextRepository::remove] Successfully removed message with id: " + key);
 			return true;

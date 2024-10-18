@@ -17,5 +17,5 @@ public:
 	pqxx::connection& get_connection(const std::string& name);
 
 private:
-	std::unordered_map<std::string, std::unique_ptr<pqxx::connection> > connections;
+	std::unordered_map<std::string, std::unique_ptr<pqxx::connection> > _connections;
 };

@@ -1,31 +1,31 @@
 #include "message.hpp"
 
 Message::Message(const int& sender_id, const int& receiver_id, const std::string& text) :
-	metadata(0, sender_id, receiver_id), text(0, text)
+	_metadata(0, sender_id, receiver_id), _text(0, text)
 {
 }
 
 nlohmann::json Message::to_json() const {
 	nlohmann::json j;
-	j.update(metadata.to_json());
-	j.update(text.to_json());
+	j.update(_metadata.to_json());
+	j.update(_text.to_json());
 
 	return j;
 }
 
 int Message::get_id() const {
-	return metadata.get_id();
+	return _metadata.get_id();
 }
 
 MessageText Message::get_text() const {
-	return text;
+	return _text;
 }
 
 MessageMetadata Message::get_metadata() const {
-	return metadata;
+	return _metadata;
 }
 
 void Message::set_id(const int& id) {
-    metadata.set_id(id);
-    text.set_id(id);
+	_metadata.set_id(id);
+	_text.set_id(id);
 }

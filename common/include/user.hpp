@@ -39,11 +39,11 @@ public:
 
 private:
 	// should rm this logic, or should I?
-	static int user_id_counter;
-	int id;
-	std::string nickname;
-	std::string password;
-	Timestamp registered_timestamp;
-	Timestamp last_online_timestamp;
-	bool online;
+	static int _user_id_counter;
+	int _id;
+	std::string _nickname;
+	std::string _password;
+	Timestamp _registered_timestamp;
+	Timestamp _last_online_timestamp;
+	bool _online;
 };

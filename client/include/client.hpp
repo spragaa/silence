@@ -46,15 +46,15 @@ private:
 
 private:
 
-	boost::asio::io_service io_service;
-	std::unique_ptr<boost::asio::io_service::work> work;
-	std::vector<std::thread> io_threads;
-	boost::asio::ip::tcp::socket socket;
-	boost::asio::streambuf read_buffer;
-	std::queue<std::string> write_queue;
-	std::string server_address;
-	unsigned short server_port;
-	User user;
-	std::vector<Message> messages; // vector is stupid, but good for now
-	bool is_authorized;
+	boost::asio::io_service _io_service;
+	std::unique_ptr<boost::asio::io_service::work> _work;
+	std::vector<std::thread> _io_threads;
+	boost::asio::ip::tcp::socket _socket;
+	boost::asio::streambuf _read_buffer;
+	std::queue<std::string> _write_queue;
+	std::string _server_address;
+	unsigned short _server_port;
+	User _user;
+	std::vector<Message> _messages; // vector is stupid, but good for now
+	bool _is_authorized;
 };

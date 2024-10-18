@@ -25,5 +25,5 @@ private:
 
 private:
 	// move inside base repo
-	std::string connection_name;
+	std::string _connection_name;
 };
