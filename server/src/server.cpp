@@ -136,7 +136,6 @@ void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohma
 	std::string nickname = request["nickname"];
 	std::string password = request["password"];
 
-
 	User new_user(nickname, password);
 	int user_id = user_repo->create(new_user);
 	nlohmann::json response;
@@ -188,6 +187,7 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 	int sender_id = request["sender_id"];
 	std::string receiver_nickname = request["receiver_nickname"];
 	std::string request_text = request["message_text"];
+	
 	nlohmann::json sender_response, receiver_response;
 
 	int receiver_id = user_repo->get_id(receiver_nickname);
@@ -198,11 +198,26 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 		return;
 	}
 
+	// get id, how?
 	Message new_msg(sender_id, receiver_id, request_text);
 
+	// will they be same??? 
+	int msg_metadata_id = msg_metadata_repo->create(new_msg.get_metadata());
+	int msg_text_id = msg_text_repo->create(new_msg.get_text());
+	
+	if (msg_metadata_id == msg_text_id) {
+	   new_msg.set_id(msg_text_id);
+	} else {
+        WARN_MSG("[Server::handle_send_message] msg_text_id and msg_metadata_id are not equal");
+        sender_response["status"] = "error";
+		sender_response["response"] = "Failed to correctly save messages in database";
+		boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
+		return;
+	}
+	
 	// we should not return failure here, some kind of retry logic or/and buffer is better
 	// we also can do it async
-	if (!msg_metadata_repo->create(new_msg.get_metadata()) || !msg_text_repo->create(new_msg.get_text())) {
+	if (msg_metadata_id == 0 || msg_text_id == 0) {
 		sender_response["status"] = "error";
 		sender_response["response"] = "Failed to save message into db/s";
 		boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
