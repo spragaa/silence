@@ -21,5 +21,5 @@ public:
 private:
 	MessageMetadata construct_message(const pqxx::row& row);
 	// move inside base repo
-	std::string connection_name;
+	std::string _connection_name;
 };

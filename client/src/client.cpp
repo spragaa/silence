@@ -2,28 +2,28 @@
 
 Client::Client(const std::string& server_address,
                unsigned short server_port, const std::string& nick)
-	: io_service()
-	, socket(io_service)
-	, work(new boost::asio::io_service::work(io_service))
-	, server_address(server_address)
-	, server_port(server_port)
-	, user(nick)
-	, is_authorized(false)
+	: _io_service()
+	, _socket(_io_service)
+	, _work(new boost::asio::io_service::work(_io_service))
+	, _server_address(server_address)
+	, _server_port(server_port)
+	, _user(nick)
+	, _is_authorized(false)
 {
 	DEBUG_MSG("[Client::Client] Trying to read user data from json...");
 	std::string user_data_filename = get_user_data_filename();
-	user = User::load_user_data_from_json(user_data_filename);
-	if (user.get_id() == 0) {
-		user = User();
-		user.set_nickname(nick);
-		DEBUG_MSG("[Client::Client] Temporary user created with nickname: '" + user.get_nickname() + "'");
+	_user = User::load_user_data_from_json(user_data_filename);
+	if (_user.get_id() == 0) {
+		_user = User();
+		_user.set_nickname(nick);
+		DEBUG_MSG("[Client::Client] Temporary user created with nickname: '" + _user.get_nickname() + "'");
 	}
 }
 
 Client::~Client() {
-	work.reset();
-	io_service.stop();
-	for (auto& thread : io_threads) {
+	_work.reset();
+	_io_service.stop();
+	for (auto& thread : _io_threads) {
 		if (thread.joinable()) {
 			thread.join();
 		}
@@ -31,11 +31,11 @@ Client::~Client() {
 }
 
 User Client::get_user() {
-	return user;
+	return _user;
 }
 
 void inline Client::show_actions() {
-	std::cout << user.get_nickname() << ", please select the number of the action you would like to perform now from the list below:" << std::endl;
+	std::cout << _user.get_nickname() << ", please select the number of the action you would like to perform now from the list below:" << std::endl;
 	std::cout << "0. Send message" << std::endl;
 	std::cout << "1. Get list of chats" << std::endl;
 	std::cout << "2. Get offline messages" << std::endl;
@@ -45,12 +45,12 @@ void inline Client::show_actions() {
 }
 
 bool Client::is_registered() const noexcept {
-	return user.get_id() != 0;
+	return _user.get_id() != 0;
 }
 
 void Client::register_user() {
 	std::string password;
-	std::string nickname = user.get_nickname();
+	std::string nickname = _user.get_nickname();
 	std::cout << nickname << ", create password: ";
 	std::getline(std::cin, password);
 
@@ -59,29 +59,29 @@ void Client::register_user() {
 	request["nickname"] = nickname;
 	request["password"] = password;
 
-	boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
+	boost::asio::write(_socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
 	DEBUG_MSG("[Client::register_user] Sending request: " + request.dump());
 	nlohmann::json response = nlohmann::json::parse(receive_response());
 	DEBUG_MSG("[Client::register_user] Received response: " + response.dump());
 
 	if(response["status"] == "success") {
 		if (response.contains("user_id") && !response["user_id"].is_null()) {
-			user.set_id(response["user_id"].get<int>());
-			DEBUG_MSG("[Client::register_user] User id set: " + std::to_string(user.get_id()));
+			_user.set_id(response["user_id"].get<int>());
+			DEBUG_MSG("[Client::register_user] User id set: " + std::to_string(_user.get_id()));
 		} else {
 			WARN_MSG("[Client::register_user] User ID not provided in the response");
 		}
 		if (response.contains("registered_timestamp") && !response["registered_timestamp"].is_null()) {
 			std::chrono::nanoseconds ns(response["registered_timestamp"].get<int64_t>());
 			Timestamp registered_timestamp = std::chrono::system_clock::time_point(ns);
-			user.set_registered_timestamp(registered_timestamp);
+			_user.set_registered_timestamp(registered_timestamp);
 		} else {
 			WARN_MSG("[Client::register_user] Registered timestamp not provided in the response");
 		}
 
-		user.set_nickname(nickname);
-		user.set_password(password);
-		user.save_user_data_to_json(get_user_data_filename());
+		_user.set_nickname(nickname);
+		_user.set_password(password);
+		_user.save_user_data_to_json(get_user_data_filename());
 		INFO_MSG("[Client::register_user] Registration successful. You can now authorize.")
 	} else if (response["status"] == "error") {
 		ERROR_MSG("[Client::register_user] Failed to register!");
@@ -90,39 +90,39 @@ void Client::register_user() {
 
 void Client::authorize_user() {
 	std::string password;
-	std::cout << user.get_nickname() << ", please enter password: ";
+	std::cout << _user.get_nickname() << ", please enter password: ";
 	std::getline(std::cin, password);
 
 	nlohmann::json request;
 	request["type"] = "authorize";
 	request["password"] = password;
-	request["nickname"] = user.get_nickname();
-	request["user_id"] = user.get_id();
+	request["nickname"] = _user.get_nickname();
+	request["user_id"] = _user.get_id();
 	DEBUG_MSG("[Client::authorize_user()] Sending request:" + request.dump());
 
 	try {
-		boost::asio::write(socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
+		boost::asio::write(_socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
 		INFO_MSG("[Client::authorize_user()] Authorization request sent successfully");
 
 		nlohmann::json response = nlohmann::json::parse(receive_response());
 		DEBUG_MSG("[Client::authorize_user()] Received response: " + response.dump());
 
 		if(response["status"] == "success") {
-			is_authorized = true;
+			_is_authorized = true;
 			// if (response.contains("user_data") && !response["user_data"].is_null()) {
 			// nlohmann::json user_data = response["user_data"];
 			// this is not yet finished on server side
 			// if (user_data.contains("last_online_timestamp") && !user_data["last_online_timestamp"].is_null()) {
 			//     std::chrono::nanoseconds ns(user_data["last_online_timestamp"].get<int64_t>());
 			//     Timestamp last_online = std::chrono::system_clock::time_point(ns);
-			//     user.set_last_online_timestamp(last_online);
+			//     _user.set_last_online_timestamp(last_online);
 			// }
 			// if (user_data.contains("is_online") && !user_data["is_online"].is_null()) {
-			//     user.set_online(user_data["is_online"].get<bool>());
+			//     _user.set_online(user_data["is_online"].get<bool>());
 			// }
 			// }
 
-			user.save_user_data_to_json(get_user_data_filename());
+			_user.save_user_data_to_json(get_user_data_filename());
 			INFO_MSG("[Client::authorize_user()] User data updated and saved");
 		} else if (response["status"] == "error") {
 			ERROR_MSG("[Client::authorize_user()] Failed to authorize user!");
@@ -139,8 +139,8 @@ void Client::authorize_user() {
 void Client::async_read() {
 	DEBUG_MSG("[Client::async_read] Async read has been started");
 
-	io_service.post([this]() {
-		boost::asio::async_read_until(socket, read_buffer, "\r\n\r\n",
+	_io_service.post([this]() {
+		boost::asio::async_read_until(_socket, _read_buffer, "\r\n\r\n",
 		                              boost::bind(&Client::handle_async_read, this,
 		                                          boost::asio::placeholders::error,
 		                                          boost::asio::placeholders::bytes_transferred));
@@ -149,9 +149,9 @@ void Client::async_read() {
 
 void Client::handle_async_read(const boost::system::error_code& error, size_t bytes_transferred) {
 	if (!error) {
-		std::string message(boost::asio::buffers_begin(read_buffer.data()),
-		                    boost::asio::buffers_begin(read_buffer.data()) + bytes_transferred);
-		read_buffer.consume(bytes_transferred);
+		std::string message(boost::asio::buffers_begin(_read_buffer.data()),
+		                    boost::asio::buffers_begin(_read_buffer.data()) + bytes_transferred);
+		_read_buffer.consume(bytes_transferred);
 		DEBUG_MSG("[Client::handle_async_read] Read: " + message);
 
 		process_server_message(message);
@@ -167,7 +167,7 @@ void Client::handle_async_read(const boost::system::error_code& error, size_t by
 }
 
 bool Client::is_connected() {
-	return socket.is_open();
+	return _socket.is_open();
 }
 
 void Client::async_write(const std::string& message) {
@@ -176,9 +176,9 @@ void Client::async_write(const std::string& message) {
 		return;
 	}
 
-	io_service.post([this, message]() {
-		bool write_in_progress = !write_queue.empty();
-		write_queue.push(message + "\r\n\r\n");
+	_io_service.post([this, message]() {
+		bool write_in_progress = !_write_queue.empty();
+		_write_queue.push(message + "\r\n\r\n");
 
 		if (!write_in_progress) {
 			do_write();
@@ -187,9 +187,9 @@ void Client::async_write(const std::string& message) {
 }
 
 void Client::do_write() {
-	if (!write_queue.empty()) {
-		boost::asio::async_write(socket,
-		                         boost::asio::buffer(write_queue.front()),
+	if (!_write_queue.empty()) {
+		boost::asio::async_write(_socket,
+		                         boost::asio::buffer(_write_queue.front()),
 		                         boost::bind(&Client::handle_async_write, this,
 		                                     boost::asio::placeholders::error));
 	}
@@ -197,7 +197,7 @@ void Client::do_write() {
 
 void Client::handle_async_write(const boost::system::error_code& error) {
 	if (!error) {
-		write_queue.pop();
+		_write_queue.pop();
 		do_write();
 	} else {
 		ERROR_MSG("[Client::handle_async_write] " + error.message());
@@ -256,7 +256,7 @@ void Client::handle_user_interaction() {
 
 					nlohmann::json message;
 					message["type"] = "send_message";
-					message["sender_id"] = user.get_id();
+					message["sender_id"] = _user.get_id();
 					message["receiver_nickname"] = recipient;
 					message["message_text"] = message_text;
 
@@ -287,15 +287,15 @@ void Client::handle_user_interaction() {
 
 void Client::run() {
 	try {
-		boost::asio::ip::tcp::resolver resolver(io_service);
-		boost::asio::ip::tcp::resolver::query query(server_address, std::to_string(server_port));
+		boost::asio::ip::tcp::resolver resolver(_io_service);
+		boost::asio::ip::tcp::resolver::query query(_server_address, std::to_string(_server_port));
 		boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
-		boost::asio::connect(socket, endpoint_iterator);
+		boost::asio::connect(_socket, endpoint_iterator);
 
 		unsigned int thread_count = std::thread::hardware_concurrency();
 		for (unsigned int i = 0; i < thread_count; ++i) {
-			io_threads.emplace_back([this]() {
-				io_service.run();
+			_io_threads.emplace_back([this]() {
+				_io_service.run();
 			});
 		}
 
@@ -315,11 +315,11 @@ void Client::run() {
 
 		INFO_MSG("[Client::run()] User registered successfully");
 
-		while (!is_authorized) {
+		while (!_is_authorized) {
 			INFO_MSG("[Client::run()] Please authorize to continue.");
 
 			authorize_user();
-			if (!is_authorized) {
+			if (!_is_authorized) {
 				WARN_MSG("[Client::run()] Authorization failed. Would you like to try again? (y/n): ");
 				std::string response;
 				std::getline(std::cin, response);
@@ -335,11 +335,11 @@ void Client::run() {
 		async_read();
 		handle_user_interaction();
 
-		work.reset();
-		for (auto& thread : io_threads) {
+		_work.reset();
+		for (auto& thread : _io_threads) {
 			thread.join();
 		}
-		socket.close();
+		_socket.close();
 	} catch (const std::exception& e) {
 		ERROR_MSG("[Client::run()] " + std::string(e.what()));
 	}
@@ -353,15 +353,15 @@ std::string Client::read_user_text() const noexcept{
 }
 
 void Client::send_message(const std::string& message) {
-	DEBUG_MSG("send_message" + get_socket_info(socket));
-	boost::asio::write(socket, boost::asio::buffer(message + "\r\n\r\n"));
+	DEBUG_MSG("send_message" + get_socket_info(_socket));
+	boost::asio::write(_socket, boost::asio::buffer(message + "\r\n\r\n"));
 }
 
 std::string Client::receive_response() {
 	boost::asio::streambuf response_buf;
 	boost::system::error_code error;
 
-	boost::asio::read_until(socket, response_buf, "\r\n\r\n", error);
+	boost::asio::read_until(_socket, response_buf, "\r\n\r\n", error);
 
 	if (error && (error != boost::asio::error::eof)) {
 		ERROR_MSG("[Client::receive_response()] While receiving response: " + std::string(error.message()));
@@ -377,5 +377,5 @@ std::string Client::receive_response() {
 }
 
 std::string Client::get_user_data_filename() const noexcept {
-	return std::string(SOURCE_DIR) + "/user_data/" + "user_" + user.get_nickname() + "_" + server_address + "_" + std::to_string(server_port) + ".json";
+	return std::string(SOURCE_DIR) + "/user_data/" + "user_" + _user.get_nickname() + "_" + _server_address + "_" + std::to_string(_server_port) + ".json";
 }

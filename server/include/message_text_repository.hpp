@@ -21,5 +21,5 @@ private:
 	int get_next_id();
 
 private:
-	std::unique_ptr<sw::redis::Redis> redis;
+	std::unique_ptr<sw::redis::Redis> _redis;
 };

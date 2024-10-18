@@ -17,8 +17,8 @@ public:
 	MessageMetadata get_metadata() const;
 
 	void set_id(const int& id);
-	
+
 private:
-	MessageMetadata metadata;
-	MessageText text;
+	MessageMetadata _metadata;
+	MessageText _text;
 };

@@ -6,7 +6,7 @@
 template<typename T>
 class BaseRepository {
 public:
-	BaseRepository(PostgresDBManager& postgres_db_manager) : postgres_db_manager(postgres_db_manager) {
+	BaseRepository(PostgresDBManager& postgres_db_manager) : _postgres_db_manager(postgres_db_manager) {
 	}
 	BaseRepository() = default;
 	virtual ~BaseRepository() = default;
@@ -17,5 +17,5 @@ public:
 	virtual bool remove(int id) = 0;
 
 protected:
-	PostgresDBManager& postgres_db_manager;
+	PostgresDBManager& _postgres_db_manager;
 };
