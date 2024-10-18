@@ -16,8 +16,9 @@ public:
 	MessageText get_text() const;
 	MessageMetadata get_metadata() const;
 
+	void set_id(const int& id);
+	
 private:
-	static int message_id_counter;
 	MessageMetadata metadata;
 	MessageText text;
 };

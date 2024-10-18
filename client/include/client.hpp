@@ -36,7 +36,7 @@ private:
 	void authorize_user();
 	void handle_user_interaction();
 
-	void start_async_read();
+	void async_read();
 	void handle_async_read(const boost::system::error_code& error, size_t bytes_transferred);
 	void async_write(const std::string& message);
 	void handle_async_write(const boost::system::error_code& error);
