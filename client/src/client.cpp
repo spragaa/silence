@@ -136,8 +136,8 @@ void Client::authorize_user() {
 	INFO_MSG("[Client::authorize_user()] Authorization process completed");
 }
 
-void Client::start_async_read() {
-	DEBUG_MSG("[Client::start_async_read] Async read has been started");
+void Client::async_read() {
+	DEBUG_MSG("[Client::async_read] Async read has been started");
 
 	io_service.post([this]() {
 		boost::asio::async_read_until(socket, read_buffer, "\r\n\r\n",
@@ -156,7 +156,7 @@ void Client::handle_async_read(const boost::system::error_code& error, size_t by
 
 		process_server_message(message);
 
-		start_async_read();
+		async_read();
 	} else if (error == boost::asio::error::eof) {
 		ERROR_MSG("[Client::handle_async_read] Server closed connection");
 		// disconnect
@@ -332,7 +332,7 @@ void Client::run() {
 
 		INFO_MSG("[Client::run()] User authorized successfully");
 		INFO_MSG("[Client::run()] Now you can start messaging!");
-		start_async_read();
+		async_read();
 		handle_user_interaction();
 
 		work.reset();
