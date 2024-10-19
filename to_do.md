@@ -37,7 +37,8 @@
 - add handshake, message framing, and control frames (ping/pong)
 - messenger interface in terminal
 - most of the runtime errors (db interactions, request/response hadling) should not prevent server/client from running
-- fix policy warnings while building  
+- fix policy warnings while building
+- use fs::filepath instead of strings
 ### refactoring 
 - unify the way to compare Timestamps, parse them from/to string, int, json and pqxx::response
 - go through all comments in source code 
