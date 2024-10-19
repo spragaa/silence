@@ -6,6 +6,7 @@ add_executable(file_server
 
 target_link_libraries(file_server 
     file_server_lib 
+    common_lib
 )
 
 target_include_directories(file_server
