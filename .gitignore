@@ -1,16 +1,7 @@
-CMakeLists.txt.user
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
-Makefile
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
-_deps
-CMakeUserPresets.json
+.vscode
 build
 
-.vscode
+# json with user data, used only by client 
 user_data
+# file system for storing media files, used only by file server  
+media_filesystem
