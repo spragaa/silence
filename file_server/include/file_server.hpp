@@ -16,7 +16,7 @@ public:
 	FileServer(
 	    uint16_t port = 55544, 
     	unsigned int threads = 16, 
-    	const std::string& storage_dir = std::string(SOURCE_DIR) + "/file_server", 
+    	const std::string& storage_dir = std::string(SOURCE_DIR) + "/media_file_system", 
     	size_t max_file_size = 1024 * 1024 * 1024
 	);
 	
