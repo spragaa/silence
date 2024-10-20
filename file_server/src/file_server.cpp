@@ -5,7 +5,7 @@ const std::string FileServer::DOWNLOAD_ROUTE = "/download/:filename";
 const std::string FileServer::DELETE_ROUTE = "/delete/:filename";
 const std::string FileServer::LIST_ROUTE = "/list";
 
-constexpr size_t CHUNK_SIZE_BYTES = 8192;
+constexpr size_t CHUNK_SIZE_BYTES = 512;
 
 FileServer::FileServer(uint16_t port, unsigned int threads, const std::string& storage_dir, size_t max_file_size)
 	: _http_endpoint(std::make_shared<Pistache::Http::Endpoint>(Pistache::Address("*:" + std::to_string(port))))
@@ -126,10 +126,22 @@ void FileServer::delete_file(const Pistache::Rest::Request& request, Pistache::H
 	}
 }
 
+// should iterate recursively 
 void FileServer::list_files(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
-	std::string file_list;
-	for (const auto& entry : fs::directory_iterator(_storage_dir)) {
-		file_list += entry.path().filename().string() + "\n";
-	}
-	response.send(Pistache::Http::Code::Ok, file_list);
+    std::cout << "[DEBUG] Entering list_files function" << std::endl;
+    
+    auto start_time = std::chrono::high_resolution_clock::now();
+    
+    std::string file_list;
+    int file_count = 0;
+    
+    for (const auto& entry : fs::directory_iterator(_storage_dir)) {
+        file_list += entry.path().filename().string() + "\n";
+        file_count++;
+    }
+    
+    std::cout << "[DEBUG] Found " << file_count << " files" << std::endl;
+    
+    std::cout << "[DEBUG] Sending response" << std::endl;
+    response.send(Pistache::Http::Code::Ok, file_list);
 }

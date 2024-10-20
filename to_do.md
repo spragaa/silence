@@ -18,12 +18,13 @@
 ## to do
 
 ### short term goals:
+- implement rest api client for file server
+- implement hashing for filenames 
+- handle the filenames on server side (message_metadata, responses for client, status feedback)
+- solve this: client -> server -> file server, maybe there is way to skip server and pass data directly to file server?
 - refactor server
-- design and implement file server :)
-- client -> server -> file server, maybe there is way to skip server and pass data directly to file server?
 
-
-### to do:
+### tasks:
 - implement some kind of db manager, that will manage all 4 dbs
 - is int enough for id? -> probably not 
 - message statuses (created, sent, undelivered, delivered, read, unread)
@@ -39,6 +40,8 @@
 - most of the runtime errors (db interactions, request/response hadling) should not prevent server/client from running
 - fix policy warnings while building
 - use fs::filepath instead of strings
+- add namespaces
+
 ### refactoring 
 - unify the way to compare Timestamps, parse them from/to string, int, json and pqxx::response
 - go through all comments in source code 
@@ -75,3 +78,4 @@
 - handle message sending on server side (save to both dbs)
 - fix message ids
 - add _member or m_member everywhere???
+- design and implement file server :)
