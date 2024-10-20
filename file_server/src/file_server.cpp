@@ -128,7 +128,7 @@ void FileServer::delete_file(const Pistache::Rest::Request& request, Pistache::H
 
 // should iterate recursively 
 void FileServer::list_files(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
-    std::cout << "[DEBUG] Entering list_files function" << std::endl;
+    DEBUG_MSG("[FileServer::list_files] Entering list_files function");
     
     auto start_time = std::chrono::high_resolution_clock::now();
     
@@ -140,8 +140,8 @@ void FileServer::list_files(const Pistache::Rest::Request& request, Pistache::Ht
         file_count++;
     }
     
-    std::cout << "[DEBUG] Found " << file_count << " files" << std::endl;
+    DEBUG_MSG("[FileServer::list_files] Found " + std::to_string(file_count) << " files");
+    DEBUG_MSG("[FileServer::list_files] Sending 'Pistache::Http::Code::Ok' response");
     
-    std::cout << "[DEBUG] Sending response" << std::endl;
     response.send(Pistache::Http::Code::Ok, file_list);
 }

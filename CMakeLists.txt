@@ -34,8 +34,9 @@ add_definitions(-DSOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
 # this works fine, but I'd like to directly fetch boost library, I think there is a way to fetch only needed boost libs
 find_package(Boost 1.74 REQUIRED COMPONENTS system thread)
-
 include(FetchContent)
+
+message("Fetching https://github.com/nlohmann/json.git, tag v3.11.2")
 FetchContent_Declare(
     nlohmann_json
     GIT_REPOSITORY https://github.com/nlohmann/json.git
@@ -43,7 +44,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nlohmann_json)
 
-# disable build tests here if possible
+message("Fetching https://github.com/jtv/libpqxx.git, tag 7.9.2")
 FetchContent_Declare(
     libpqxx
     GIT_REPOSITORY https://github.com/jtv/libpqxx.git
@@ -53,6 +54,7 @@ set(PQXX_STATIC OFF CACHE BOOL "" FORCE)
 set(SKIP_BUILD_TEST ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(libpqxx)
 
+message("Fetching https://github.com/redis/hiredis.git, tag v1.0.2")
 FetchContent_Declare(
     hiredis
     GIT_REPOSITORY https://github.com/redis/hiredis.git
@@ -60,6 +62,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(hiredis)
 
+message("Fetching https://github.com/sewenew/redis-plus-plus.git, tag 1.3.5")
 FetchContent_Declare( 
     redis_plus_plus
     GIT_REPOSITORY https://github.com/sewenew/redis-plus-plus.git
@@ -70,6 +73,7 @@ set(REDIS_PLUS_PLUS_BUILD_TEST OFF)
 set(REDIS_PLUS_PLUS_USE_TLS OFF)
 FetchContent_MakeAvailable(redis_plus_plus)
 
+message("Fetching https://github.com/pistacheio/pistache.git, tag 0.0.5")
 FetchContent_Declare(
     pistache
     GIT_REPOSITORY https://github.com/pistacheio/pistache.git
@@ -88,6 +92,7 @@ add_subdirectory(client)
 if(BUILD_TESTS)
     enable_testing()
     
+    message("Fetching https://github.com/google/googletest.git, tag release-1.12.1")
     FetchContent_Declare(
         googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
