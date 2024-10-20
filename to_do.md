@@ -18,7 +18,9 @@
 ## to do
 
 ### short term goals:
-- implement rest api client for file server
+- test interaction of file_server and file_server_client with all possible requests, make sure that files are sent
+- integrate file server client into server workflow
+- add tests for file_server, file_server_client and their interaction
 - implement hashing for filenames 
 - handle the filenames on server side (message_metadata, responses for client, status feedback)
 - solve this: client -> server -> file server, maybe there is way to skip server and pass data directly to file server?
@@ -79,3 +81,4 @@
 - fix message ids
 - add _member or m_member everywhere???
 - design and implement file server :)
+- implement rest api client for file server
