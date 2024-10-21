@@ -6,6 +6,15 @@ const std::string FileServer::DELETE_ROUTE = "/delete/:filename";
 const std::string FileServer::LIST_ROUTE = "/list";
 
 constexpr size_t CHUNK_SIZE_BYTES = 512;
+constexpr std::array<char, 62> ALPHABET = {
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+    'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+    'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',
+    'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+    'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
+    'y', 'z'
+};
 
 FileServer::FileServer(uint16_t port, unsigned int threads, const std::string& storage_dir, size_t max_file_size)
 	: _http_endpoint(std::make_shared<Pistache::Http::Endpoint>(Pistache::Address("*:" + std::to_string(port))))
@@ -24,6 +33,7 @@ void FileServer::init() {
 	_http_endpoint->init(opts);
 	INFO_MSG("[FileServer::init] Initialization successful!");
 	setup_routes();
+	// generate_folder_structure();
 }
 
 void FileServer::start() {
@@ -43,11 +53,32 @@ void FileServer::setup_routes() {
     INFO_MSG("[FileServer::setup_routes] Routes created:\n" + UPLOAD_ROUTE + "\n" + DOWNLOAD_ROUTE + "\n" + DELETE_ROUTE + "\n" + LIST_ROUTE);
 }
 
+// from one side it is ok that server initialization takes a while,
+// but on other hand, we can create relative folders once we actually need them
+void FileServer::generate_folder_structure() {
+    fs::path root_dir(_storage_dir);
+    
+    for (const char c1 : ALPHABET) {
+        for (const char c2 : ALPHABET) {
+            fs::path dir_path = root_dir / (std::string(1, c1) + std::string(1, c2));
+            fs::create_directories(dir_path);
+
+            for (const char sub_c1 : ALPHABET) {
+                for (const char sub_c2 : ALPHABET) {
+                    fs::path sub_dir_path = dir_path / (std::string(1, sub_c1) + std::string(1, sub_c2));
+                    fs::create_directories(sub_dir_path);
+                }
+            }
+        }    
+    }
+}
+
 void FileServer::upload_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
 	auto filename = request.param(":filename").as<std::string>();
 	auto filepath = fs::path(_storage_dir) / filename;
 	
 	const std::string& body = request.body();
+	
 	size_t raw_data_bytes = body.size();
 	if (raw_data_bytes > CHUNK_SIZE_BYTES) {
 		response.send(Pistache::Http::Code::Bad_Request, "Received raw data size is bigger then acceptable chunk size!");
