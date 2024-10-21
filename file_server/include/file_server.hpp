@@ -37,9 +37,10 @@ private:
 	void download_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
 	void delete_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
 	void list_files(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
+	
+	void generate_folder_structure();
 
 private:
-
 	std::shared_ptr<Pistache::Http::Endpoint> _http_endpoint;
 	Pistache::Rest::Router _router;
 	unsigned int _threads;
