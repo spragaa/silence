@@ -19,7 +19,7 @@ public:
 	    uint16_t port = 55544, 
     	unsigned int threads = 16, 
     	const std::string& storage_dir = std::string(SOURCE_DIR) + "/media_file_system/", 
-    	size_t max_file_size = 1024 * 1024 * 1024
+    	size_t max_file_size = 10000000
 	);
 	
 	void init();
@@ -44,5 +44,5 @@ private:
 	Pistache::Rest::Router _router;
 	unsigned int _threads;
 	std::string _storage_dir;
-	size_t _max_file_size;
+	size_t _max_file_size; // 10mb by default -> document it
 };
