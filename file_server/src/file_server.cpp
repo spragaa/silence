@@ -46,25 +46,33 @@ void FileServer::setup_routes() {
 void FileServer::upload_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
 	auto filename = request.param(":filename").as<std::string>();
 	auto filepath = fs::path(_storage_dir) / filename;
-
+	
 	const std::string& body = request.body();
-	size_t total_bytes = body.size();
-	DEBUG_MSG("[FileServer::upload_file] Upload file called, filepath:" + filepath.string() + ", body size: " + std::to_string(total_bytes) + " bytes");
-
-	if (total_bytes >= _max_file_size) {
-		response.send(Pistache::Http::Code::Bad_Request, "File size exceeds max file size limit");
-		WARN_MSG("[FileServer::upload_file] File size exceeds max file size limit");
+	size_t raw_data_bytes = body.size();
+	if (raw_data_bytes > CHUNK_SIZE_BYTES) {
+		response.send(Pistache::Http::Code::Bad_Request, "Received raw data size is bigger then acceptable chunk size!");
+		WARN_MSG("[FileServer::upload_file] Received raw data size is bigger then acceptable chunk size!");
+		// remove file add message about fail
 		return;
 	}
+	
+	size_t file_size = fs::file_size(filepath); 
+	if (file_size > _max_file_size - raw_data_bytes) {
+	    WARN_MSG("[FileServer::upload_file] Size of " + filepath.string() + " is: " + std::to_string(file_size) + ", thats more then system limit, removing this file");
+		fs::remove(filepath);
+		return;
+	}
+	
+	DEBUG_MSG("[FileServer::upload_file] Upload file called, filepath:" + filepath.string() + ", body size: " + std::to_string(raw_data_bytes) + " bytes");
 
-	std::ofstream file(filepath, std::ios::binary);
+	std::ofstream file(filepath, std::ios::binary | std::ios::app);
 	if (!file) {
 		response.send(Pistache::Http::Code::Internal_Server_Error, "Failed to create file");
 		WARN_MSG("[FileServer::upload_file] Failed to create file: " + filepath.string());
 		return;
-	}
+	} 
 
-	file.write(body.c_str(), total_bytes);
+	file.write(body.c_str(), raw_data_bytes);
 	file.close();
 
 	if (file.good()) {

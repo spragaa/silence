@@ -22,19 +22,28 @@
 // 
 #include "file_server_client.hpp"
 #include <iostream>
+namespace fs = std::filesystem;
 
 int main() {
     try {
         FileServerClient client("localhost", "55544");
+        std::string filename = "logscr.txt";
+        std::string filepath = "/home/logi/Downloads";
 
-        std::cout << "Listing files:\n" << client.list_files() << std::endl;
-        std::cout << "Uploading file:\n" << client.upload_file("test.txt", "Hello, World!") << std::endl;
-        std::cout << "Downloading file:\n" << client.download_file("test.txt") << std::endl;
-        std::cout << "Deleting file:\n" << client.delete_file("test.txt") << std::endl;
-        std::cout << "Listing files after deletion:\n" << client.list_files() << std::endl;
+        fs::path full_path = fs::path(filepath) / filename;
+        if (!fs::exists(full_path)) {
+            std::cerr << "Error: File does not exist: " << full_path << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        std::cout << "Uploading file: " << full_path << std::endl;
+        std::string upload_result = client.upload_file(filename, filepath);
+        std::cout << "Upload result: " << upload_result << std::endl;
+
+        // std::cout << "Listing files:\n" << client.list_files() << std::endl;
     }
     catch(std::exception const& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Error in main: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
