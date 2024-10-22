@@ -2,6 +2,10 @@
 build
 
 # jsons with user data, used only by client 
-client/user_data
+client/user_data/*
+
+# files that user allowed client programm to use, basically send to server
+client/user_files/*
+
 # file system for storing media files, used only by file server  
-file_server/media_file_system
+file_server/media_file_system/*
