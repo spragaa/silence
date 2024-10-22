@@ -7,6 +7,7 @@
 #include "user_metadata_repository.hpp"
 #include "message_metadata_repository.hpp"
 #include "message_text_repository.hpp"
+#include "file_server_client.hpp"
 
 #include <iostream>
 #include <ostream>
@@ -37,7 +38,9 @@ public:
 	       unsigned int thread_pool_size,
 	       const std::string& user_metadata_db_connection_string, // add metadata to name
 	       const std::string& msg_metadata_db_connection_string, // add metadata to name
-	       const std::string& msg_text_db_connection_string
+	       const std::string& msg_text_db_connection_string,
+           const std::string& file_server_host,
+           const std::string& file_server_port
 	       );
 	~Server();
 
@@ -51,15 +54,17 @@ private:
 	void handle_register(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	void handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	void handle_send_message(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
+	void handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 
+private:
 	boost::asio::io_service _io_service;
 	tcp::acceptor _acceptor;
 	boost::shared_ptr<boost::asio::io_service::work> _work;
-
 	PostgresDBManager _postgres_db_manager;
 	std::unique_ptr<UserMetadataRepository> _user_repo;
 	std::unique_ptr<MessageMetadataRepository> _msg_metadata_repo;
 	std::unique_ptr<MessageTextRepository> _msg_text_repo;
+	std::unique_ptr<FileServerClient> _file_server_client;
 
 	std::map<int, boost::shared_ptr<tcp::socket> > _connected_clients;
 };
