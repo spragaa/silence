@@ -1,7 +1,7 @@
 .vscode
 build
 
-# json with user data, used only by client 
-user_data
+# jsons with user data, used only by client 
+client/user_data
 # file system for storing media files, used only by file server  
-media_file_system
+file_server/media_file_system

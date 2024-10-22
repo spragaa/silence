@@ -166,6 +166,9 @@ void FileServer::delete_file(const Pistache::Rest::Request& request, Pistache::H
 }
 
 // should iterate recursively 
+// why do we need this one?
+// this will take a lot of time, and doesn't make any sense 
+// maybe we can use it for file system status?
 void FileServer::list_files(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
     DEBUG_MSG("[FileServer::list_files] Entering list_files function");
     
