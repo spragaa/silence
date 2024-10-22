@@ -377,5 +377,5 @@ std::string Client::receive_response() {
 }
 
 std::string Client::get_user_data_filename() const noexcept {
-	return std::string(SOURCE_DIR) + "/user_data/" + "user_" + _user.get_nickname() + "_" + _server_address + "_" + std::to_string(_server_port) + ".json";
+	return std::string(SOURCE_DIR) + "/client/user_data/" + "user_" + _user.get_nickname() + "_" + _server_address + "_" + std::to_string(_server_port) + ".json";
 }
