@@ -12,6 +12,9 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <nlohmann/json.hpp>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 class Client {
 public:
@@ -30,7 +33,8 @@ private:
 	std::string read_user_text() const noexcept;
 	std::string receive_response();
 	std::string get_user_data_filename() const noexcept;
-
+	void send_file_chunks(const std::string& filepath);
+	
 	bool is_registered() const noexcept;
 	void register_user();
 	void authorize_user();
@@ -55,6 +59,7 @@ private:
 	std::string _server_address;
 	unsigned short _server_port;
 	User _user;
-	std::vector<Message> _messages; // vector is stupid, but good for now
+	std::vector<Message> _messages;
 	bool _is_authorized;
+	std::string _user_files_dir = std::string(SOURCE_DIR) + "/client/user_files";
 };
