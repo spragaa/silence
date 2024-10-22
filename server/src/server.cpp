@@ -3,11 +3,14 @@
 #include <boost/thread.hpp>
 #include <iostream>
 
-Server::Server(unsigned short port, unsigned int thread_pool_size,
+Server::Server(unsigned short port, 
+               unsigned int thread_pool_size,
                const std::string& user_metadata_db_connection_string,
                const std::string& msg_metadata_db_connection_string,
-               const std::string& msg_text_db_connection_string
-               )
+               const std::string& msg_text_db_connection_string,
+               const std::string& file_server_host,
+               const std::string& file_server_port
+            )
 	: _acceptor(_io_service, tcp::endpoint(tcp::v4(), port)),
 	_work(new boost::asio::io_service::work(_io_service)) {
 
@@ -17,6 +20,8 @@ Server::Server(unsigned short port, unsigned int thread_pool_size,
 	_user_repo = std::make_unique<UserMetadataRepository>(_postgres_db_manager, "user_metadata_db");
 	_msg_metadata_repo = std::make_unique<MessageMetadataRepository>(_postgres_db_manager, "message_metadata_db");
 	_msg_text_repo = std::make_unique<MessageTextRepository>(msg_text_db_connection_string);
+	
+	_file_server_client = std::make_unique<FileServerClient>(file_server_host, file_server_port);
 }
 
 Server::~Server() {
@@ -92,7 +97,10 @@ void Server::handle_request(boost::shared_ptr<tcp::socket> socket) {
 					handle_authorize(socket, request);
 				} else if(request["type"] == "send_message") {
 					handle_send_message(socket, request);
-				} else {
+				} else if (request["type"] == "file_chunk") {
+                    handle_file_chunk(socket, request);
+                } 
+				else {
 					nlohmann::json response = {
 						{"status", "error"},
 						{"response", "Unknown request type"}
@@ -230,4 +238,9 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 			boost::asio::write(*(it->second), boost::asio::buffer(receiver_response.dump() + "\r\n\r\n"));
 		}
 	}
+}
+
+void Server::handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
+
+    WARN_MSG("[Server::handle_file_chunk]!!!!!!!!!!");
 }

@@ -34,6 +34,7 @@ User Client::get_user() {
 	return _user;
 }
 
+
 void inline Client::show_actions() {
 	std::cout << _user.get_nickname() << ", please select the number of the action you would like to perform now from the list below:" << std::endl;
 	std::cout << "0. Send message" << std::endl;
@@ -215,6 +216,36 @@ void Client::process_server_message(const std::string& message) {
 	}
 }
 
+// should be async!
+// void Client::send_file_chunks(const std::string& filepath) {
+//     std::ifstream file(filepath, std::ios::binary);
+//     if (!file) {
+//         ERROR_MSG("[Client::send_file_chunks] Unable to open file: " + filepath);
+//         return;
+//     }
+
+//     const size_t chunk_size = 512;
+//     std::vector<char> buffer(chunk_size);
+//     size_t chunk_number = 0;
+
+//     while (!file.eof()) {
+//         file.read(buffer.data(), chunk_size);
+//         std::streamsize bytes_read = file.gcount();
+
+//         if (bytes_read == 0) {
+//             break;
+//         }
+
+//         nlohmann::json file_chunk;
+//         file_chunk["type"] = "file_chunk";
+//         file_chunk["filename"] = fs::path(filepath).filename().string();
+//         file_chunk["chunk_data"] = std::string(buffer.data(), bytes_read);
+//         file_chunk["is_last"] = file.eof();
+
+//         async_write(file_chunk.dump());
+//     }
+// }
+
 void Client::handle_user_interaction() {
 	DEBUG_MSG("[Client::handle_user_interaction()] Starting interaction with user!");
 
@@ -253,14 +284,32 @@ void Client::handle_user_interaction() {
 					std::cout << "Enter your message: ";
 					std::string message_text;
 					std::getline(std::cin, message_text);
+					
+					// how send multiple files?
+					std::string file_name;
+					std::cout << "If there is a file to send, please enter the file name (it should be located in " 
+					          << _user_files_dir << " or type no, otherwise: ";
+					std::getline(std::cin, file_name);
 
 					nlohmann::json message;
 					message["type"] = "send_message";
 					message["sender_id"] = _user.get_id();
 					message["receiver_nickname"] = recipient;
 					message["message_text"] = message_text;
+					
+					// not sure if filepath is the best way of doing it
+					message["filepath"] = "none";
+					fs::path filepath = fs::path(_user_files_dir) / file_name;
+					if (!fs::exists(filepath)) {
+					    WARN_MSG("[Client::handle_user_interaction] File doesn't exist: " + filepath.string());
+					} else {
+					    message["filepath"] = filepath.string();
+					}					
 
 					async_write(message.dump());
+					// async?
+					// send_file(filepath);
+					
 					DEBUG_MSG("CASE 0");
 				}
 				break;
