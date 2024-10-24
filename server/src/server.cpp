@@ -251,13 +251,17 @@ void Server::handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nloh
     int chunk_number = request["chunk_number"];
     bool is_last = request["is_last"];
     
-    // lets try
-    
-    // try send chunk to the file_server
-    _file_server_client->upload_file()
     nlohmann::json sender_response, receiver_response;
-    sender_response[""]
-
-    boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
+    sender_response["type"] = "chunk_acknowledgment";
+    sender_response["status"] = "success";
+    sender_response["filename"] = filename;
     
+    if(_file_server_client->upload_chunk(filename, chunk_data)) {
+        INFO_MSG("[Server::handle_file_chunk] Chunk uploaded to file server");
+        sender_response["status"] = "success";
+    } else {
+        sender_response["status"] = "success";
+    }
+
+    boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));    
 }

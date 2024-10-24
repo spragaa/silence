@@ -114,6 +114,41 @@ std::string FileServerClient::upload_file(const std::string& filename, const std
     return "File uploaded successfully. Server response: " + response;
 }
 
+bool FileServerClient::upload_chunk(const std::string& filename, const std::string& chunk_data) {
+    try {
+        auto const results = _resolver.resolve(_host, _port);
+        _stream.connect(results);
+
+        http::request<http::string_body> req{http::verb::post, "/upload/" + filename, _version};
+        req.set(http::field::host, _host);
+        req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+        req.set(http::field::content_type, "application/octet-stream");
+        req.body() = chunk_data;
+        req.prepare_payload();
+
+        http::write(_stream, req);
+
+        beast::flat_buffer buffer;
+        http::response<http::dynamic_body> res;
+        http::read(_stream, buffer, res);
+
+        std::string response_body = beast::buffers_to_string(res.body().data());
+
+        beast::error_code ec;
+        _stream.socket().shutdown(tcp::socket::shutdown_both, ec);
+
+        if(ec && ec != beast::errc::not_connected) {
+            throw beast::system_error{ec};
+        }
+        
+        return response_body == "File uploaded successfully";
+    }
+    catch(std::exception const& e) {
+        ERROR_MSG("[FileServerClient::upload_chunk] " + std::string(e.what()));
+        return false;
+    }
+}
+
 std::string FileServerClient::download_file(const std::string& filename) {
     return send_request("/download/" + filename, http::verb::get);
 }
