@@ -218,7 +218,7 @@ void Client::process_server_message(const std::string& message) {
 		if (json_message["type"] == "chunk_acknowledgment") {
             std::lock_guard<std::mutex> lock(_mutex);
             _chunk_acknowledged = true;
-            _cv.notify_one();
+            _chunk_cv.notify_one();
         }
 		
 	} catch (const nlohmann::json::parse_error& e) {
@@ -250,7 +250,7 @@ void Client::send_file_chunks(const std::string& filepath) {
         file_chunk_request["type"] = "file_chunk";
         file_chunk_request["filename"] = fs::path(filepath).filename().string();
         file_chunk_request["chunk_data"] = std::string(buffer.data(), bytes_read);
-        file_chink_request["chunk_number"] = chunk_number;
+        file_chunk_request["chunk_number"] = chunk_number;
         file_chunk_request["is_last"] = file.eof();
         DEBUG_MSG("[Client::send_file_chunks] Sending file chunk request: " + file_chunk_request.dump());
         
@@ -260,8 +260,8 @@ void Client::send_file_chunks(const std::string& filepath) {
         // but I'm not sure tho
         // sleep(2);
         
-        std::unique_loc<std::mutex> lock(_mutex);
-        _chunk_cv.wait(lock, |this| { return _chunk_acknowledged; });
+        std::unique_lock<std::mutex> lock(_mutex);
+        _chunk_cv.wait(lock, [this] { return _chunk_acknowledged; });
         _chunk_acknowledged = false;
     }
 }
