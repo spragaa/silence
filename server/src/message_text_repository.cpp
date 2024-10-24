@@ -42,7 +42,7 @@ sw::redis::ConnectionOptions MessageTextRepository::parse_config_string(const st
 		ERROR_MSG("[MessageTextRepository::parse_config_string] Invalid connection string format");
 	}
 
-	INFO_MSG("[MessageTextRepository::parseConnectionString] Parsed successfully!");
+	INFO_MSG("[MessageTextRepository::parse_config_string] Parsed successfully!");
 
 	return options;
 }
@@ -65,7 +65,7 @@ int MessageTextRepository::create(const MessageText& msg) {
 		DEBUG_MSG("[MessageTextRepository::create] MessageText created successfully: " + value + " with id: " + key);
 		return static_cast<int>(new_id);
 	} catch(const sw::redis::Error& e) {
-		ERROR_MSG("[MessageTextRepository::create] Redis error: " + std::string(e.what()));
+		ERROR_MSG("[MessageTextRepository::create] " + std::string(e.what()));
 		return 0;
 	} catch(const std::exception& e) {
 		ERROR_MSG("[MessageTextRepository::create] " + std::string(e.what()));
