@@ -183,7 +183,9 @@ void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohm
 }
 
 void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
-	int sender_id = request["sender_id"];
+	DEBUG_MSG("[Server::handle_send_message] Called on request: " + request.dump());
+    
+    int sender_id = request["sender_id"];
 	std::string receiver_nickname = request["receiver_nickname"];
 	std::string request_text = request["message_text"];
 
@@ -202,10 +204,11 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 
 	// will they be same???
 	int msg_metadata_id = _msg_metadata_repo->create(new_msg.get_metadata());
-	int msg_text_id = _msg_text_repo->create(new_msg.get_text());
-
-	if (msg_metadata_id == msg_text_id) {
-		new_msg.set_id(msg_text_id);
+	// [MessageTextRepository::create] unknown error code: Failed to connect to Redis: tu
+	// int msg_text_id = _msg_text_repo->create(new_msg.get_text());
+	// if (msg_metadata_id == msg_text_id) {
+	if (msg_metadata_id) {
+		new_msg.set_id(msg_metadata_id);
 	} else {
 		WARN_MSG("[Server::handle_send_message] msg_text_id and msg_metadata_id are not equal");
 		sender_response["status"] = "error";
@@ -216,7 +219,8 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 
 	// we should not return failure here, some kind of retry logic or/and buffer is better
 	// we also can do it async
-	if (msg_metadata_id == 0 || msg_text_id == 0) {
+	// if (msg_metadata_id == 0 || msg_text_id == 0) { // connection to redis is broken now :(
+	if (msg_metadata_id == 0) {
 		sender_response["status"] = "error";
 		sender_response["response"] = "Failed to save message into db/s";
 		boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
@@ -241,6 +245,19 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 }
 
 void Server::handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
+    DEBUG_MSG("[Server::handle_file_chunk] Request: " + request.dump());
+    std::string filename = request["filename"];
+    std::string chunk_data = request["chunk_data"];
+    int chunk_number = request["chunk_number"];
+    bool is_last = request["is_last"];
+    
+    // lets try
+    
+    // try send chunk to the file_server
+    _file_server_client->upload_file()
+    nlohmann::json sender_response, receiver_response;
+    sender_response[""]
 
-    WARN_MSG("[Server::handle_file_chunk]!!!!!!!!!!");
+    boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
+    
 }

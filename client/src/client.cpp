@@ -172,7 +172,9 @@ bool Client::is_connected() {
 }
 
 void Client::async_write(const std::string& message) {
-	if (!is_connected()) {
+	DEBUG_MSG("[Client::async_write] Tryign to write request: " + message);
+    
+    if (!is_connected()) {
 		ERROR_MSG("[Client::async_write] Not connected to server");
 		return;
 	}
@@ -211,40 +213,58 @@ void Client::process_server_message(const std::string& message) {
 	try {
 		nlohmann::json json_message = nlohmann::json::parse(message);
 		DEBUG_MSG("[Client::process_server_message] Parsed response: " + json_message.dump());
+		
+		// we can add chunk and filename here, in case we want to send few files in the same time in future
+		if (json_message["type"] == "chunk_acknowledgment") {
+            std::lock_guard<std::mutex> lock(_mutex);
+            _chunk_acknowledged = true;
+            _cv.notify_one();
+        }
+		
 	} catch (const nlohmann::json::parse_error& e) {
 		ERROR_MSG("[Client::process_server_message] Failed to parse message: " + std::string(e.what()));
 	}
 }
 
 // should be async!
-// void Client::send_file_chunks(const std::string& filepath) {
-//     std::ifstream file(filepath, std::ios::binary);
-//     if (!file) {
-//         ERROR_MSG("[Client::send_file_chunks] Unable to open file: " + filepath);
-//         return;
-//     }
+void Client::send_file_chunks(const std::string& filepath) {
+    std::ifstream file(filepath, std::ios::binary);
+    if (!file) {
+        ERROR_MSG("[Client::send_file_chunks] Unable to open file: " + filepath);
+        return;
+    }
 
-//     const size_t chunk_size = 512;
-//     std::vector<char> buffer(chunk_size);
-//     size_t chunk_number = 0;
+    const size_t chunk_size = 512;
+    std::vector<char> buffer(chunk_size);
+    size_t chunk_number = 0;
 
-//     while (!file.eof()) {
-//         file.read(buffer.data(), chunk_size);
-//         std::streamsize bytes_read = file.gcount();
+    while (!file.eof()) {
+        file.read(buffer.data(), chunk_size);
+        std::streamsize bytes_read = file.gcount();
 
-//         if (bytes_read == 0) {
-//             break;
-//         }
+        if (bytes_read == 0) {
+            break;
+        }
 
-//         nlohmann::json file_chunk;
-//         file_chunk["type"] = "file_chunk";
-//         file_chunk["filename"] = fs::path(filepath).filename().string();
-//         file_chunk["chunk_data"] = std::string(buffer.data(), bytes_read);
-//         file_chunk["is_last"] = file.eof();
-
-//         async_write(file_chunk.dump());
-//     }
-// }
+        nlohmann::json file_chunk_request;
+        file_chunk_request["type"] = "file_chunk";
+        file_chunk_request["filename"] = fs::path(filepath).filename().string();
+        file_chunk_request["chunk_data"] = std::string(buffer.data(), bytes_read);
+        file_chink_request["chunk_number"] = chunk_number;
+        file_chunk_request["is_last"] = file.eof();
+        DEBUG_MSG("[Client::send_file_chunks] Sending file chunk request: " + file_chunk_request.dump());
+        
+        async_write(file_chunk_request.dump());
+        // this is needed, becuse chat server is one thread now, and it could processes all requests in time
+        // I also suggest, that theese next requests might be lost
+        // but I'm not sure tho
+        // sleep(2);
+        
+        std::unique_loc<std::mutex> lock(_mutex);
+        _chunk_cv.wait(lock, |this| { return _chunk_acknowledged; });
+        _chunk_acknowledged = false;
+    }
+}
 
 void Client::handle_user_interaction() {
 	DEBUG_MSG("[Client::handle_user_interaction()] Starting interaction with user!");
@@ -305,12 +325,12 @@ void Client::handle_user_interaction() {
 					} else {
 					    message["filepath"] = filepath.string();
 					}					
-
-					async_write(message.dump());
-					// async?
-					// send_file(filepath);
 					
-					DEBUG_MSG("CASE 0");
+					
+					async_write(message.dump());
+					// should be async
+					send_file_chunks(filepath);
+					
 				}
 				break;
 				case 1:
