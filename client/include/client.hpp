@@ -56,6 +56,10 @@ private:
 	boost::asio::ip::tcp::socket _socket;
 	boost::asio::streambuf _read_buffer;
 	std::queue<std::string> _write_queue;
+	// in future if we want to send several files in the same time, we can use a map of these for
+	std::condition_variable _chunk_cv;
+	std::mutex = _mutex;
+	bool _chunk_acknowledged = false;
 	std::string _server_address;
 	unsigned short _server_port;
 	User _user;

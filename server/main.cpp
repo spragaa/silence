@@ -8,7 +8,7 @@ int main() {
 	// read them from config
 	const std::string user_metadata_db_connection_string = "host=localhost port=5432 dbname=user_metadata user=postgres password=pass";
 	const std::string msg_text_db_connection_string = "host=localhost port=5432 dbname=message_metadata user=postgres password=pass";
-	const std::string message_text_db_connection_string = "redis://spraga@127.0.0.1:6379"; // simplify? - no need, because we will read it from json
+	const std::string message_text_db_connection_string = "redis://spraga@127.0.0.1:6379";
 	const std::string file_server_host = "localhost";
 	const std::string file_server_port = "55544";
 	Server server(port,
