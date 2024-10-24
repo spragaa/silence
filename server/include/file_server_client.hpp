@@ -22,8 +22,12 @@ class FileServerClient {
 public:
     FileServerClient(const std::string& host, const std::string& port);
     
+    // adjust all methods to return bool where possible 
+    // put server response messages into enum
     std::string list_files();
+    // legacy :)
     std::string upload_file(const std::string& filename, const std::string& filepath);
+    bool upload_chunk(const std::string& filename, const std::string& chunk_data);
     std::string download_file(const std::string& filename);
     std::string delete_file(const std::string& filename);
 
