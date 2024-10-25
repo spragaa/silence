@@ -3,14 +3,14 @@
 #include <boost/thread.hpp>
 #include <iostream>
 
-Server::Server(unsigned short port, 
+Server::Server(unsigned short port,
                unsigned int thread_pool_size,
                const std::string& user_metadata_db_connection_string,
                const std::string& msg_metadata_db_connection_string,
                const std::string& msg_text_db_connection_string,
                const std::string& file_server_host,
                const std::string& file_server_port
-            )
+               )
 	: _acceptor(_io_service, tcp::endpoint(tcp::v4(), port)),
 	_work(new boost::asio::io_service::work(_io_service)) {
 
@@ -20,7 +20,7 @@ Server::Server(unsigned short port,
 	_user_repo = std::make_unique<UserMetadataRepository>(_postgres_db_manager, "user_metadata_db");
 	_msg_metadata_repo = std::make_unique<MessageMetadataRepository>(_postgres_db_manager, "message_metadata_db");
 	_msg_text_repo = std::make_unique<MessageTextRepository>(msg_text_db_connection_string);
-	
+
 	_file_server_client = std::make_unique<FileServerClient>(file_server_host, file_server_port);
 }
 
@@ -98,8 +98,8 @@ void Server::handle_request(boost::shared_ptr<tcp::socket> socket) {
 				} else if(request["type"] == "send_message") {
 					handle_send_message(socket, request);
 				} else if (request["type"] == "file_chunk") {
-                    handle_file_chunk(socket, request);
-                } 
+					handle_file_chunk(socket, request);
+				}
 				else {
 					nlohmann::json response = {
 						{"status", "error"},
@@ -184,10 +184,11 @@ void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohm
 
 void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
 	DEBUG_MSG("[Server::handle_send_message] Called on request: " + request.dump());
-    
-    int sender_id = request["sender_id"];
+
+	int sender_id = request["sender_id"];
 	std::string receiver_nickname = request["receiver_nickname"];
 	std::string request_text = request["message_text"];
+	// std::string request_filename = request["filename"];
 
 	nlohmann::json sender_response, receiver_response;
 
@@ -202,7 +203,6 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 	// get id, how?
 	Message new_msg(sender_id, receiver_id, request_text);
 
-	// will they be same???
 	int msg_metadata_id = _msg_metadata_repo->create(new_msg.get_metadata());
 	// [MessageTextRepository::create] unknown error code: Failed to connect to Redis: tu
 	// int msg_text_id = _msg_text_repo->create(new_msg.get_text());
@@ -211,6 +211,7 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 		new_msg.set_id(msg_metadata_id);
 	} else {
 		WARN_MSG("[Server::handle_send_message] msg_text_id and msg_metadata_id are not equal");
+		// add more info, msg id ...
 		sender_response["status"] = "error";
 		sender_response["response"] = "Failed to correctly save messages in database";
 		boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
@@ -245,23 +246,24 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 }
 
 void Server::handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
-    DEBUG_MSG("[Server::handle_file_chunk] Request: " + request.dump());
-    std::string filename = request["filename"];
-    std::string chunk_data = request["chunk_data"];
-    int chunk_number = request["chunk_number"];
-    bool is_last = request["is_last"];
-    
-    nlohmann::json sender_response, receiver_response;
-    sender_response["type"] = "chunk_acknowledgment";
-    sender_response["status"] = "success";
-    sender_response["filename"] = filename;
-    
-    if(_file_server_client->upload_chunk(filename, chunk_data)) {
-        INFO_MSG("[Server::handle_file_chunk] Chunk uploaded to file server");
-        sender_response["status"] = "success";
-    } else {
-        sender_response["status"] = "success";
-    }
+	DEBUG_MSG("[Server::handle_file_chunk] Request: " + request.dump());
+	std::string filename = request["filename"];
+	std::string chunk_data = request["chunk_data"];
+	int chunk_number = request["chunk_number"];
+	bool is_last = request["is_last"];
 
-    boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));    
+	nlohmann::json sender_response, receiver_response;
+	sender_response["type"] = "chunk_acknowledgment";
+	sender_response["status"] = "success";
+	sender_response["filename"] = filename;
+
+	if(_file_server_client->upload_chunk(filename, chunk_data)) {
+		INFO_MSG("[Server::handle_file_chunk] Chunk uploaded to file server");
+		sender_response["status"] = "success";
+	} else {
+		WARN_MSG("[Server::handle_file_chunk] Failed to upload chunk to file server");
+		sender_response["status"] = "error";
+	}
+
+	boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
 }

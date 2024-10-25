@@ -16,8 +16,8 @@ int main() {
 	              user_metadata_db_connection_string,
 	              msg_text_db_connection_string,
 	              message_text_db_connection_string,
-				  file_server_host, 
-				  file_server_port);
+	              file_server_host,
+	              file_server_port);
 	server.start();
 
 	return 0;
