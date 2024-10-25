@@ -30,8 +30,64 @@ Client::~Client() {
 	}
 }
 
-User Client::get_user() {
-	return _user;
+void Client::run() {
+	try {
+		boost::asio::ip::tcp::resolver resolver(_io_service);
+		boost::asio::ip::tcp::resolver::query query(_server_address, std::to_string(_server_port));
+		boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+		boost::asio::connect(_socket, endpoint_iterator);
+
+		unsigned int thread_count = std::thread::hardware_concurrency();
+		for (unsigned int i = 0; i < thread_count; ++i) {
+			_io_threads.emplace_back([this]() {
+				_io_service.run();
+			});
+		}
+
+		while (!is_registered()) {
+			WARN_MSG("[Client::run()] No existing user data found. Please register.");
+			register_user();
+			if (!is_registered()) {
+				WARN_MSG("[Client::run()] Registration failed. Would you like to try again? (y/n):");
+				std::string response;
+				std::getline(std::cin, response);
+				if (response != "y" && response != "Y") {
+					INFO_MSG("[Client::run()] Exiting...");
+					return;
+				}
+			}
+		}
+
+		INFO_MSG("[Client::run()] User registered successfully");
+
+		while (!_is_authorized) {
+			INFO_MSG("[Client::run()] Please authorize to continue.");
+
+			authorize_user();
+			if (!_is_authorized) {
+				WARN_MSG("[Client::run()] Authorization failed. Would you like to try again? (y/n): ");
+				std::string response;
+				std::getline(std::cin, response);
+				if (response != "y" && response != "Y") {
+					INFO_MSG("[Client::run()] Exiting...");
+					return;
+				}
+			}
+		}
+
+		INFO_MSG("[Client::run()] User authorized successfully");
+		INFO_MSG("[Client::run()] Now you can start messaging!");
+		async_read();
+		handle_user_interaction();
+
+		_work.reset();
+		for (auto& thread : _io_threads) {
+			thread.join();
+		}
+		_socket.close();
+	} catch (const std::exception& e) {
+		ERROR_MSG("[Client::run()] " + std::string(e.what()));
+	}
 }
 
 
@@ -43,227 +99,6 @@ void inline Client::show_actions() {
 	std::cout << "5. Exit" << std::endl;
 
 	std::cout << "Input: ";
-}
-
-bool Client::is_registered() const noexcept {
-	return _user.get_id() != 0;
-}
-
-void Client::register_user() {
-	std::string password;
-	std::string nickname = _user.get_nickname();
-	std::cout << nickname << ", create password: ";
-	std::getline(std::cin, password);
-
-	nlohmann::json request;
-	request["type"] = "register";
-	request["nickname"] = nickname;
-	request["password"] = password;
-
-	boost::asio::write(_socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
-	DEBUG_MSG("[Client::register_user] Sending request: " + request.dump());
-	nlohmann::json response = nlohmann::json::parse(receive_response());
-	DEBUG_MSG("[Client::register_user] Received response: " + response.dump());
-
-	if(response["status"] == "success") {
-		if (response.contains("user_id") && !response["user_id"].is_null()) {
-			_user.set_id(response["user_id"].get<int>());
-			DEBUG_MSG("[Client::register_user] User id set: " + std::to_string(_user.get_id()));
-		} else {
-			WARN_MSG("[Client::register_user] User ID not provided in the response");
-		}
-		if (response.contains("registered_timestamp") && !response["registered_timestamp"].is_null()) {
-			std::chrono::nanoseconds ns(response["registered_timestamp"].get<int64_t>());
-			Timestamp registered_timestamp = std::chrono::system_clock::time_point(ns);
-			_user.set_registered_timestamp(registered_timestamp);
-		} else {
-			WARN_MSG("[Client::register_user] Registered timestamp not provided in the response");
-		}
-
-		_user.set_nickname(nickname);
-		_user.set_password(password);
-		_user.save_user_data_to_json(get_user_data_filename());
-		INFO_MSG("[Client::register_user] Registration successful. You can now authorize.")
-	} else if (response["status"] == "error") {
-		ERROR_MSG("[Client::register_user] Failed to register!");
-	}
-}
-
-void Client::authorize_user() {
-	std::string password;
-	std::cout << _user.get_nickname() << ", please enter password: ";
-	std::getline(std::cin, password);
-
-	nlohmann::json request;
-	request["type"] = "authorize";
-	request["password"] = password;
-	request["nickname"] = _user.get_nickname();
-	request["user_id"] = _user.get_id();
-	DEBUG_MSG("[Client::authorize_user()] Sending request:" + request.dump());
-
-	try {
-		boost::asio::write(_socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
-		INFO_MSG("[Client::authorize_user()] Authorization request sent successfully");
-
-		nlohmann::json response = nlohmann::json::parse(receive_response());
-		DEBUG_MSG("[Client::authorize_user()] Received response: " + response.dump());
-
-		if(response["status"] == "success") {
-			_is_authorized = true;
-			// if (response.contains("user_data") && !response["user_data"].is_null()) {
-			// nlohmann::json user_data = response["user_data"];
-			// this is not yet finished on server side
-			// if (user_data.contains("last_online_timestamp") && !user_data["last_online_timestamp"].is_null()) {
-			//     std::chrono::nanoseconds ns(user_data["last_online_timestamp"].get<int64_t>());
-			//     Timestamp last_online = std::chrono::system_clock::time_point(ns);
-			//     _user.set_last_online_timestamp(last_online);
-			// }
-			// if (user_data.contains("is_online") && !user_data["is_online"].is_null()) {
-			//     _user.set_online(user_data["is_online"].get<bool>());
-			// }
-			// }
-
-			_user.save_user_data_to_json(get_user_data_filename());
-			INFO_MSG("[Client::authorize_user()] User data updated and saved");
-		} else if (response["status"] == "error") {
-			ERROR_MSG("[Client::authorize_user()] Failed to authorize user!");
-		} else {
-			ERROR_MSG("[Client::authorize_user()] Unexpected response from server");
-		}
-	} catch (const std::exception& e) {
-		ERROR_MSG("[Client::authorize_user()] Exception during authorization" + std::string(e.what()));
-	}
-
-	INFO_MSG("[Client::authorize_user()] Authorization process completed");
-}
-
-void Client::async_read() {
-	DEBUG_MSG("[Client::async_read] Async read has been started");
-
-	_io_service.post([this]() {
-		boost::asio::async_read_until(_socket, _read_buffer, "\r\n\r\n",
-		                              boost::bind(&Client::handle_async_read, this,
-		                                          boost::asio::placeholders::error,
-		                                          boost::asio::placeholders::bytes_transferred));
-	});
-}
-
-void Client::handle_async_read(const boost::system::error_code& error, size_t bytes_transferred) {
-	if (!error) {
-		std::string message(boost::asio::buffers_begin(_read_buffer.data()),
-		                    boost::asio::buffers_begin(_read_buffer.data()) + bytes_transferred);
-		_read_buffer.consume(bytes_transferred);
-		DEBUG_MSG("[Client::handle_async_read] Read: " + message);
-
-		process_server_message(message);
-
-		async_read();
-	} else if (error == boost::asio::error::eof) {
-		ERROR_MSG("[Client::handle_async_read] Server closed connection");
-		// disconnect
-	} else {
-		ERROR_MSG("[Client::handle_async_read] " + error.message());
-		// reconnect or handle error correcrlty
-	}
-}
-
-bool Client::is_connected() {
-	return _socket.is_open();
-}
-
-void Client::async_write(const std::string& message) {
-	DEBUG_MSG("[Client::async_write] Tryign to write request: " + message);
-    
-    if (!is_connected()) {
-		ERROR_MSG("[Client::async_write] Not connected to server");
-		return;
-	}
-
-	_io_service.post([this, message]() {
-		bool write_in_progress = !_write_queue.empty();
-		_write_queue.push(message + "\r\n\r\n");
-
-		if (!write_in_progress) {
-			do_write();
-		}
-	});
-}
-
-void Client::do_write() {
-	if (!_write_queue.empty()) {
-		boost::asio::async_write(_socket,
-		                         boost::asio::buffer(_write_queue.front()),
-		                         boost::bind(&Client::handle_async_write, this,
-		                                     boost::asio::placeholders::error));
-	}
-}
-
-void Client::handle_async_write(const boost::system::error_code& error) {
-	if (!error) {
-		_write_queue.pop();
-		do_write();
-	} else {
-		ERROR_MSG("[Client::handle_async_write] " + error.message());
-		// recconect
-		// inform user
-	}
-}
-
-void Client::process_server_message(const std::string& message) {
-	try {
-		nlohmann::json json_message = nlohmann::json::parse(message);
-		DEBUG_MSG("[Client::process_server_message] Parsed response: " + json_message.dump());
-		
-		// we can add chunk and filename here, in case we want to send few files in the same time in future
-		if (json_message["type"] == "chunk_acknowledgment") {
-            std::lock_guard<std::mutex> lock(_mutex);
-            _chunk_acknowledged = true;
-            _chunk_cv.notify_one();
-        }
-		
-	} catch (const nlohmann::json::parse_error& e) {
-		ERROR_MSG("[Client::process_server_message] Failed to parse message: " + std::string(e.what()));
-	}
-}
-
-// should be async!
-void Client::send_file_chunks(const std::string& filepath) {
-    std::ifstream file(filepath, std::ios::binary);
-    if (!file) {
-        ERROR_MSG("[Client::send_file_chunks] Unable to open file: " + filepath);
-        return;
-    }
-
-    const size_t chunk_size = 512;
-    std::vector<char> buffer(chunk_size);
-    size_t chunk_number = 0;
-
-    while (!file.eof()) {
-        file.read(buffer.data(), chunk_size);
-        std::streamsize bytes_read = file.gcount();
-
-        if (bytes_read == 0) {
-            break;
-        }
-
-        nlohmann::json file_chunk_request;
-        file_chunk_request["type"] = "file_chunk";
-        file_chunk_request["filename"] = fs::path(filepath).filename().string();
-        file_chunk_request["chunk_data"] = std::string(buffer.data(), bytes_read);
-        file_chunk_request["chunk_number"] = chunk_number;
-        file_chunk_request["is_last"] = file.eof();
-        DEBUG_MSG("[Client::send_file_chunks] Sending file chunk request: " + file_chunk_request.dump());
-        
-        async_write(file_chunk_request.dump());
-        // this is needed, becuse chat server is one thread now, and it could processes all requests in time
-        // I also suggest, that theese next requests might be lost
-        // but I'm not sure tho
-        // sleep(2);
-        
-        std::unique_lock<std::mutex> lock(_mutex);
-        _chunk_cv.wait(lock, [this] { return _chunk_acknowledged; });
-        _chunk_acknowledged = false;
-    }
 }
 
 void Client::handle_user_interaction() {
@@ -354,66 +189,6 @@ void Client::handle_user_interaction() {
 	}
 }
 
-void Client::run() {
-	try {
-		boost::asio::ip::tcp::resolver resolver(_io_service);
-		boost::asio::ip::tcp::resolver::query query(_server_address, std::to_string(_server_port));
-		boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
-		boost::asio::connect(_socket, endpoint_iterator);
-
-		unsigned int thread_count = std::thread::hardware_concurrency();
-		for (unsigned int i = 0; i < thread_count; ++i) {
-			_io_threads.emplace_back([this]() {
-				_io_service.run();
-			});
-		}
-
-		while (!is_registered()) {
-			WARN_MSG("[Client::run()] No existing user data found. Please register.");
-			register_user();
-			if (!is_registered()) {
-				WARN_MSG("[Client::run()] Registration failed. Would you like to try again? (y/n):");
-				std::string response;
-				std::getline(std::cin, response);
-				if (response != "y" && response != "Y") {
-					INFO_MSG("[Client::run()] Exiting...");
-					return;
-				}
-			}
-		}
-
-		INFO_MSG("[Client::run()] User registered successfully");
-
-		while (!_is_authorized) {
-			INFO_MSG("[Client::run()] Please authorize to continue.");
-
-			authorize_user();
-			if (!_is_authorized) {
-				WARN_MSG("[Client::run()] Authorization failed. Would you like to try again? (y/n): ");
-				std::string response;
-				std::getline(std::cin, response);
-				if (response != "y" && response != "Y") {
-					INFO_MSG("[Client::run()] Exiting...");
-					return;
-				}
-			}
-		}
-
-		INFO_MSG("[Client::run()] User authorized successfully");
-		INFO_MSG("[Client::run()] Now you can start messaging!");
-		async_read();
-		handle_user_interaction();
-
-		_work.reset();
-		for (auto& thread : _io_threads) {
-			thread.join();
-		}
-		_socket.close();
-	} catch (const std::exception& e) {
-		ERROR_MSG("[Client::run()] " + std::string(e.what()));
-	}
-}
-
 std::string Client::read_user_text() const noexcept{
 	std::string message;
 	std::getline(std::cin, message);
@@ -421,9 +196,205 @@ std::string Client::read_user_text() const noexcept{
 	return message;
 }
 
+void Client::register_user() {
+	std::string password;
+	std::string nickname = _user.get_nickname();
+	std::cout << nickname << ", create password: ";
+	std::getline(std::cin, password);
+
+	nlohmann::json request;
+	request["type"] = "register";
+	request["nickname"] = nickname;
+	request["password"] = password;
+
+	boost::asio::write(_socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
+	DEBUG_MSG("[Client::register_user] Sending request: " + request.dump());
+	nlohmann::json response = nlohmann::json::parse(receive_response());
+	DEBUG_MSG("[Client::register_user] Received response: " + response.dump());
+
+	if(response["status"] == "success") {
+		if (response.contains("user_id") && !response["user_id"].is_null()) {
+			_user.set_id(response["user_id"].get<int>());
+			DEBUG_MSG("[Client::register_user] User id set: " + std::to_string(_user.get_id()));
+		} else {
+			WARN_MSG("[Client::register_user] User ID not provided in the response");
+		}
+		if (response.contains("registered_timestamp") && !response["registered_timestamp"].is_null()) {
+			std::chrono::nanoseconds ns(response["registered_timestamp"].get<int64_t>());
+			Timestamp registered_timestamp = std::chrono::system_clock::time_point(ns);
+			_user.set_registered_timestamp(registered_timestamp);
+		} else {
+			WARN_MSG("[Client::register_user] Registered timestamp not provided in the response");
+		}
+
+		_user.set_nickname(nickname);
+		_user.set_password(password);
+		_user.save_user_data_to_json(get_user_data_filename());
+		INFO_MSG("[Client::register_user] Registration successful. You can now authorize.")
+	} else if (response["status"] == "error") {
+		ERROR_MSG("[Client::register_user] Failed to register!");
+	}
+}
+
+void Client::authorize_user() {
+	std::string password;
+	std::cout << _user.get_nickname() << ", please enter password: ";
+	std::getline(std::cin, password);
+
+	nlohmann::json request;
+	request["type"] = "authorize";
+	request["password"] = password;
+	request["nickname"] = _user.get_nickname();
+	request["user_id"] = _user.get_id();
+	DEBUG_MSG("[Client::authorize_user()] Sending request:" + request.dump());
+
+	try {
+		boost::asio::write(_socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
+		INFO_MSG("[Client::authorize_user()] Authorization request sent successfully");
+
+		nlohmann::json response = nlohmann::json::parse(receive_response());
+		DEBUG_MSG("[Client::authorize_user()] Received response: " + response.dump());
+
+		if(response["status"] == "success") {
+			_is_authorized = true;
+			// if (response.contains("user_data") && !response["user_data"].is_null()) {
+			// nlohmann::json user_data = response["user_data"];
+			// this is not yet finished on server side
+			// if (user_data.contains("last_online_timestamp") && !user_data["last_online_timestamp"].is_null()) {
+			//     std::chrono::nanoseconds ns(user_data["last_online_timestamp"].get<int64_t>());
+			//     Timestamp last_online = std::chrono::system_clock::time_point(ns);
+			//     _user.set_last_online_timestamp(last_online);
+			// }
+			// if (user_data.contains("is_online") && !user_data["is_online"].is_null()) {
+			//     _user.set_online(user_data["is_online"].get<bool>());
+			// }
+			// }
+
+			_user.save_user_data_to_json(get_user_data_filename());
+			INFO_MSG("[Client::authorize_user()] User data updated and saved");
+		} else if (response["status"] == "error") {
+			ERROR_MSG("[Client::authorize_user()] Failed to authorize user!");
+		} else {
+			ERROR_MSG("[Client::authorize_user()] Unexpected response from server");
+		}
+	} catch (const std::exception& e) {
+		ERROR_MSG("[Client::authorize_user()] Exception during authorization" + std::string(e.what()));
+	}
+
+	INFO_MSG("[Client::authorize_user()] Authorization process completed");
+}
+
 void Client::send_message(const std::string& message) {
 	DEBUG_MSG("send_message" + get_socket_info(_socket));
 	boost::asio::write(_socket, boost::asio::buffer(message + "\r\n\r\n"));
+}
+
+// should be async!
+void Client::send_file_chunks(const std::string& filepath) {
+    std::ifstream file(filepath, std::ios::binary);
+    if (!file) {
+        ERROR_MSG("[Client::send_file_chunks] Unable to open file: " + filepath);
+        return;
+    }
+
+    const size_t chunk_size = 512;
+    std::vector<char> buffer(chunk_size);
+    size_t chunk_number = 0;
+
+    while (!file.eof()) {
+        file.read(buffer.data(), chunk_size);
+        std::streamsize bytes_read = file.gcount();
+
+        if (bytes_read == 0) {
+            break;
+        }
+
+        nlohmann::json file_chunk_request;
+        file_chunk_request["type"] = "file_chunk";
+        file_chunk_request["filename"] = fs::path(filepath).filename().string();
+        file_chunk_request["chunk_data"] = std::string(buffer.data(), bytes_read);
+        file_chunk_request["chunk_number"] = chunk_number;
+        file_chunk_request["is_last"] = file.eof();
+        DEBUG_MSG("[Client::send_file_chunks] Sending file chunk request: " + file_chunk_request.dump());
+        
+        async_write(file_chunk_request.dump());
+        // this is needed, becuse chat server is one thread now, and it could processes all requests in time
+        // I also suggest, that theese next requests might be lost
+        // but I'm not sure tho
+        // sleep(2);
+        
+        std::unique_lock<std::mutex> lock(_mutex);
+        _chunk_cv.wait(lock, [this] { return _chunk_acknowledged; });
+        _chunk_acknowledged = false;
+    }
+}
+
+void Client::async_read() {
+	DEBUG_MSG("[Client::async_read] Async read has been started");
+
+	_io_service.post([this]() {
+		boost::asio::async_read_until(_socket, _read_buffer, "\r\n\r\n",
+		                              boost::bind(&Client::handle_async_read, this,
+		                                          boost::asio::placeholders::error,
+		                                          boost::asio::placeholders::bytes_transferred));
+	});
+}
+
+void Client::handle_async_read(const boost::system::error_code& error, size_t bytes_transferred) {
+	if (!error) {
+		std::string message(boost::asio::buffers_begin(_read_buffer.data()),
+		                    boost::asio::buffers_begin(_read_buffer.data()) + bytes_transferred);
+		_read_buffer.consume(bytes_transferred);
+		DEBUG_MSG("[Client::handle_async_read] Read: " + message);
+
+		process_server_message(message);
+
+		async_read();
+	} else if (error == boost::asio::error::eof) {
+		ERROR_MSG("[Client::handle_async_read] Server closed connection");
+		// disconnect
+	} else {
+		ERROR_MSG("[Client::handle_async_read] " + error.message());
+		// reconnect or handle error correcrlty
+	}
+}
+
+void Client::async_write(const std::string& message) {
+	DEBUG_MSG("[Client::async_write] Tryign to write request: " + message);
+    
+    if (!is_connected()) {
+		ERROR_MSG("[Client::async_write] Not connected to server");
+		return;
+	}
+
+	_io_service.post([this, message]() {
+		bool write_in_progress = !_write_queue.empty();
+		_write_queue.push(message + "\r\n\r\n");
+
+		if (!write_in_progress) {
+			do_write();
+		}
+	});
+}
+
+void Client::do_write() {
+	if (!_write_queue.empty()) {
+		boost::asio::async_write(_socket,
+		                         boost::asio::buffer(_write_queue.front()),
+		                         boost::bind(&Client::handle_async_write, this,
+		                                     boost::asio::placeholders::error));
+	}
+}
+
+void Client::handle_async_write(const boost::system::error_code& error) {
+	if (!error) {
+		_write_queue.pop();
+		do_write();
+	} else {
+		ERROR_MSG("[Client::handle_async_write] " + error.message());
+		// recconect
+		// inform user
+	}
 }
 
 std::string Client::receive_response() {
@@ -443,6 +414,35 @@ std::string Client::receive_response() {
 		);
 
 	return response;
+}
+
+void Client::process_server_message(const std::string& message) {
+	try {
+		nlohmann::json json_message = nlohmann::json::parse(message);
+		DEBUG_MSG("[Client::process_server_message] Parsed response: " + json_message.dump());
+		
+		// we can add chunk and filename here, in case we want to send few files in the same time in future
+		if (json_message["type"] == "chunk_acknowledgment") {
+            std::lock_guard<std::mutex> lock(_mutex);
+            _chunk_acknowledged = true;
+            _chunk_cv.notify_one();
+        }
+		
+	} catch (const nlohmann::json::parse_error& e) {
+		ERROR_MSG("[Client::process_server_message] Failed to parse message: " + std::string(e.what()));
+	}
+}
+
+User Client::get_user() {
+	return _user;
+}
+
+bool Client::is_registered() const noexcept {
+	return _user.get_id() != 0;
+}
+
+bool Client::is_connected() {
+	return _socket.is_open();
 }
 
 std::string Client::get_user_data_filename() const noexcept {
