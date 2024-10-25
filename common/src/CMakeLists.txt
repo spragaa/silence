@@ -2,6 +2,8 @@ add_library(common_lib
     debug.cpp
     common.cpp
     message.cpp
+    message_metadata.cpp
+    message_text.cpp
     user.cpp
 )
 

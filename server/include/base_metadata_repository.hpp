@@ -1,12 +1,12 @@
 #pragma once
 
-#include "db_manager.hpp"
+#include "postgres_db_manager.hpp"
 #include <optional>
 
 template<typename T>
 class BaseRepository {
 public:
-	BaseRepository(DBManager& db_manager) : db_manager(db_manager) {
+	BaseRepository(PostgresDBManager& postgres_db_manager) : _postgres_db_manager(postgres_db_manager) {
 	}
 	BaseRepository() = default;
 	virtual ~BaseRepository() = default;
@@ -17,5 +17,5 @@ public:
 	virtual bool remove(int id) = 0;
 
 protected:
-	DBManager& db_manager;
+	PostgresDBManager& _postgres_db_manager;
 };

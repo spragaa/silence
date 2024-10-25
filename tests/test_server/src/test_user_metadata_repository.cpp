@@ -1,22 +1,21 @@
 #include "user_metadata_repository.hpp"
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 class UserMetadataRepositoryTests : public ::testing::Test {
 protected:
-	std::unique_ptr<UserMetadataRepository> repo;
-	DBManager db_manager;
+	std::unique_ptr<UserMetadataRepository> _repo;
+	PostgresDBManager postgres_db_manager;
 
 	void SetUp() override {
-		db_manager.add_connection("test_user_metadata", "host=localhost port=5432 dbname=test_user_metadata user=postgres password=pass");
-		repo = std::make_unique<UserMetadataRepository>(db_manager, "test_user_metadata");
+		postgres_db_manager.add_connection("test_user_metadata", "host=localhost port=5432 dbname=test_user_metadata user=postgres password=pass");
+		_repo = std::make_unique<UserMetadataRepository>(postgres_db_manager, "test_user_metadata");
 	}
 };
 
 TEST_F(UserMetadataRepositoryTests, read_user_with_id_1) {
 	int user_id = 1;
-	std::optional<User> user = repo->read(user_id);
+	std::optional<User> user = _repo->read(user_id);
 
 	ASSERT_TRUE(user.has_value());
 
@@ -51,11 +50,11 @@ TEST_F(UserMetadataRepositoryTests, create_user) {
 	user_to_create.set_last_online_timestamp(timestamp);
 	user_to_create.set_online(online);
 
-	bool is_created = repo->create(user_to_create);
+	bool is_created = _repo->create(user_to_create);
 
 	ASSERT_TRUE(is_created);
 
-	std::optional<User> user = repo->read(user_id);
+	std::optional<User> user = _repo->read(user_id);
 	ASSERT_TRUE(user.has_value());
 
 	auto n_user = *user;
@@ -73,21 +72,21 @@ TEST_F(UserMetadataRepositoryTests, create_user) {
 
 TEST_F(UserMetadataRepositoryTests, remove_existing_user) {
 	int user_id = 1;
-	bool is_removed = repo->remove(1);
+	bool is_removed = _repo->remove(1);
 
 	ASSERT_TRUE(is_removed);
 
-	std::optional<User> user = repo->read(user_id);
+	std::optional<User> user = _repo->read(user_id);
 	ASSERT_FALSE(user.has_value());
 }
 
 TEST_F(UserMetadataRepositoryTests, remove_non_existing_user) {
 	int user_id = 6;
-	bool is_removed = repo->remove(1);
+	bool is_removed = _repo->remove(1);
 
 	ASSERT_FALSE(is_removed);
 
-	std::optional<User> user = repo->read(user_id);
+	std::optional<User> user = _repo->read(user_id);
 	ASSERT_FALSE(user.has_value());
 }
 
@@ -109,11 +108,11 @@ TEST_F(UserMetadataRepositoryTests, update_existing_user) {
 	user_to_update.set_last_online_timestamp(timestamp);
 	user_to_update.set_online(online);
 
-	bool is_updated = repo->update(user_to_update);
+	bool is_updated = _repo->update(user_to_update);
 
 	ASSERT_TRUE(is_updated);
 
-	std::optional<User> user = repo->read(user_id);
+	std::optional<User> user = _repo->read(user_id);
 	ASSERT_TRUE(user.has_value());
 
 	auto n_user = *user;
@@ -147,11 +146,11 @@ TEST_F(UserMetadataRepositoryTests, update_non_existing_user) {
 	user_to_update.set_last_online_timestamp(timestamp);
 	user_to_update.set_online(online);
 
-	bool is_updated = repo->update(user_to_update);
+	bool is_updated = _repo->update(user_to_update);
 
 	ASSERT_FALSE(is_updated);
 
-	std::optional<User> user = repo->read(user_id);
+	std::optional<User> user = _repo->read(user_id);
 	ASSERT_FALSE(user.has_value());
 }
 
@@ -160,7 +159,7 @@ TEST_F(UserMetadataRepositoryTests, authorize_existing_user) {
 	std::string nickname = "george_hotz";
 	std::string password = "george_hotz_pass";
 
-	bool is_authorized = repo->authorize(user_id, nickname, password);
+	bool is_authorized = _repo->authorize(user_id, nickname, password);
 	ASSERT_TRUE(is_authorized);
 }
 
@@ -169,7 +168,7 @@ TEST_F(UserMetadataRepositoryTests, authorize_non_existing_user) {
 	std::string nickname = "george_hotz";
 	std::string password = "wrong_pass";
 
-	bool is_authorized = repo->authorize(user_id, nickname, password);
+	bool is_authorized = _repo->authorize(user_id, nickname, password);
 	ASSERT_FALSE(is_authorized);
 }
 
@@ -184,7 +183,7 @@ TEST_F(UserMetadataRepositoryTests, authorize_non_existing_user) {
 //         {"online", true}
 //     };
 
-//     User constructed_user = repo->construct_user(user_json);
+//     User constructed_user = _repo->construct_user(user_json);
 
 //     EXPECT_EQ(constructed_user.get_id(), 1);
 //     EXPECT_EQ(constructed_user.get_nickname(), "test_user");

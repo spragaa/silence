@@ -1,14 +1,14 @@
 #include "message_metadata_repository.hpp"
 
-MessageMetadataRepository::MessageMetadataRepository(DBManager& db_manager, const std::string& connection_name) : BaseRepository(db_manager), connection_name(connection_name) {
+MessageMetadataRepository::MessageMetadataRepository(PostgresDBManager& postgres_db_manager, const std::string& connection_name) : BaseRepository(postgres_db_manager), _connection_name(connection_name) {
 	DEBUG_MSG("MessageMetadataRepository created");
 }
 
 MessageMetadataRepository::~MessageMetadataRepository() = default;
 
-int MessageMetadataRepository::create(const Message& message) {
+int MessageMetadataRepository::create(const MessageMetadata& message) {
 	try {
-		pqxx::work txn(db_manager.get_connection(connection_name));
+		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 
 		std::stringstream ss;
 		auto time_point = message.get_created_timestamp();
@@ -17,11 +17,10 @@ int MessageMetadataRepository::create(const Message& message) {
 		std::string formatted_time = ss.str();
 
 		pqxx::result r = txn.exec_params(
-			"INSERT INTO messages (sender_id, receiver_id, text, created_timestamp) "
-			"VALUES ($1, $2, $3, $4) RETURNING id",
+			"INSERT INTO messages (sender_id, receiver_id, created_timestamp) "
+			"VALUES ($1, $2, $3) RETURNING id",
 			message.get_sender_id(),
 			message.get_receiver_id(),
-			message.get_text(),
 			formatted_time
 			);
 		txn.commit();
@@ -32,7 +31,7 @@ int MessageMetadataRepository::create(const Message& message) {
 		}
 
 		int inserted_id = r[0][0].as<int>();
-		INFO_MSG("[MessageMetadataRepository::create] Message inserted successfully with id: " + std::to_string(inserted_id));
+		INFO_MSG("[MessageMetadataRepository::create] MessageMetadata inserted successfully with id: " + std::to_string(inserted_id));
 		return inserted_id;
 	} catch (const std::exception& e) {
 		ERROR_MSG("[MessageMetadataRepository::create] Exception caught: " + std::string(e.what()));
@@ -40,15 +39,15 @@ int MessageMetadataRepository::create(const Message& message) {
 	}
 }
 
-std::optional<Message> MessageMetadataRepository::read(int id) {
+std::optional<MessageMetadata> MessageMetadataRepository::read(int id) {
 	try {
-		pqxx::work txn(db_manager.get_connection(connection_name));
+		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 		pqxx::result r = txn.exec_params("SELECT * FROM messages WHERE id = $1", id);
 		if (r.empty()) {
 			WARN_MSG("[MessageMetadataRepository::read] No message found with id: " + std::to_string(id));
 			return std::nullopt;
 		}
-		INFO_MSG("[MessageMetadataRepository::read] Message found with id: " + std::to_string(id));
+		INFO_MSG("[MessageMetadataRepository::read] MessageMetadata found with id: " + std::to_string(id));
 		return construct_message(r[0]);
 	} catch (const std::exception& e) {
 		ERROR_MSG("[MessageMetadataRepository::read] Exception caught: " + std::string(e.what()));
@@ -56,9 +55,9 @@ std::optional<Message> MessageMetadataRepository::read(int id) {
 	}
 }
 
-bool MessageMetadataRepository::update(const Message& message) {
+bool MessageMetadataRepository::update(const MessageMetadata& message) {
 	try {
-		pqxx::work txn(db_manager.get_connection(connection_name));
+		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 
 		std::stringstream ss;
 		auto time_point = message.get_last_edited_timestamp().value_or(std::chrono::system_clock::now());
@@ -67,9 +66,8 @@ bool MessageMetadataRepository::update(const Message& message) {
 		std::string formatted_time = ss.str();
 
 		pqxx::result r = txn.exec_params(
-			"UPDATE messages SET text = $1, last_edited_timestamp = $2 "
-			"WHERE id = $3",
-			message.get_text(),
+			"UPDATE messages SET last_edited_timestamp = $1 "
+			"WHERE id = $2",
 			formatted_time,
 			message.get_id()
 			);
@@ -80,17 +78,18 @@ bool MessageMetadataRepository::update(const Message& message) {
 			return false;
 		}
 
-		INFO_MSG("[MessageMetadataRepository::update] Message updated successfully with id: " + std::to_string(message.get_id()));
+		INFO_MSG("[MessageMetadataRepository::update] MessageMetadata updated successfully with id: " + std::to_string(message.get_id()));
 		return true;
 	} catch (const std::exception& e) {
 		ERROR_MSG("[MessageMetadataRepository::update] Exception caught: " + std::string(e.what()));
 		return false;
 	}
+	DEBUG_MSG("[MessageMetadataRepository::update] DUMMY");
 }
 
 bool MessageMetadataRepository::remove(int id) {
 	try {
-		pqxx::work txn(db_manager.get_connection(connection_name));
+		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 
 		std::stringstream ss;
 		auto time_point = std::chrono::system_clock::now();
@@ -111,7 +110,7 @@ bool MessageMetadataRepository::remove(int id) {
 			return false;
 		}
 
-		INFO_MSG("[MessageMetadataRepository::remove] Message deleted successfully with id: " + std::to_string(id));
+		INFO_MSG("[MessageMetadataRepository::remove] MessageMetadata deleted successfully with id: " + std::to_string(id));
 		return true;
 	} catch (const std::exception& e) {
 		ERROR_MSG("[MessageMetadataRepository::remove] Exception caught: " + std::string(e.what()));
@@ -126,13 +125,12 @@ std::chrono::system_clock::time_point parse_timestamp(const std::string& timesta
 	return std::chrono::system_clock::from_time_t(std::mktime(&tm));
 }
 
-Message MessageMetadataRepository::construct_message(const pqxx::row& row) {
-	Message msg(
+MessageMetadata MessageMetadataRepository::construct_message(const pqxx::row& row) {
+	MessageMetadata msg(
+		row["id"].as<int>(),
 		row["sender_id"].as<int>(),
-		row["receiver_id"].as<int>(),
-		row["text"].as<std::string>()
+		row["receiver_id"].as<int>()
 		);
-	msg.set_id(row["id"].as<int>());
 	msg.set_deleted(row["deleted"].as<bool>());
 	msg.set_created_timestamp(parse_timestamp(row["created_timestamp"].as<std::string>()));
 	if (!row["deleted_timestamp"].is_null())
