@@ -36,8 +36,8 @@ class Server : public boost::enable_shared_from_this<Server> {
 public:
 	Server(unsigned short port,
 	       unsigned int thread_pool_size,
-	       const std::string& user_metadata_db_connection_string, // add metadata to name
-	       const std::string& msg_metadata_db_connection_string, // add metadata to name
+	       const std::string& user_metadata_db_connection_string,
+	       const std::string& msg_metadata_db_connection_string,
 	       const std::string& msg_text_db_connection_string,
 	       const std::string& file_server_host,
 	       const std::string& file_server_port
@@ -48,7 +48,7 @@ public:
 
 private:
 	void start_request_handling();
-	// should I move these into RequestHandlerClas?
+	// should I move these into RequestHandlerClass?
 	void handle_accept(boost::shared_ptr<tcp::socket> socket, const boost::system::error_code& error);
 	void handle_request(boost::shared_ptr<tcp::socket> socket);
 	void handle_register(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
