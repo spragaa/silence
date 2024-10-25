@@ -21,7 +21,6 @@ once file server client receives the file, it can upload it to file server
 8. sending file to the receiver should be uno reverse, (I'm not sure if it make sense to directly send file from char server to receiver tho)
   server downloads chunks of file from file_server, and sends these chunks to the receiver client, receiver client on the other hand packs the file into 
   one thing and store locally
-*** lets first implement working logic of storing the file on the chat server, then send it to the file_server
 *** lets first implement the logic to store file on file_server and then download it from there
     then when we will be able to handle online and offline users, then I think I could think 
     about adding sender -> server -> receiver and not
