@@ -6,14 +6,16 @@ const std::string FileServer::DELETE_ROUTE = "/delete/:filename";
 const std::string FileServer::LIST_ROUTE = "/list";
 
 constexpr size_t CHUNK_SIZE_BYTES = 512;
+constexpr uint8_t FILENAME_LEN = 16;
+
 constexpr std::array<char, 62> ALPHABET = {
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-    'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-    'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',
-    'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
-    'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
-    'y', 'z'
+	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+	'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+	'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',
+	'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+	'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
+	'y', 'z'
 };
 
 FileServer::FileServer(uint16_t port, unsigned int threads, const std::string& storage_dir, size_t max_file_size)
@@ -33,7 +35,6 @@ void FileServer::init() {
 	_http_endpoint->init(opts);
 	INFO_MSG("[FileServer::init] Initialization successful!");
 	setup_routes();
-	// generate_folder_structure();
 }
 
 void FileServer::start() {
@@ -46,54 +47,48 @@ void FileServer::setup_routes() {
 	using namespace Pistache::Rest;
 
 	Routes::Post(_router, UPLOAD_ROUTE, Routes::bind(&FileServer::upload_file, this));
-    Routes::Get(_router, DOWNLOAD_ROUTE, Routes::bind(&FileServer::download_file, this));
-    Routes::Delete(_router, DELETE_ROUTE, Routes::bind(&FileServer::delete_file, this));
-    Routes::Get(_router, LIST_ROUTE, Routes::bind(&FileServer::list_files, this));
-    
-    INFO_MSG("[FileServer::setup_routes] Routes created:\n" + UPLOAD_ROUTE + "\n" + DOWNLOAD_ROUTE + "\n" + DELETE_ROUTE + "\n" + LIST_ROUTE);
-}
+	Routes::Get(_router, DOWNLOAD_ROUTE, Routes::bind(&FileServer::download_file, this));
+	Routes::Delete(_router, DELETE_ROUTE, Routes::bind(&FileServer::delete_file, this));
+	Routes::Get(_router, LIST_ROUTE, Routes::bind(&FileServer::list_files, this));
 
-// from one side it is ok that server initialization takes a while,
-// but on other hand, we can create relative folders once we actually need them
-void FileServer::generate_folder_structure() {
-    fs::path root_dir(_storage_dir);
-    
-    for (const char c1 : ALPHABET) {
-        for (const char c2 : ALPHABET) {
-            fs::path dir_path = root_dir / (std::string(1, c1) + std::string(1, c2));
-            fs::create_directories(dir_path);
-
-            for (const char sub_c1 : ALPHABET) {
-                for (const char sub_c2 : ALPHABET) {
-                    fs::path sub_dir_path = dir_path / (std::string(1, sub_c1) + std::string(1, sub_c2));
-                    fs::create_directories(sub_dir_path);
-                }
-            }
-        }    
-    }
+	INFO_MSG("[FileServer::setup_routes] Routes created:\n" + UPLOAD_ROUTE + "\n" + DOWNLOAD_ROUTE + "\n" + DELETE_ROUTE + "\n" + LIST_ROUTE);
 }
 
 void FileServer::upload_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
 	auto filename = request.param(":filename").as<std::string>();
-	auto filepath = fs::path(_storage_dir) / filename;
-	
-	const std::string& body = request.body();
-	
-	size_t raw_data_bytes = body.size();
-	if (raw_data_bytes > CHUNK_SIZE_BYTES) {
-		response.send(Pistache::Http::Code::Bad_Request, "Received raw data size is bigger then acceptable chunk size!");
-		WARN_MSG("[FileServer::upload_file] Received raw data size is bigger then acceptable chunk size!");
-		// remove file add message about fail
+
+	if (!is_valid_filename(filename)) {
+		WARN_MSG("[FileServer::upload_file] File " + filename + " contains unsupported symbols or its size is incorrect, cannot upload it to file_server");
+		response.send(Pistache::Http::Code::Bad_Request, "File " + filename + " contains unsupported symbols or its size is incorrect, cannot upload it to file_server");
 		return;
 	}
-	
-	size_t file_size = fs::file_size(filepath); 
-	if (file_size > _max_file_size - raw_data_bytes) {
-	    WARN_MSG("[FileServer::upload_file] Size of " + filepath.string() + " is: " + std::to_string(file_size) + ", thats more then system limit, removing this file");
+
+	std::string lvl1_dir = filename.substr(0, 2);
+	std::string lvl2_dir = filename.substr(2, 2);
+
+	fs::path directories_path = fs::path(_storage_dir) / lvl1_dir / lvl2_dir;
+	std::filesystem::create_directories(directories_path);
+	fs::path filepath = directories_path / filename;
+	DEBUG_MSG("[FileServer::upload_file] Filepath is " + filepath.string());
+
+	const std::string& body = request.body();
+
+	size_t raw_data_bytes = body.size();
+	if (raw_data_bytes > CHUNK_SIZE_BYTES) {
+		response.send(Pistache::Http::Code::Bad_Request, "Received raw data size is bigger than acceptable chunk size!");
+		WARN_MSG("[FileServer::upload_file] Received raw data size is bigger than acceptable chunk size. Removing it!");
 		fs::remove(filepath);
 		return;
 	}
-	
+
+	size_t file_size = fs::exists(filepath) ? fs::file_size(filepath) : 0;
+	if (file_size > _max_file_size - raw_data_bytes) {
+		response.send(Pistache::Http::Code::Bad_Request, "Size of " + filepath.string() + " is: " + std::to_string(file_size) + ", that's more than system limit, removing it");
+		WARN_MSG("[FileServer::upload_file] Size of " + filepath.string() + " is: " + std::to_string(file_size) + ", that's more than system limit, removing it");
+		fs::remove(filepath);
+		return;
+	}
+
 	DEBUG_MSG("[FileServer::upload_file] Upload file called, filepath:" + filepath.string() + ", body size: " + std::to_string(raw_data_bytes) + " bytes");
 
 	std::ofstream file(filepath, std::ios::binary | std::ios::app);
@@ -101,7 +96,7 @@ void FileServer::upload_file(const Pistache::Rest::Request& request, Pistache::H
 		response.send(Pistache::Http::Code::Internal_Server_Error, "Failed to create file");
 		WARN_MSG("[FileServer::upload_file] Failed to create file: " + filepath.string());
 		return;
-	} 
+	}
 
 	file.write(body.c_str(), raw_data_bytes);
 	file.close();
@@ -161,29 +156,53 @@ void FileServer::delete_file(const Pistache::Rest::Request& request, Pistache::H
 	} else {
 		response.send(Pistache::Http::Code::Internal_Server_Error, "Failed to delete file");
 		WARN_MSG("[FileServer::delete_file] Failed to delete file: " + filepath.string());
-		
+
 	}
 }
 
-// should iterate recursively 
+// should iterate recursively
 // why do we need this one?
-// this will take a lot of time, and doesn't make any sense 
+// this will take a lot of time, and doesn't make any sense
 // maybe we can use it for file system status?
 void FileServer::list_files(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
-    DEBUG_MSG("[FileServer::list_files] Entering list_files function");
-    
-    auto start_time = std::chrono::high_resolution_clock::now();
-    
-    std::string file_list;
-    int file_count = 0;
-    
-    for (const auto& entry : fs::directory_iterator(_storage_dir)) {
-        file_list += entry.path().filename().string() + "\n";
-        file_count++;
-    }
-    
-    DEBUG_MSG("[FileServer::list_files] Found " + std::to_string(file_count) << " files");
-    DEBUG_MSG("[FileServer::list_files] Sending 'Pistache::Http::Code::Ok' response");
-    
-    response.send(Pistache::Http::Code::Ok, file_list);
+	DEBUG_MSG("[FileServer::list_files] Entering list_files function");
+
+	auto start_time = std::chrono::high_resolution_clock::now();
+
+	std::string file_list;
+	int file_count = 0;
+
+	for (const auto& entry : fs::directory_iterator(_storage_dir)) {
+		file_list += entry.path().filename().string() + "\n";
+		file_count++;
+	}
+
+	DEBUG_MSG("[FileServer::list_files] Found " + std::to_string(file_count) << " files");
+	DEBUG_MSG("[FileServer::list_files] Sending 'Pistache::Http::Code::Ok' response");
+
+	response.send(Pistache::Http::Code::Ok, file_list);
+}
+
+bool FileServer::is_valid_filename(const std::string& filename) const {
+	fs::path file_path(filename);
+	std::string str = file_path.stem().string();
+
+	if (str.size() != FILENAME_LEN) {
+		return false;
+	}
+
+	for (const char c1 : str) {
+		bool is_valid = false;
+		for (const char c2 : ALPHABET) {
+			if (c1 == c2) {
+				is_valid = true;
+				break;
+			}
+		}
+
+		if (!is_valid) {
+			return false;
+		}
+	}
+	return true;
 }
