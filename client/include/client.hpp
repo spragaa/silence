@@ -13,6 +13,7 @@
 #include <boost/bind.hpp>
 #include <nlohmann/json.hpp>
 #include <filesystem>
+#include <random>
 
 namespace fs = std::filesystem;
 
@@ -34,11 +35,13 @@ private:
 	std::string receive_response();
 	std::string get_user_data_filename() const noexcept;
 	void send_file_chunks(const std::string& filepath);
-	
+
 	bool is_registered() const noexcept;
+	bool is_connected();
 	void register_user();
 	void authorize_user();
 	void handle_user_interaction();
+	std::string generate_random_string(const int& len);
 
 	void async_read();
 	void handle_async_read(const boost::system::error_code& error, size_t bytes_transferred);
@@ -46,7 +49,6 @@ private:
 	void handle_async_write(const boost::system::error_code& error);
 	void do_write();
 	void process_server_message(const std::string& message);
-	bool is_connected();
 
 private:
 

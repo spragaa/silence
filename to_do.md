@@ -44,6 +44,7 @@
 - use fs::filepath instead of strings
 - add namespaces
 - research pkcs# 5 standart for safe password storage
+- https://stackoverflow.com/questions/45710667/defining-global-constants-in-c17
 ### refactoring 
 - unify the way to compare Timestamps, parse them from/to string, int, json and pqxx::response
 - go through all comments in source code 

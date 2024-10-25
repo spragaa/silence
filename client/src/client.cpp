@@ -1,5 +1,8 @@
 #include "client.hpp"
 
+constexpr uint8_t filename_len = 16;
+const std::string alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
 Client::Client(const std::string& server_address,
                unsigned short server_port, const std::string& nick)
 	: _io_service()
@@ -95,7 +98,7 @@ void inline Client::show_actions() {
 	std::cout << _user.get_nickname() << ", please select the number of the action you would like to perform now from the list below:" << std::endl;
 	std::cout << "0. Send message" << std::endl;
 	std::cout << "1. Get list of chats" << std::endl;
-	std::cout << "2. Get offline messages" << std::endl;
+	std::cout << "2. Share file with chat application" << std::endl;
 	std::cout << "5. Exit" << std::endl;
 
 	std::cout << "Input: ";
@@ -139,10 +142,10 @@ void Client::handle_user_interaction() {
 					std::cout << "Enter your message: ";
 					std::string message_text;
 					std::getline(std::cin, message_text);
-					
+
 					// how send multiple files?
 					std::string file_name;
-					std::cout << "If there is a file to send, please enter the file name (it should be located in " 
+					std::cout << "If there is a file to send, please enter the file name (it should be located in "
 					          << _user_files_dir << " or type no, otherwise: ";
 					std::getline(std::cin, file_name);
 
@@ -151,29 +154,49 @@ void Client::handle_user_interaction() {
 					message["sender_id"] = _user.get_id();
 					message["receiver_nickname"] = recipient;
 					message["message_text"] = message_text;
-					
+
 					// not sure if filepath is the best way of doing it
-					message["filepath"] = "none";
+					message["file_name"] = "none";
 					fs::path filepath = fs::path(_user_files_dir) / file_name;
 					if (!fs::exists(filepath)) {
-					    WARN_MSG("[Client::handle_user_interaction] File doesn't exist: " + filepath.string());
+						WARN_MSG("File doesn't exist: " + filepath.string());
+						WARN_MSG("Sending message without file");
 					} else {
-					    message["filepath"] = filepath.string();
-					}					
-					
-					
+						message["file_name"] = file_name;
+					}
+
 					async_write(message.dump());
 					// should be async
 					send_file_chunks(filepath);
-					
+					break;
 				}
-				break;
 				case 1:
 					DEBUG_MSG("CASE 1");
 					break;
-				case 2:
-					DEBUG_MSG("CASE 2");
+				case 2: {
+					std::cout << "Enter file path: ";
+					std::string input;
+					std::getline(std::cin, input);
+
+					fs::path filepath = fs::path(input);
+
+					if (!fs::exists(filepath)) {
+						WARN_MSG("File doesn't exist: " + filepath.string());
+						break;
+					}
+
+					std::string random_filename = generate_random_string(filename_len) +
+					                              filepath.extension().string();
+					fs::path destination = fs::path(_user_files_dir) / random_filename;
+
+					try {
+						fs::copy_file(filepath, destination);
+						INFO_MSG("File " + filepath.string() + " was moved successfully and renamed to: " + random_filename);
+					} catch (const fs::filesystem_error& e) {
+						ERROR_MSG("Error while copying file: " + std::string(e.what()));
+					}
 					break;
+				}
 				case 3:
 					DEBUG_MSG("CASE 3");
 					break;
@@ -291,42 +314,45 @@ void Client::send_message(const std::string& message) {
 
 // should be async!
 void Client::send_file_chunks(const std::string& filepath) {
-    std::ifstream file(filepath, std::ios::binary);
-    if (!file) {
-        ERROR_MSG("[Client::send_file_chunks] Unable to open file: " + filepath);
-        return;
-    }
+	std::ifstream file(filepath, std::ios::binary);
+	if (!file) {
+		ERROR_MSG("[Client::send_file_chunks] Unable to open file: " + filepath);
+		return;
+	}
 
-    const size_t chunk_size = 512;
-    std::vector<char> buffer(chunk_size);
-    size_t chunk_number = 0;
+	const size_t chunk_size = 512;
+	std::vector<char> buffer(chunk_size);
+	size_t chunk_number = 0;
 
-    while (!file.eof()) {
-        file.read(buffer.data(), chunk_size);
-        std::streamsize bytes_read = file.gcount();
+	while (file) {
+		file.read(buffer.data(), chunk_size);
+		std::streamsize bytes_read = file.gcount();
 
-        if (bytes_read == 0) {
-            break;
-        }
+		if (bytes_read <= 0) {
+			break;
+		}
 
-        nlohmann::json file_chunk_request;
-        file_chunk_request["type"] = "file_chunk";
-        file_chunk_request["filename"] = fs::path(filepath).filename().string();
-        file_chunk_request["chunk_data"] = std::string(buffer.data(), bytes_read);
-        file_chunk_request["chunk_number"] = chunk_number;
-        file_chunk_request["is_last"] = file.eof();
-        DEBUG_MSG("[Client::send_file_chunks] Sending file chunk request: " + file_chunk_request.dump());
-        
-        async_write(file_chunk_request.dump());
-        // this is needed, becuse chat server is one thread now, and it could processes all requests in time
-        // I also suggest, that theese next requests might be lost
-        // but I'm not sure tho
-        // sleep(2);
-        
-        std::unique_lock<std::mutex> lock(_mutex);
-        _chunk_cv.wait(lock, [this] { return _chunk_acknowledged; });
-        _chunk_acknowledged = false;
-    }
+		nlohmann::json file_chunk_request;
+		file_chunk_request["type"] = "file_chunk";
+		file_chunk_request["filename"] = fs::path(filepath).filename().string();
+		file_chunk_request["chunk_data"] = std::string(buffer.data(), bytes_read);
+		file_chunk_request["chunk_number"] = chunk_number;
+		file_chunk_request["is_last"] = file.eof();
+
+		DEBUG_MSG("[Client::send_file_chunks] Sending file chunk request: " + file_chunk_request.dump());
+
+		async_write(file_chunk_request.dump());
+
+		std::unique_lock<std::mutex> lock(_mutex);
+		_chunk_cv.wait(lock, [this] {
+			return _chunk_acknowledged;
+		});
+		_chunk_acknowledged = false;
+
+		chunk_number++;
+	}
+
+	file.close();
 }
 
 void Client::async_read() {
@@ -361,8 +387,8 @@ void Client::handle_async_read(const boost::system::error_code& error, size_t by
 
 void Client::async_write(const std::string& message) {
 	DEBUG_MSG("[Client::async_write] Tryign to write request: " + message);
-    
-    if (!is_connected()) {
+
+	if (!is_connected()) {
 		ERROR_MSG("[Client::async_write] Not connected to server");
 		return;
 	}
@@ -420,14 +446,14 @@ void Client::process_server_message(const std::string& message) {
 	try {
 		nlohmann::json json_message = nlohmann::json::parse(message);
 		DEBUG_MSG("[Client::process_server_message] Parsed response: " + json_message.dump());
-		
+
 		// we can add chunk and filename here, in case we want to send few files in the same time in future
 		if (json_message["type"] == "chunk_acknowledgment") {
-            std::lock_guard<std::mutex> lock(_mutex);
-            _chunk_acknowledged = true;
-            _chunk_cv.notify_one();
-        }
-		
+			std::lock_guard<std::mutex> lock(_mutex);
+			_chunk_acknowledged = true;
+			_chunk_cv.notify_one();
+		}
+
 	} catch (const nlohmann::json::parse_error& e) {
 		ERROR_MSG("[Client::process_server_message] Failed to parse message: " + std::string(e.what()));
 	}
@@ -443,6 +469,20 @@ bool Client::is_registered() const noexcept {
 
 bool Client::is_connected() {
 	return _socket.is_open();
+}
+
+std::string Client::generate_random_string(const int& len) {
+	std::random_device random_device;
+	std::mt19937 generator(random_device());
+	std::uniform_int_distribution<> distribution(0, alphabet.size() - 1);
+
+	std::string str;
+
+	for (std::size_t i = 0; i < len; ++i) {
+		str += alphabet[distribution(generator)];
+	}
+
+	return str;
 }
 
 std::string Client::get_user_data_filename() const noexcept {

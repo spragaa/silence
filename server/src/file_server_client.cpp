@@ -2,157 +2,163 @@
 #include <iostream>
 
 FileServerClient::FileServerClient(const std::string& host, const std::string& port)
-    : _host(host), _port(port), _resolver(_io_context), _stream(_io_context) {}
+	: _host(host), _port(port), _resolver(_io_context), _stream(_io_context) {
+}
 
 std::string FileServerClient::send_request(const std::string& target, http::verb method, const std::string& body) {
-    try {
-        auto const results = _resolver.resolve(_host, _port);
-        _stream.connect(results);
+	try {
+		auto const results = _resolver.resolve(_host, _port);
+		_stream.connect(results);
 
-        http::request<http::string_body> req{method, target, _version};
-        req.set(http::field::host, _host);
-        req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+		http::request<http::string_body> req{method, target, _version};
+		req.set(http::field::host, _host);
+		req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
 
-        if (!body.empty()) {
-            req.body() = body;
-            req.prepare_payload();
-        }
+		if (!body.empty()) {
+			req.body() = body;
+			req.prepare_payload();
+		}
 
-        // too big
-        // DEBUG_MSG("[FileServerClient::send_request] Sending request: " + req.body());
-        http::write(_stream, req);
+		// too big
+		// DEBUG_MSG("[FileServerClient::send_request] Sending request: " + req.body());
+		http::write(_stream, req);
 
-        beast::flat_buffer buffer;
-        http::response<http::dynamic_body> res;
-        http::read(_stream, buffer, res);
+		beast::flat_buffer buffer;
+		http::response<http::dynamic_body> res;
+		http::read(_stream, buffer, res);
 
-        std::string response_body = beast::buffers_to_string(res.body().data());
+		std::string response_body = beast::buffers_to_string(res.body().data());
 
-        beast::error_code ec;
-        _stream.socket().shutdown(tcp::socket::shutdown_both, ec);
+		beast::error_code ec;
+		_stream.socket().shutdown(tcp::socket::shutdown_both, ec);
 
-        if(ec && ec != beast::errc::not_connected) {
-            throw beast::system_error{ec};
-        }
+		if(ec && ec != beast::errc::not_connected) {
+			throw beast::system_error{ec};
+		}
 
-        return response_body;
-    }
-    catch(std::exception const& e) {
-        ERROR_MSG("[FileServerClient::send_request] " + std::string(e.what()));
-        return "Error" + std::string(e.what());
-    }
+		return response_body;
+	}
+	catch(std::exception const& e) {
+		ERROR_MSG("[FileServerClient::send_request] " + std::string(e.what()));
+		return "Error" + std::string(e.what());
+	}
 }
 
 std::string FileServerClient::list_files() {
-    return send_request("/list", http::verb::get);
+	return send_request("/list", http::verb::get);
 }
 
-std::string FileServerClient::upload_file(const std::string& filename, const std::string& filepath) {
-    auto start_time = std::chrono::high_resolution_clock::now();
-    
-    fs::path full_path = fs::path(filepath) / filename;
-    std::ifstream file(full_path, std::ios::binary);
-    if (!file) {
-        ERROR_MSG("[FileServerClient::upload_file] Unable to open file: " + full_path.string());
-        return "Error: Unable to open file: " + full_path.string();
-    }
+// std::string FileServerClient::upload_file(const std::string& filename, const std::string& filepath) {
+// 	auto start_time = std::chrono::high_resolution_clock::now();
 
-    const size_t chunk_size = 512;
-    std::vector<char> buffer(chunk_size);
-    std::string response;
+// 	fs::path full_path = fs::path(filepath) / filename;
+// 	std::ifstream file(full_path, std::ios::binary);
+// 	if (!file) {
+// 		ERROR_MSG("[FileServerClient::upload_file] Unable to open file: " + full_path.string());
+// 		return "Error: Unable to open file: " + full_path.string();
+// 	}
 
-    try {
-        auto const results = _resolver.resolve(_host, _port);
-        _stream.connect(results);
+// 	const size_t chunk_size = 512;
+// 	std::vector<char> buffer(chunk_size);
+// 	std::string response;
 
-        size_t total_bytes_sent = 0;
-        while (!file.eof()) {
-            file.read(buffer.data(), chunk_size);
-            std::streamsize bytes_read = file.gcount();
+// 	try {
+// 		auto const results = _resolver.resolve(_host, _port);
+// 		_stream.connect(results);
 
-            if (bytes_read == 0) {
-                break;
-            }
+// 		size_t total_bytes_sent = 0;
+// 		while (!file.eof()) {
+// 			file.read(buffer.data(), chunk_size);
+// 			std::streamsize bytes_read = file.gcount();
 
-            http::request<http::string_body> req{http::verb::post, "/upload/" + filename, _version};
-            req.set(http::field::host, _host);
-            req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-            req.set(http::field::content_type, "application/octet-stream");
-            req.body().assign(buffer.data(), bytes_read);
-            req.prepare_payload();
-            
-            // too big
-            // DEBUG_MSG("[FileServerClient::send_request] Sending request: " + req.body());
+// 			if (bytes_read == 0) {
+// 				break;
+// 			}
 
-            http::write(_stream, req);
+// 			http::request<http::string_body> req{http::verb::post, "/upload/" + filename, _version};
+// 			req.set(http::field::host, _host);
+// 			req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+// 			req.set(http::field::content_type, "application/octet-stream");
+// 			req.body().assign(buffer.data(), bytes_read);
+// 			req.prepare_payload();
 
-            beast::flat_buffer buffer;
-            http::response<http::dynamic_body> res;
-            http::read(_stream, buffer, res);
+// 			// too big
+// 			// DEBUG_MSG("[FileServerClient::send_request] Sending request: " + req.body());
 
-            response = beast::buffers_to_string(res.body().data());
-            total_bytes_sent += bytes_read;
-            DEBUG_MSG("[FileServerClient::upload_file] Chunk sent. Total bytes sent: " +  std::to_string(total_bytes_sent));
-        }
+// 			http::write(_stream, req);
 
-        beast::error_code ec;
-        _stream.socket().shutdown(tcp::socket::shutdown_both, ec);
+// 			beast::flat_buffer buffer;
+// 			http::response<http::dynamic_body> res;
+// 			http::read(_stream, buffer, res);
 
-        if(ec && ec != beast::errc::not_connected) {
-            throw beast::system_error{ec};
-        }
-    }
-    catch(std::exception const& e) {
-        ERROR_MSG("[FileServerClient::upload_file] " +  std::string(e.what()));
-        return "Error during upload: " + std::string(e.what());
-    }
-    auto end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> total_time_ms = end_time - start_time;
+// 			response = beast::buffers_to_string(res.body().data());
+// 			total_bytes_sent += bytes_read;
+// 			DEBUG_MSG("[FileServerClient::upload_file] Chunk sent. Total bytes sent: " +  std::to_string(total_bytes_sent));
+// 		}
 
-    DEBUG_MSG("[FileServerClient::upload_file] Chunk uploaded successfully. Execution time: " + std::to_string(total_time_ms.count()) 
-        + " ms. Server response: " + response);
-    return "File uploaded successfully. Server response: " + response;
-}
+// 		beast::error_code ec;
+// 		_stream.socket().shutdown(tcp::socket::shutdown_both, ec);
+
+// 		if(ec && ec != beast::errc::not_connected) {
+// 			throw beast::system_error{ec};
+// 		}
+// 	}
+// 	catch(std::exception const& e) {
+// 		ERROR_MSG("[FileServerClient::upload_file] " +  std::string(e.what()));
+// 		return "Error during upload: " + std::string(e.what());
+// 	}
+// 	auto end_time = std::chrono::high_resolution_clock::now();
+// 	std::chrono::duration<double, std::milli> total_time_ms = end_time - start_time;
+
+// 	DEBUG_MSG("[FileServerClient::upload_file] Chunk uploaded successfully. Execution time: " + std::to_string(total_time_ms.count())
+// 	          + " ms. Server response: " + response);
+// 	return "File uploaded successfully. Server response: " + response;
+// }
 
 bool FileServerClient::upload_chunk(const std::string& filename, const std::string& chunk_data) {
-    try {
-        auto const results = _resolver.resolve(_host, _port);
-        _stream.connect(results);
+	try {
+		auto const results = _resolver.resolve(_host, _port);
+		_stream.connect(results);
+		DEBUG_MSG("[FileServerClient::upload_chunk] Connected to host");
 
-        http::request<http::string_body> req{http::verb::post, "/upload/" + filename, _version};
-        req.set(http::field::host, _host);
-        req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-        req.set(http::field::content_type, "application/octet-stream");
-        req.body() = chunk_data;
-        req.prepare_payload();
+		http::request<http::string_body> req{http::verb::post, "/upload/" + filename, _version};
+		req.set(http::field::host, _host);
+		req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+		req.set(http::field::content_type, "application/octet-stream");
+		req.body() = chunk_data;
+		req.prepare_payload();
 
-        http::write(_stream, req);
+		DEBUG_MSG("[FileServerClient::upload_chunk] Sending reques body: " + req.body());
 
-        beast::flat_buffer buffer;
-        http::response<http::dynamic_body> res;
-        http::read(_stream, buffer, res);
+		http::write(_stream, req);
 
-        std::string response_body = beast::buffers_to_string(res.body().data());
+		beast::flat_buffer buffer;
+		http::response<http::dynamic_body> res;
+		http::read(_stream, buffer, res);
 
-        beast::error_code ec;
-        _stream.socket().shutdown(tcp::socket::shutdown_both, ec);
+		std::string response_body = beast::buffers_to_string(res.body().data());
+		DEBUG_MSG("[FileServerClient::upload_chunk] Response body: " + response_body);
 
-        if(ec && ec != beast::errc::not_connected) {
-            throw beast::system_error{ec};
-        }
-        
-        return response_body == "File uploaded successfully";
-    }
-    catch(std::exception const& e) {
-        ERROR_MSG("[FileServerClient::upload_chunk] " + std::string(e.what()));
-        return false;
-    }
+		beast::error_code ec;
+		_stream.socket().shutdown(tcp::socket::shutdown_both, ec);
+
+		if(ec && ec != beast::errc::not_connected) {
+			FATAL_MSG("[FileServerClient::upload_chunk] Socket shutdown error: " + ec.message());
+			return false;
+		}
+
+		return response_body == "File uploaded successfully";
+	}
+	catch(std::exception const& e) {
+		ERROR_MSG("[FileServerClient::upload_chunk] Exception: " + std::string(e.what()));
+		return false;
+	}
 }
 
 std::string FileServerClient::download_file(const std::string& filename) {
-    return send_request("/download/" + filename, http::verb::get);
+	return send_request("/download/" + filename, http::verb::get);
 }
 
 std::string FileServerClient::delete_file(const std::string& filename) {
-    return send_request("/delete/" + filename, http::verb::delete_);
+	return send_request("/delete/" + filename, http::verb::delete_);
 }

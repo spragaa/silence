@@ -39,8 +39,8 @@ public:
 	       const std::string& user_metadata_db_connection_string, // add metadata to name
 	       const std::string& msg_metadata_db_connection_string, // add metadata to name
 	       const std::string& msg_text_db_connection_string,
-           const std::string& file_server_host,
-           const std::string& file_server_port
+	       const std::string& file_server_host,
+	       const std::string& file_server_port
 	       );
 	~Server();
 
