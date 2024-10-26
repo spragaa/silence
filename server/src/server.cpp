@@ -64,15 +64,17 @@ void Server::handle_request(boost::shared_ptr<tcp::socket> socket) {
 
 		if (error == boost::asio::error::eof) {
 			DEBUG_MSG("[Server::handle_request] Client closed connection on socket: " + get_socket_info(*socket));
-
-			for(auto it = _connected_clients.begin(); it != _connected_clients.end(); ++it) {
-				if(it->second == socket) {
-					_connected_clients.erase(it);
-					break;
-				}
-			}
+			
+			_connected_clients_manager.remove_client_by_socket(socket);
+			
+			// for(auto it = _connected_clients.begin(); it != _connected_clients.end(); ++it) {
+			// 	if(it->second == socket) {
+			// 		_connected_clients.erase(it);
+			// 		break;
+			// 	}
+			// }
 			DEBUG_MSG("[Server::handle_authorize] Client removed from connected list: " + get_socket_info(*socket));
-			DEBUG_MSG("[Server::handle_authorize] Currently, there are " + std::to_string(_connected_clients.size()) + " users connected");
+			DEBUG_MSG("[Server::handle_authorize] Currently, there are " + std::to_string(_connected_clients_manager.get_connected_count()) + " users connected");
 
 			break;
 		} else if (error) {
@@ -165,11 +167,11 @@ void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohm
 		//     {"is_online", true}
 		// };
 		// _user_repo.update_user_status(user_id, true);
-
-		_connected_clients[user_id] = socket;
+		_connected_clients_manager.add_client(user_id, socket);
+		// _connected_clients[user_id] = socket;
 		// "New user connected" in handle authorize may be counterintuitive?
 		DEBUG_MSG("[Server::handle_authorize] New user connected, with id: " + std::to_string(user_id) + " on socket: " + get_socket_info(*socket));
-		DEBUG_MSG("[Server::handle_authorize] Currently, there are " + std::to_string(_connected_clients.size()) + " users connected");
+		DEBUG_MSG("[Server::handle_authorize] Currently, there are " + std::to_string(_connected_clients_manager.get_connected_count()) + " users connected");
 	} else {
 		response["status"] = "error";
 		response["response"] = "Authorization failed: Invalid credentials";
@@ -229,15 +231,13 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 	DEBUG_MSG("[Server::handle_send_message] Response for sender: " + sender_response.dump());
 	boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
 
-	for(auto it = _connected_clients.begin(); it != _connected_clients.end(); ++it) {
-		if (it->first == receiver_id) {
-			receiver_response.update(new_msg.to_json());
-			receiver_response["type"] = "receive_msg";
-			// more?
-			DEBUG_MSG("[Server::handle_send_message] Response for receiver: " + receiver_response.dump());
-			boost::asio::write(*(it->second), boost::asio::buffer(receiver_response.dump() + "\r\n\r\n"));
-		}
-	}
+	auto receiver_socket = _connected_clients_manager.get_client_socket(receiver_id);
+    if (receiver_socket) {
+        receiver_response.update(new_msg.to_json());
+        receiver_response["type"] = "receive_msg";
+        DEBUG_MSG("[Server::handle_send_message] Response for receiver: " + receiver_response.dump());
+        boost::asio::write(*receiver_socket, boost::asio::buffer(receiver_response.dump() + "\r\n\r\n"));
+    }
 	
 	if (request.contains("file_name") && request["file_name"] != "none") {
         std::string filename = request["file_name"];
@@ -255,17 +255,17 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
         
         auto upload_it = _file_uploads.find(filename);
         if (upload_it != _file_uploads.end() && upload_it->second.completed) {
-            auto receiver_it = _connected_clients.find(receiver_id);
-            if (receiver_it != _connected_clients.end()) {
+            auto receiver_socket = _connected_clients_manager.get_client_socket(receiver_id);
+            if (receiver_socket) {
                 nlohmann::json file_transfer_notification;
                 file_transfer_notification["type"] = "incoming_file";
                 file_transfer_notification["filename"] = filename;
                 file_transfer_notification["sender_id"] = sender_id;
                 
-                boost::asio::write(*(receiver_it->second), 
+                boost::asio::write(*receiver_socket, 
                     boost::asio::buffer(file_transfer_notification.dump() + "\r\n\r\n"));
                 
-                send_file_to_client(receiver_it->second, filename);
+                send_file_to_client(receiver_socket, filename);
             }
         }
     }
@@ -314,8 +314,8 @@ void Server::handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nloh
                                          });
                 
             if (pending_it != _pending_file_transfers.end()) {
-                auto receiver_it = _connected_clients.find(pending_it->receiver_id);
-                if (receiver_it != _connected_clients.end()) {
+                auto receiver_socket = _connected_clients_manager.get_client_socket(pending_it->receiver_id);
+                if (receiver_socket) {
                     try {
                         nlohmann::json file_transfer_notification;
                         file_transfer_notification["type"] = "incoming_file";
@@ -325,10 +325,10 @@ void Server::handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nloh
                         DEBUG_MSG("[Server::handle_file_chunk] Sending file transfer notification: " 
                                 + file_transfer_notification.dump());
                         
-                        boost::asio::write(*(receiver_it->second), 
+                        boost::asio::write(*receiver_socket, 
                             boost::asio::buffer(file_transfer_notification.dump() + "\r\n\r\n"));
 
-                        send_file_to_client(receiver_it->second, filename);
+                        send_file_to_client(receiver_socket, filename);
                         _pending_file_transfers.erase(pending_it);
                         
                         INFO_MSG("[Server::handle_file_chunk] File " + filename 
