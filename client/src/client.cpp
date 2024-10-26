@@ -312,47 +312,66 @@ void Client::send_message(const std::string& message) {
 	boost::asio::write(_socket, boost::asio::buffer(message + "\r\n\r\n"));
 }
 
-// should be async!
 void Client::send_file_chunks(const std::string& filepath) {
-	std::ifstream file(filepath, std::ios::binary);
-	if (!file) {
-		ERROR_MSG("[Client::send_file_chunks] Unable to open file: " + filepath);
-		return;
-	}
+    if (filepath.empty() || !fs::exists(filepath)) {
+        ERROR_MSG("[Client::send_file_chunks] Invalid filepath: " + filepath);
+        return;
+    }
 
-	const size_t chunk_size = 512;
-	std::vector<char> buffer(chunk_size);
-	size_t chunk_number = 0;
+    auto state = std::make_shared<FileTransferState>(filepath);
+    
+    if (!state->file) {
+        ERROR_MSG("[Client::send_file_chunks] Unable to open file: " + filepath);
+        return;
+    }
 
-	while (file) {
-		file.read(buffer.data(), chunk_size);
-		std::streamsize bytes_read = file.gcount();
+    _io_service.post([this, state]() {
+        send_next_chunk(state);
+    });
+}
 
-		if (bytes_read <= 0) {
-			break;
-		}
+void Client::send_next_chunk(std::shared_ptr<FileTransferState> state) {
+    if (!state->file) {
+        return;
+    }
 
-		nlohmann::json file_chunk_request;
-		file_chunk_request["type"] = "file_chunk";
-		file_chunk_request["filename"] = fs::path(filepath).filename().string();
-		file_chunk_request["chunk_data"] = std::string(buffer.data(), bytes_read);
-		file_chunk_request["chunk_number"] = chunk_number;
-		file_chunk_request["is_last"] = file.eof();
+    state->file.read(state->buffer.data(), state->chunk_size);
+    std::streamsize bytes_read = state->file.gcount();
 
-		DEBUG_MSG("[Client::send_file_chunks] Sending file chunk request: " + file_chunk_request.dump());
+    if (bytes_read <= 0) {
+        state->file.close();
+        DEBUG_MSG("[Client::send_next_chunk] File transfer completed");
+        return;
+    }
 
-		async_write(file_chunk_request.dump());
+    nlohmann::json chunk_request;
+    chunk_request["type"] = "file_chunk";
+    chunk_request["filename"] = state->filename;
+    chunk_request["chunk_data"] = std::string(state->buffer.data(), bytes_read);
+    chunk_request["chunk_number"] = state->chunk_number + 1;
+    chunk_request["is_last"] = state->file.eof();
 
-		std::unique_lock<std::mutex> lock(_mutex);
-		_chunk_cv.wait(lock, [this] {
-			return _chunk_acknowledged;
-		});
-		_chunk_acknowledged = false;
+    DEBUG_MSG("[Client::send_next_chunk] Sending chunk " + std::to_string(state->chunk_number + 1));
+    
+    async_write(chunk_request.dump());
+    wait_for_chunk_ack(state);
+}
 
-		chunk_number++;
-	}
-
-	file.close();
+void Client::wait_for_chunk_ack(std::shared_ptr<FileTransferState> state) {
+    auto timer = std::make_shared<boost::asio::steady_timer>(_io_service, 
+                                                           std::chrono::milliseconds(50));
+    
+    // ec is needed here
+    timer->async_wait([this, timer, state](const boost::system::error_code& /*ec*/) {
+        std::lock_guard<std::mutex> lock(_mutex);
+        if (_chunk_acknowledged) {
+            _chunk_acknowledged = false;
+            state->chunk_number++;
+            send_next_chunk(state);
+        } else {
+            wait_for_chunk_ack(state);
+        }
+    });
 }
 
 void Client::async_read() {
@@ -443,20 +462,23 @@ std::string Client::receive_response() {
 }
 
 void Client::process_server_message(const std::string& message) {
-	try {
-		nlohmann::json json_message = nlohmann::json::parse(message);
-		DEBUG_MSG("[Client::process_server_message] Parsed response: " + json_message.dump());
+    try {
+        nlohmann::json json_message = nlohmann::json::parse(message);
+        DEBUG_MSG("[Client::process_server_message] Parsed response: " + json_message.dump());
 
-		// we can add chunk and filename here, in case we want to send few files in the same time in future
-		if (json_message["type"] == "chunk_acknowledgment") {
-			std::lock_guard<std::mutex> lock(_mutex);
-			_chunk_acknowledged = true;
-			_chunk_cv.notify_one();
-		}
-
-	} catch (const nlohmann::json::parse_error& e) {
-		ERROR_MSG("[Client::process_server_message] Failed to parse message: " + std::string(e.what()));
-	}
+        if (json_message["type"] == "chunk_acknowledgment") {
+            if (json_message["status"] == "success") {
+                std::lock_guard<std::mutex> lock(_mutex);
+                _chunk_acknowledged = true;
+                _chunk_cv.notify_one();
+            } else {
+                ERROR_MSG("[Client::process_server_message] Chunk upload failed: " 
+                         + json_message["error"].get<std::string>());
+            }
+        }
+    } catch (const nlohmann::json::parse_error& e) {
+        ERROR_MSG("[Client::process_server_message] Failed to parse message: " + std::string(e.what()));
+    }
 }
 
 User Client::get_user() {
