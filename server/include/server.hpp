@@ -17,24 +17,24 @@ using boost::asio::ip::tcp;
 
 class Server : public boost::enable_shared_from_this<Server> {
 public:
-    Server(const ServerConfig& config);
-    ~Server();
+	Server(const ServerConfig& config);
+	~Server();
 
-    void start();
-
-private:
-    void start_request_handling();
-    void handle_accept(boost::shared_ptr<tcp::socket> socket, 
-                      const boost::system::error_code& error);
+	void start();
 
 private:
-    boost::asio::io_service _io_service;
-    tcp::acceptor _acceptor;
-    boost::shared_ptr<boost::asio::io_service::work> _work;
-    std::vector<boost::shared_ptr<boost::thread>> _thread_pool;
-    
-    ServerConfig _config;
-    RepositoryManager _repo_manager;
-    ConnectedClientsManager _connected_clients_manager;
-    RequestHandler _request_handler;
+	void start_request_handling();
+	void handle_accept(boost::shared_ptr<tcp::socket> socket,
+	                   const boost::system::error_code& error);
+
+private:
+	boost::asio::io_service _io_service;
+	tcp::acceptor _acceptor;
+	boost::shared_ptr<boost::asio::io_service::work> _work;
+	std::vector<boost::shared_ptr<boost::thread> > _thread_pool;
+
+	ServerConfig _config;
+	RepositoryManager _repo_manager;
+	ConnectedClientsManager _connected_clients_manager;
+	RequestHandler _request_handler;
 };
