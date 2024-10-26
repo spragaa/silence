@@ -5,18 +5,10 @@
 
 Server::Server(const ServerConfig& config)
 	: _config(config),
+	  _repo_manager(config),
       _acceptor(_io_service, tcp::endpoint(tcp::v4(), _config._port)),
 	  _work(new boost::asio::io_service::work(_io_service)) {
 
-	_postgres_db_manager.add_connection("user_metadata_db", _config._user_metadata_db_connection_string);
-	_postgres_db_manager.add_connection("message_metadata_db", _config._msg_metadata_db_connection_string);
-
-	_user_repo = std::make_unique<UserMetadataRepository>(_postgres_db_manager, "user_metadata_db");
-	_msg_metadata_repo = std::make_unique<MessageMetadataRepository>(_postgres_db_manager, "message_metadata_db");
-	_msg_text_repo = std::make_unique<MessageTextRepository>(_config._msg_text_db_connection_string);
-
-	_file_server_client = std::make_unique<FileServerClient>(_config._file_server_host, _config._file_server_port);
-	
 	for (unsigned int i = 0; i < _config._thread_pool_size; ++i) {
 		_thread_pool.push_back(boost::make_shared<boost::thread>(
 								  boost::bind(&boost::asio::io_service::run, &_io_service)));
@@ -140,7 +132,7 @@ void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohma
 	std::string password = request["password"];
 
 	User new_user(nickname, password);
-	int user_id = _user_repo->create(new_user);
+	int user_id = _repo_manager.create_user(new_user);
 	nlohmann::json response;
 
 	if (user_id != 0) {
@@ -161,7 +153,7 @@ void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohm
 	std::string password = request["password"];
 	int user_id = request["user_id"];
 
-	bool auth_success = _user_repo->authorize(user_id, nickname, password);
+	bool auth_success = _repo_manager.authorize_user(user_id, nickname, password);
 	nlohmann::json response;
 
 	if (auth_success) {
@@ -196,7 +188,7 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 
 	nlohmann::json sender_response, receiver_response;
 
-	int receiver_id = _user_repo->get_id(receiver_nickname);
+	int receiver_id = _repo_manager.get_user_id(receiver_nickname);
 	if (receiver_id == 0) {
 		sender_response["status"] = "error";
 		sender_response["response"] = "Receiver not found";
@@ -206,7 +198,7 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 
 	Message new_msg(sender_id, receiver_id, request_text);
 
-	int msg_metadata_id = _msg_metadata_repo->create(new_msg.get_metadata());
+	int msg_metadata_id = _repo_manager.create_message(new_msg);
 	// [MessageTextRepository::create] unknown error code: Failed to connect to Redis: tu
 	// int msg_text_id = _msg_text_repo->create(new_msg.get_text());
 	// if (msg_metadata_id == msg_text_id) {
@@ -305,7 +297,7 @@ void Server::handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nloh
         sender_response["status"] = "error";
         sender_response["error"] = "wrong_chunk_order";
     }
-    else if (_file_server_client->upload_chunk(filename, chunk_data)) {
+    else if (_repo_manager.upload_file_chunk(filename, chunk_data)) {
         INFO_MSG("[Server::handle_file_chunk] Chunk " + std::to_string(chunk_number) + " uploaded");
         sender_response["status"] = "success";
         upload_state.last_chunk_received = chunk_number;
@@ -374,7 +366,7 @@ void Server::handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nloh
 }
 
 void Server::send_file_to_client(boost::shared_ptr<tcp::socket> client_socket, const std::string& filename) {
-    std::vector<std::string> chunks = _file_server_client->download_file_chunks(filename);
+    std::vector<std::string> chunks = _repo_manager.download_file_chunks(filename);
     
     if (chunks.empty()) {
         ERROR_MSG("[Server::send_file_to_client] Failed to download chunks for file: " + filename);
