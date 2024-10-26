@@ -65,6 +65,6 @@ private:
 	std::unique_ptr<MessageMetadataRepository> _msg_metadata_repo;
 	std::unique_ptr<MessageTextRepository> _msg_text_repo;
 	std::unique_ptr<FileServerClient> _file_server_client;
-
+	std::vector<boost::shared_ptr<boost::thread> > _thread_pool;
 	std::map<int, boost::shared_ptr<tcp::socket> > _connected_clients;
 };
