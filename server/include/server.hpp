@@ -19,6 +19,7 @@
 #include <string>
 #include <set>
 #include <map>
+#include <queue>
 #include <memory>
 
 #include <boost/asio.hpp>
@@ -48,6 +49,7 @@ public:
 
 private:
     struct UploadState;
+    struct PendingFileTransfer;
 
 	void start_request_handling();
 	// should I move these into RequestHandlerClass?
@@ -57,7 +59,7 @@ private:
 	void handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	void handle_send_message(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	void handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
-
+	void send_file_to_client(boost::shared_ptr<tcp::socket> client_socket, const std::string& filename);
 	
 private:
     struct UploadState {
@@ -65,6 +67,15 @@ private:
         bool completed;
     };
 
+    struct PendingFileTransfer {
+        std::string filename;
+        int sender_id;
+        int receiver_id;
+    };
+    // queue?
+    std::vector<PendingFileTransfer> _pending_file_transfers;
+    std::mutex _pending_transfers_mutex;
+    
     boost::asio::io_service _io_service;
 	tcp::acceptor _acceptor;
 	boost::shared_ptr<boost::asio::io_service::work> _work;

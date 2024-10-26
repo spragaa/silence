@@ -54,6 +54,15 @@ void FileServer::setup_routes() {
 	INFO_MSG("[FileServer::setup_routes] Routes created:\n" + UPLOAD_ROUTE + "\n" + DOWNLOAD_ROUTE + "\n" + DELETE_ROUTE + "\n" + LIST_ROUTE);
 }
 
+fs::path FileServer::get_filepath_by_name(const std::string& filename) const {
+   	std::string lvl1_dir = filename.substr(0, 2);
+	std::string lvl2_dir = filename.substr(2, 2);
+   
+	fs::path directories_path = fs::path(_storage_dir) / lvl1_dir / lvl2_dir;
+	std::filesystem::create_directories(directories_path);
+	return directories_path / filename;
+} 
+
 void FileServer::upload_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
 	auto filename = request.param(":filename").as<std::string>();
 
@@ -63,12 +72,7 @@ void FileServer::upload_file(const Pistache::Rest::Request& request, Pistache::H
 		return;
 	}
 
-	std::string lvl1_dir = filename.substr(0, 2);
-	std::string lvl2_dir = filename.substr(2, 2);
-
-	fs::path directories_path = fs::path(_storage_dir) / lvl1_dir / lvl2_dir;
-	std::filesystem::create_directories(directories_path);
-	fs::path filepath = directories_path / filename;
+	fs::path filepath = get_filepath_by_name(filename);
 	DEBUG_MSG("[FileServer::upload_file] Filepath is " + filepath.string());
 
 	const std::string& body = request.body();
@@ -113,7 +117,8 @@ void FileServer::upload_file(const Pistache::Rest::Request& request, Pistache::H
 
 void FileServer::download_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
 	auto filename = request.param(":filename").as<std::string>();
-	auto filepath = fs::path(_storage_dir) / filename;
+	auto filepath = get_filepath_by_name(filename);
+
 	DEBUG_MSG("[FileServer::download_file] Download file called, filepath:" + filepath.string());
 
 	if (!fs::exists(filepath)) {
