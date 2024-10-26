@@ -55,13 +55,13 @@ void FileServer::setup_routes() {
 }
 
 fs::path FileServer::get_filepath_by_name(const std::string& filename) const {
-   	std::string lvl1_dir = filename.substr(0, 2);
+	std::string lvl1_dir = filename.substr(0, 2);
 	std::string lvl2_dir = filename.substr(2, 2);
-   
+
 	fs::path directories_path = fs::path(_storage_dir) / lvl1_dir / lvl2_dir;
 	std::filesystem::create_directories(directories_path);
 	return directories_path / filename;
-} 
+}
 
 void FileServer::upload_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
 	auto filename = request.param(":filename").as<std::string>();
