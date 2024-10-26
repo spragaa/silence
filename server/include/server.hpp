@@ -9,6 +9,8 @@
 #include "message_text_repository.hpp"
 #include "file_server_client.hpp"
 
+#include "server_config.hpp"
+
 #include <iostream>
 #include <ostream>
 #include <iomanip>
@@ -35,14 +37,7 @@ using namespace boost::placeholders;
 
 class Server : public boost::enable_shared_from_this<Server> {
 public:
-	Server(unsigned short port,
-	       unsigned int thread_pool_size,
-	       const std::string& user_metadata_db_connection_string,
-	       const std::string& msg_metadata_db_connection_string,
-	       const std::string& msg_text_db_connection_string,
-	       const std::string& file_server_host,
-	       const std::string& file_server_port
-	       );
+	Server(const ServerConfig& config);
 	~Server();
 
 	void start();
@@ -55,10 +50,14 @@ private:
 	// should I move these into RequestHandlerClass?
 	void handle_accept(boost::shared_ptr<tcp::socket> socket, const boost::system::error_code& error);
 	void handle_request(boost::shared_ptr<tcp::socket> socket);
+
+	// base class in handle request
+	// each of these methods is a derived class 
 	void handle_register(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	void handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	void handle_send_message(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	void handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
+
 	void send_file_to_client(boost::shared_ptr<tcp::socket> client_socket, const std::string& filename);
 	
 private:
@@ -87,4 +86,6 @@ private:
 	std::vector<boost::shared_ptr<boost::thread> > _thread_pool;
 	std::map<int, boost::shared_ptr<tcp::socket> > _connected_clients;
 	std::map<std::string, UploadState> _file_uploads;
+	
+	ServerConfig _config;
 };
