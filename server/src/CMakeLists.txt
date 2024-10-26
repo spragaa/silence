@@ -5,6 +5,8 @@ add_library(server_lib
     message_metadata_repository.cpp
     message_text_repository.cpp
     file_server_client.cpp
+    repository_manager.cpp
+
 )
 
 target_link_libraries(server_lib

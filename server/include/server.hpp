@@ -8,8 +8,8 @@
 #include "message_metadata_repository.hpp"
 #include "message_text_repository.hpp"
 #include "file_server_client.hpp"
-
 #include "server_config.hpp"
+#include "repository_manager.hpp"
 
 #include <iostream>
 #include <ostream>
@@ -78,14 +78,10 @@ private:
     boost::asio::io_service _io_service;
 	tcp::acceptor _acceptor;
 	boost::shared_ptr<boost::asio::io_service::work> _work;
-	PostgresDBManager _postgres_db_manager;
-	std::unique_ptr<UserMetadataRepository> _user_repo;
-	std::unique_ptr<MessageMetadataRepository> _msg_metadata_repo;
-	std::unique_ptr<MessageTextRepository> _msg_text_repo;
-	std::unique_ptr<FileServerClient> _file_server_client;
 	std::vector<boost::shared_ptr<boost::thread> > _thread_pool;
 	std::map<int, boost::shared_ptr<tcp::socket> > _connected_clients;
 	std::map<std::string, UploadState> _file_uploads;
 	
 	ServerConfig _config;
+	RepositoryManager _repo_manager;
 };
