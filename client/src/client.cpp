@@ -313,65 +313,65 @@ void Client::send_message(const std::string& message) {
 }
 
 void Client::send_file_chunks(const std::string& filepath) {
-    if (filepath.empty() || !fs::exists(filepath)) {
-        ERROR_MSG("[Client::send_file_chunks] Invalid filepath: " + filepath);
-        return;
-    }
+	if (filepath.empty() || !fs::exists(filepath)) {
+		ERROR_MSG("[Client::send_file_chunks] Invalid filepath: " + filepath);
+		return;
+	}
 
-    auto state = std::make_shared<FileTransferState>(filepath);
-    
-    if (!state->file) {
-        ERROR_MSG("[Client::send_file_chunks] Unable to open file: " + filepath);
-        return;
-    }
+	auto state = std::make_shared<FileTransferState>(filepath);
 
-    _io_service.post([this, state]() {
-        send_next_chunk(state);
-    });
+	if (!state->file) {
+		ERROR_MSG("[Client::send_file_chunks] Unable to open file: " + filepath);
+		return;
+	}
+
+	_io_service.post([this, state]() {
+		send_next_chunk(state);
+	});
 }
 
 void Client::send_next_chunk(std::shared_ptr<FileTransferState> state) {
-    if (!state->file) {
-        return;
-    }
+	if (!state->file) {
+		return;
+	}
 
-    state->file.read(state->buffer.data(), state->chunk_size);
-    std::streamsize bytes_read = state->file.gcount();
+	state->file.read(state->buffer.data(), state->chunk_size);
+	std::streamsize bytes_read = state->file.gcount();
 
-    if (bytes_read <= 0) {
-        state->file.close();
-        DEBUG_MSG("[Client::send_next_chunk] File transfer completed");
-        return;
-    }
+	if (bytes_read <= 0) {
+		state->file.close();
+		DEBUG_MSG("[Client::send_next_chunk] File transfer completed");
+		return;
+	}
 
-    nlohmann::json chunk_request;
-    chunk_request["type"] = "file_chunk";
-    chunk_request["filename"] = state->filename;
-    chunk_request["chunk_data"] = std::string(state->buffer.data(), bytes_read);
-    chunk_request["chunk_number"] = state->chunk_number + 1;
-    chunk_request["is_last"] = state->file.eof();
+	nlohmann::json chunk_request;
+	chunk_request["type"] = "file_chunk";
+	chunk_request["filename"] = state->filename;
+	chunk_request["chunk_data"] = std::string(state->buffer.data(), bytes_read);
+	chunk_request["chunk_number"] = state->chunk_number + 1;
+	chunk_request["is_last"] = state->file.eof();
 
-    DEBUG_MSG("[Client::send_next_chunk] Sending chunk " + std::to_string(state->chunk_number + 1));
-    
-    async_write(chunk_request.dump());
-    wait_for_chunk_ack(state);
+	DEBUG_MSG("[Client::send_next_chunk] Sending chunk " + std::to_string(state->chunk_number + 1));
+
+	async_write(chunk_request.dump());
+	wait_for_chunk_ack(state);
 }
 
 void Client::wait_for_chunk_ack(std::shared_ptr<FileTransferState> state) {
-    auto timer = std::make_shared<boost::asio::steady_timer>(_io_service, 
-                                                           std::chrono::milliseconds(50));
-    
-    // ec is needed here
-    timer->async_wait([this, timer, state](const boost::system::error_code& /*ec*/) {
-        std::lock_guard<std::mutex> lock(_mutex);
-        if (_chunk_acknowledged) {
-            _chunk_acknowledged = false;
-            state->chunk_number++;
-            send_next_chunk(state);
-        } else {
-            wait_for_chunk_ack(state);
-        }
-    });
+	auto timer = std::make_shared<boost::asio::steady_timer>(_io_service,
+	                                                         std::chrono::milliseconds(50));
+
+	// ec is needed here
+	timer->async_wait([this, timer, state](const boost::system::error_code& /*ec*/) {
+		std::lock_guard<std::mutex> lock(_mutex);
+		if (_chunk_acknowledged) {
+			_chunk_acknowledged = false;
+			state->chunk_number++;
+			send_next_chunk(state);
+		} else {
+			wait_for_chunk_ack(state);
+		}
+	});
 }
 
 void Client::async_read() {
@@ -462,73 +462,73 @@ std::string Client::receive_response() {
 }
 
 void Client::process_server_message(const std::string& message) {
-    try {
-        nlohmann::json json_message = nlohmann::json::parse(message);
-        DEBUG_MSG("[Client::process_server_message] Parsed response: " + json_message.dump());
+	try {
+		nlohmann::json json_message = nlohmann::json::parse(message);
+		DEBUG_MSG("[Client::process_server_message] Parsed response: " + json_message.dump());
 
-        if (json_message["type"] == "chunk_acknowledgment") {
-            handle_chunk_acknowledgment(json_message);
-        }
-        else if (json_message["type"] == "incoming_file") {
-            handle_incoming_file(json_message);
-        }
-        else if (json_message["type"] == "file_chunk") {
-            handle_incoming_file_chunk(json_message);
-        }
-    } catch (const nlohmann::json::parse_error& e) {
-        ERROR_MSG("[Client::process_server_message] Failed to parse message: " + std::string(e.what()));
-    }
+		if (json_message["type"] == "chunk_acknowledgment") {
+			handle_chunk_acknowledgment(json_message);
+		}
+		else if (json_message["type"] == "incoming_file") {
+			handle_incoming_file(json_message);
+		}
+		else if (json_message["type"] == "file_chunk") {
+			handle_incoming_file_chunk(json_message);
+		}
+	} catch (const nlohmann::json::parse_error& e) {
+		ERROR_MSG("[Client::process_server_message] Failed to parse message: " + std::string(e.what()));
+	}
 }
 
 void Client::handle_chunk_acknowledgment(const nlohmann::json& response) {
-    if (response["status"] == "success") {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _chunk_acknowledged = true;
-        _chunk_cv.notify_one();
-    } else {
-        ERROR_MSG("[Client::handle_chunk_acknowledgment] Chunk upload failed: " 
-                 + response["error"].get<std::string>());
-    }
+	if (response["status"] == "success") {
+		std::lock_guard<std::mutex> lock(_mutex);
+		_chunk_acknowledged = true;
+		_chunk_cv.notify_one();
+	} else {
+		ERROR_MSG("[Client::handle_chunk_acknowledgment] Chunk upload failed: "
+		          + response["error"].get<std::string>());
+	}
 }
 
 void Client::handle_incoming_file(const nlohmann::json& notification) {
-    std::string filename = notification["filename"];
-    int sender_id = notification["sender_id"];
-    
-    INFO_MSG("[Client::handle_incoming_file] Receiving file '" + filename 
-             + "' from " + std::to_string(sender_id));
-    
-    _incoming_files[filename] = std::ofstream(
-        _user_files_dir + "/" + filename, 
-        std::ios::binary
-    );
+	std::string filename = notification["filename"];
+	int sender_id = notification["sender_id"];
+
+	INFO_MSG("[Client::handle_incoming_file] Receiving file '" + filename
+	         + "' from " + std::to_string(sender_id));
+
+	_incoming_files[filename] = std::ofstream(
+		_user_files_dir + "/" + filename,
+		std::ios::binary
+		);
 }
 
 void Client::handle_incoming_file_chunk(const nlohmann::json& chunk_message) {
-    std::string filename = chunk_message["filename"];
-    std::string chunk_data = chunk_message["chunk_data"];
-    size_t chunk_number = chunk_message["chunk_number"];
-    bool is_last = chunk_message["is_last"];
-    
-    auto file_it = _incoming_files.find(filename);
-    if (file_it == _incoming_files.end()) {
-        ERROR_MSG("[Client::handle_incoming_file_chunk] No open file for " + filename);
-        return;
-    }
-    
-    file_it->second.write(chunk_data.c_str(), chunk_data.length());
-    
-    nlohmann::json ack;
-    ack["type"] = "chunk_received";
-    ack["filename"] = filename;
-    ack["chunk_number"] = chunk_number;
-    async_write(ack.dump());
-    
-    if (is_last) {
-        INFO_MSG("[Client::handle_incoming_file_chunk] File " + filename + " received completely");
-        file_it->second.close();
-        _incoming_files.erase(file_it);
-    }
+	std::string filename = chunk_message["filename"];
+	std::string chunk_data = chunk_message["chunk_data"];
+	size_t chunk_number = chunk_message["chunk_number"];
+	bool is_last = chunk_message["is_last"];
+
+	auto file_it = _incoming_files.find(filename);
+	if (file_it == _incoming_files.end()) {
+		ERROR_MSG("[Client::handle_incoming_file_chunk] No open file for " + filename);
+		return;
+	}
+
+	file_it->second.write(chunk_data.c_str(), chunk_data.length());
+
+	nlohmann::json ack;
+	ack["type"] = "chunk_received";
+	ack["filename"] = filename;
+	ack["chunk_number"] = chunk_number;
+	async_write(ack.dump());
+
+	if (is_last) {
+		INFO_MSG("[Client::handle_incoming_file_chunk] File " + filename + " received completely");
+		file_it->second.close();
+		_incoming_files.erase(file_it);
+	}
 }
 
 User Client::get_user() {
