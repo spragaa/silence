@@ -22,10 +22,18 @@ Server::Server(unsigned short port,
 	_msg_text_repo = std::make_unique<MessageTextRepository>(msg_text_db_connection_string);
 
 	_file_server_client = std::make_unique<FileServerClient>(file_server_host, file_server_port);
+	
+	for (unsigned int i = 0; i < thread_pool_size; ++i) {
+		_thread_pool.push_back(boost::make_shared<boost::thread>(
+								  boost::bind(&boost::asio::io_service::run, &_io_service)));
+	}
 }
 
 Server::~Server() {
 	_io_service.stop();
+	for (auto& thread : _thread_pool) {
+		thread->join();
+	}
 }
 
 void Server::start() {
@@ -200,7 +208,6 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 		return;
 	}
 
-	// get id, how?
 	Message new_msg(sender_id, receiver_id, request_text);
 
 	int msg_metadata_id = _msg_metadata_repo->create(new_msg.get_metadata());
