@@ -155,6 +155,62 @@ bool FileServerClient::upload_chunk(const std::string& filename, const std::stri
 	}
 }
 
+std::vector<std::string> FileServerClient::download_file_chunks(const std::string& filename) {
+    std::vector<std::string> chunks;
+    
+    try {
+        auto const results = _resolver.resolve(_host, _port);
+        _stream.connect(results);
+
+        http::request<http::string_body> req{http::verb::get, "/download/" + filename, _version};
+        req.set(http::field::host, _host);
+        req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+        
+        http::write(_stream, req);
+
+        beast::flat_buffer buffer;
+        http::response<http::dynamic_body> res;
+        
+        while(true) {
+            buffer.clear();
+            res.clear();
+            
+            boost::system::error_code ec;
+            http::read(_stream, buffer, res, ec);
+            
+            if (ec == http::error::end_of_stream) {
+                break;
+            }
+            
+            if (ec) {
+                throw beast::system_error{ec};
+            }
+
+            std::string chunk_data = beast::buffers_to_string(res.body().data());
+            if (chunk_data.empty()) {
+                break;
+            }
+            
+            chunks.push_back(chunk_data);
+            DEBUG_MSG("[FileServerClient::download_file_chunks] Received chunk " 
+                     + std::to_string(chunks.size()) + " size: " 
+                     + std::to_string(chunk_data.size()));
+        }
+
+        beast::error_code ec;
+        _stream.socket().shutdown(tcp::socket::shutdown_both, ec);
+
+        if(ec && ec != beast::errc::not_connected) {
+            throw beast::system_error{ec};
+        }
+    }
+    catch(std::exception const& e) {
+        ERROR_MSG("[FileServerClient::download_file_chunks] " + std::string(e.what()));
+    }
+    
+    return chunks;
+}
+
 std::string FileServerClient::download_file(const std::string& filename) {
 	return send_request("/download/" + filename, http::verb::get);
 }

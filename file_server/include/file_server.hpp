@@ -40,7 +40,7 @@ private:
 
 	void generate_folder_structure();
 	bool is_valid_filename(const std::string& filename) const;
-
+	fs::path get_filepath_by_name(const std::string& filename) const;
 private:
 	std::shared_ptr<Pistache::Http::Endpoint> _http_endpoint;
 	Pistache::Rest::Router _router;

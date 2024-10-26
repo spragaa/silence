@@ -39,6 +39,10 @@ private:
     void send_next_chunk(std::shared_ptr<FileTransferState> state);
     void wait_for_chunk_ack(std::shared_ptr<FileTransferState> state);
 
+    void handle_chunk_acknowledgment(const nlohmann::json& response);
+    void handle_incoming_file(const nlohmann::json& notification);
+    void handle_incoming_file_chunk(const nlohmann::json& chunk_message);
+
 	bool is_registered() const noexcept;
 	bool is_connected();
 	void register_user();
@@ -83,4 +87,5 @@ private:
 	std::vector<Message> _messages;
 	bool _is_authorized;
 	std::string _user_files_dir = std::string(SOURCE_DIR) + "/client/user_files";
+	std::map<std::string, std::ofstream> _incoming_files;
 };
