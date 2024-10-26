@@ -47,6 +47,8 @@ public:
 	void start();
 
 private:
+    struct UploadState;
+
 	void start_request_handling();
 	// should I move these into RequestHandlerClass?
 	void handle_accept(boost::shared_ptr<tcp::socket> socket, const boost::system::error_code& error);
@@ -56,8 +58,14 @@ private:
 	void handle_send_message(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	void handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 
+	
 private:
-	boost::asio::io_service _io_service;
+    struct UploadState {
+        size_t last_chunk_received;
+        bool completed;
+    };
+
+    boost::asio::io_service _io_service;
 	tcp::acceptor _acceptor;
 	boost::shared_ptr<boost::asio::io_service::work> _work;
 	PostgresDBManager _postgres_db_manager;
@@ -67,4 +75,5 @@ private:
 	std::unique_ptr<FileServerClient> _file_server_client;
 	std::vector<boost::shared_ptr<boost::thread> > _thread_pool;
 	std::map<int, boost::shared_ptr<tcp::socket> > _connected_clients;
+	std::map<std::string, UploadState> _file_uploads;
 };

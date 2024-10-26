@@ -253,24 +253,47 @@ void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nl
 }
 
 void Server::handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
-	DEBUG_MSG("[Server::handle_file_chunk] Request: " + request.dump());
-	std::string filename = request["filename"];
-	std::string chunk_data = request["chunk_data"];
-	int chunk_number = request["chunk_number"];
-	bool is_last = request["is_last"];
+    // such logs are massive, it is probably a good idea to add another msg type, smt like json/req/res
+    // and another debug flag, to be able to shut suck logs when needed
+    DEBUG_MSG("[Server::handle_file_chunk] Request: " + request.dump());
+    
+    std::string filename = request["filename"];
+    std::string chunk_data = request["chunk_data"];
+    size_t chunk_number = request["chunk_number"];
+    bool is_last = request["is_last"];
 
-	nlohmann::json sender_response, receiver_response;
-	sender_response["type"] = "chunk_acknowledgment";
-	sender_response["status"] = "success";
-	sender_response["filename"] = filename;
+    if (_file_uploads.find(filename) == _file_uploads.end()) {
+        _file_uploads[filename] = {0, false};
+    }
+    
+    auto& upload_state = _file_uploads[filename];
+    
+    nlohmann::json sender_response;
+    sender_response["type"] = "chunk_acknowledgment";
+    sender_response["filename"] = filename;
+    sender_response["chunk_number"] = chunk_number;
 
-	if(_file_server_client->upload_chunk(filename, chunk_data)) {
-		INFO_MSG("[Server::handle_file_chunk] Chunk uploaded to file server");
-		sender_response["status"] = "success";
-	} else {
-		WARN_MSG("[Server::handle_file_chunk] Failed to upload chunk to file server");
-		sender_response["status"] = "error";
-	}
+    if (chunk_number != upload_state.last_chunk_received + 1) {
+        WARN_MSG("[Server::handle_file_chunk] Received out-of-order chunk. Expected: " 
+                 + std::to_string(upload_state.last_chunk_received + 1) 
+                 + ", Got: " + std::to_string(chunk_number));
+        sender_response["status"] = "error";
+        sender_response["error"] = "wrong_chunk_order";
+    }
+    else if (_file_server_client->upload_chunk(filename, chunk_data)) {
+        INFO_MSG("[Server::handle_file_chunk] Chunk " + std::to_string(chunk_number) + " uploaded");
+        sender_response["status"] = "success";
+        upload_state.last_chunk_received = chunk_number;
+        
+        if (is_last) {
+            upload_state.completed = true;
+            INFO_MSG("[Server::handle_file_chunk] File upload completed: " + filename);
+        }
+    } else {
+        WARN_MSG("[Server::handle_file_chunk] Failed to upload chunk to file server");
+        sender_response["status"] = "error";
+        sender_response["error"] = "upload_failed";
+    }
 
-	boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
+    boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
 }
