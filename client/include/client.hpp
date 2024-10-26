@@ -28,13 +28,16 @@ public:
 	User get_user();
 
 private:
-
-	void        send_message(const std::string& message);
+    struct FileTransferState;
+	
+    void        send_message(const std::string& message);
 	void inline show_actions();
 	std::string read_user_text() const noexcept;
 	std::string receive_response();
 	std::string get_user_data_filename() const noexcept;
 	void send_file_chunks(const std::string& filepath);
+    void send_next_chunk(std::shared_ptr<FileTransferState> state);
+    void wait_for_chunk_ack(std::shared_ptr<FileTransferState> state);
 
 	bool is_registered() const noexcept;
 	bool is_connected();
@@ -51,6 +54,19 @@ private:
 	void process_server_message(const std::string& message);
 
 private:
+    
+    struct FileTransferState {
+        std::ifstream file;
+        size_t chunk_number = 0;
+        std::vector<char> buffer;
+        static const size_t chunk_size = 512;
+        std::string filename;
+        
+        FileTransferState(const std::string& path) : 
+            file(path, std::ios::binary),
+            buffer(chunk_size),
+            filename(fs::path(path).filename().string()) {}
+    };
 
 	boost::asio::io_service _io_service;
 	std::unique_ptr<boost::asio::io_service::work> _work;
@@ -58,7 +74,6 @@ private:
 	boost::asio::ip::tcp::socket _socket;
 	boost::asio::streambuf _read_buffer;
 	std::queue<std::string> _write_queue;
-	// in future if we want to send several files in the same time, we can use a map of these
 	std::condition_variable _chunk_cv;
 	std::mutex _mutex;
 	bool _chunk_acknowledged = false;
