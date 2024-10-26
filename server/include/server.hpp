@@ -10,6 +10,7 @@
 #include "file_server_client.hpp"
 #include "server_config.hpp"
 #include "repository_manager.hpp"
+#include "connected_clients_manager.hpp"
 
 #include <iostream>
 #include <ostream>
@@ -79,9 +80,9 @@ private:
 	tcp::acceptor _acceptor;
 	boost::shared_ptr<boost::asio::io_service::work> _work;
 	std::vector<boost::shared_ptr<boost::thread> > _thread_pool;
-	std::map<int, boost::shared_ptr<tcp::socket> > _connected_clients;
 	std::map<std::string, UploadState> _file_uploads;
 	
 	ServerConfig _config;
 	RepositoryManager _repo_manager;
+	ConnectedClientsManager _connected_clients_manager;
 };
