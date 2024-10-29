@@ -13,21 +13,22 @@ MessageTextRepository::MessageTextRepository(const std::string& connection_strin
 		          ", User: " + connection_options.user +
 		          ", Password: " + connection_options.password +
 		          ", DB: " + std::to_string(connection_options.db));
-
 		_redis = std::make_unique<sw::redis::Redis>(connection_options);
+		auto ping_result = _redis->ping();
+		DEBUG_MSG("[MessageTextRepository::MessageTextRepository] PING response: " + ping_result);
 		INFO_MSG("[MessageTextRepository::MessageTextRepository] Successfully connected to message_text Redis database");
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		ERROR_MSG("[MessageTextRepository::MessageTextRepository] " +  std::string(e.what()));
 		FATAL_MSG("[MessageTextRepository::MessageTextRepository] Failed to connect to Redis database");
+		throw;
 	}
 }
 
 sw::redis::ConnectionOptions MessageTextRepository::parse_config_string(const std::string& connection_string) {
 	sw::redis::ConnectionOptions options;
-
 	std::regex connection_regex("redis://(?:(\\w+):)?([^@]+)@([\\w.]+):(\\d+)(?:/(\\d+))?");
 	std::smatch matches;
-
 	if (std::regex_match(connection_string, matches, connection_regex)) {
 		if (matches[1].matched) {
 			options.user = matches[1].str();
@@ -39,11 +40,9 @@ sw::redis::ConnectionOptions MessageTextRepository::parse_config_string(const st
 			options.db = std::stoi(matches[5].str());
 		}
 	} else {
-		ERROR_MSG("[MessageTextRepository::parse_config_string] Invalid connection string format");
+		throw std::invalid_argument("[MessageTextRepository::parse_config_string] Invalid connection string format");
 	}
-
-	INFO_MSG("[MessageTextRepository::parse_config_string] Parsed successfully!");
-
+	DEBUG_MSG("[MessageTextRepository::parseConnectionString] Parsed successfully!");
 	return options;
 }
 

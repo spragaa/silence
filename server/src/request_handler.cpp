@@ -120,25 +120,25 @@ void RequestHandler::handle_authorize(boost::shared_ptr<tcp::socket> socket, con
 }
 
 void RequestHandler::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
-    DEBUG_MSG("[Server::handle_send_message] Called on request: " + request.dump());
+	DEBUG_MSG("[Server::handle_send_message] Called on request: " + request.dump());
 
-    int sender_id = request["sender_id"];
-    std::string receiver_nickname = request["receiver_nickname"];
-    std::string request_text = request["message_text"];
+	int sender_id = request["sender_id"];
+	std::string receiver_nickname = request["receiver_nickname"];
+	std::string request_text = request["message_text"];
 
-    nlohmann::json sender_response, receiver_response;
+	nlohmann::json sender_response, receiver_response;
 
-    int receiver_id = _repo_manager.get_user_id(receiver_nickname);
-    if (receiver_id == 0) {
-        sender_response["status"] = "error";
-        sender_response["response"] = "Receiver not found";
-        boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
-        return;
-    }
+	int receiver_id = _repo_manager.get_user_id(receiver_nickname);
+	if (receiver_id == 0) {
+		sender_response["status"] = "error";
+		sender_response["response"] = "Receiver not found";
+		boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
+		return;
+	}
 
-    Message new_msg(sender_id, receiver_id, request_text);
-    int msg_metadata_id = _repo_manager.create_message(new_msg);
-    
+	Message new_msg(sender_id, receiver_id, request_text);
+	int msg_metadata_id = _repo_manager.create_message(new_msg);
+
 	if (msg_metadata_id) {
 		new_msg.set_id(msg_metadata_id);
 	} else {
@@ -159,7 +159,7 @@ void RequestHandler::handle_send_message(boost::shared_ptr<tcp::socket> socket, 
 		boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
 		return;
 	}
-	
+
 	sender_response["status"] = "success";
 	sender_response["response"] = "Message sent successfully";
 	// sender_response["file_name"] = request_filename;
@@ -177,135 +177,135 @@ void RequestHandler::handle_send_message(boost::shared_ptr<tcp::socket> socket, 
 	}
 
 	if (request.contains("file_name") && request["file_name"] != "none") {
-        std::string filename = request["file_name"];
-        
-        {
-            std::lock_guard<std::mutex> lock(_pending_transfers_mutex);
-            _pending_file_transfers.push_back(PendingFileTransfer{
-                filename,
-                sender_id,
-                receiver_id
-            });
-            DEBUG_MSG("[Server::handle_send_message] Created pending transfer for file: " + 
-                     filename + " from user " + std::to_string(sender_id) + 
-                     " to user " + std::to_string(receiver_id));
-        }
+		std::string filename = request["file_name"];
 
-        _file_uploads[filename] = {0, false};
-        
-        sender_response["file_name"] = filename;
-        DEBUG_MSG("[Server::handle_send_message] File transfer initialized for: " + filename);
-    }
+		{
+			std::lock_guard<std::mutex> lock(_pending_transfers_mutex);
+			_pending_file_transfers.push_back(PendingFileTransfer{
+				filename,
+				sender_id,
+				receiver_id
+			});
+			DEBUG_MSG("[Server::handle_send_message] Created pending transfer for file: " +
+			          filename + " from user " + std::to_string(sender_id) +
+			          " to user " + std::to_string(receiver_id));
+		}
 
-    sender_response["status"] = "success";
-    sender_response["response"] = "Message sent successfully";
-    sender_response.update(new_msg.to_json());
-    DEBUG_MSG("[Server::handle_send_message] Response for sender: " + sender_response.dump());
-    boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
+		_file_uploads[filename] = {0, false};
 
-    if (receiver_socket) {
-        receiver_response.update(new_msg.to_json());
-        receiver_response["type"] = "receive_msg";
-        if (request.contains("file_name") && request["file_name"] != "none") {
-            receiver_response["file_name"] = request["file_name"];
-        }
-        DEBUG_MSG("[Server::handle_send_message] Response for receiver: " + receiver_response.dump());
-        boost::asio::write(*receiver_socket, boost::asio::buffer(receiver_response.dump() + "\r\n\r\n"));
-    }
+		sender_response["file_name"] = filename;
+		DEBUG_MSG("[Server::handle_send_message] File transfer initialized for: " + filename);
+	}
+
+	sender_response["status"] = "success";
+	sender_response["response"] = "Message sent successfully";
+	sender_response.update(new_msg.to_json());
+	DEBUG_MSG("[Server::handle_send_message] Response for sender: " + sender_response.dump());
+	boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
+
+	if (receiver_socket) {
+		receiver_response.update(new_msg.to_json());
+		receiver_response["type"] = "receive_msg";
+		if (request.contains("file_name") && request["file_name"] != "none") {
+			receiver_response["file_name"] = request["file_name"];
+		}
+		DEBUG_MSG("[Server::handle_send_message] Response for receiver: " + receiver_response.dump());
+		boost::asio::write(*receiver_socket, boost::asio::buffer(receiver_response.dump() + "\r\n\r\n"));
+	}
 }
 
 void RequestHandler::handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
-    DEBUG_MSG("[Server::handle_file_chunk] Request: " + request.dump());
+	DEBUG_MSG("[Server::handle_file_chunk] Request: " + request.dump());
 
-    std::string filename = request["filename"];
-    std::string chunk_data = request["chunk_data"];
-    size_t chunk_number = request["chunk_number"];
-    bool is_last = request["is_last"];
+	std::string filename = request["filename"];
+	std::string chunk_data = request["chunk_data"];
+	size_t chunk_number = request["chunk_number"];
+	bool is_last = request["is_last"];
 
-    if (_file_uploads.find(filename) == _file_uploads.end()) {
-        _file_uploads[filename] = {0, false};
-    }
+	if (_file_uploads.find(filename) == _file_uploads.end()) {
+		_file_uploads[filename] = {0, false};
+	}
 
-    auto& upload_state = _file_uploads[filename];
+	auto& upload_state = _file_uploads[filename];
 
-    nlohmann::json sender_response;
-    sender_response["type"] = "chunk_acknowledgment";
-    sender_response["filename"] = filename;
-    sender_response["chunk_number"] = chunk_number;
+	nlohmann::json sender_response;
+	sender_response["type"] = "chunk_acknowledgment";
+	sender_response["filename"] = filename;
+	sender_response["chunk_number"] = chunk_number;
 
-    if (chunk_number != upload_state.last_chunk_received + 1) {
-        WARN_MSG("[Server::handle_file_chunk] Received out-of-order chunk. Expected: "
-                 + std::to_string(upload_state.last_chunk_received + 1)
-                 + ", Got: " + std::to_string(chunk_number));
-        sender_response["status"] = "error";
-        sender_response["error"] = "wrong_chunk_order";
-    }
-    else if (_repo_manager.upload_file_chunk(filename, chunk_data)) {
-        INFO_MSG("[Server::handle_file_chunk] Chunk " + std::to_string(chunk_number) + " uploaded");
-        sender_response["status"] = "success";
-        upload_state.last_chunk_received = chunk_number;
+	if (chunk_number != upload_state.last_chunk_received + 1) {
+		WARN_MSG("[Server::handle_file_chunk] Received out-of-order chunk. Expected: "
+		         + std::to_string(upload_state.last_chunk_received + 1)
+		         + ", Got: " + std::to_string(chunk_number));
+		sender_response["status"] = "error";
+		sender_response["error"] = "wrong_chunk_order";
+	}
+	else if (_repo_manager.upload_file_chunk(filename, chunk_data)) {
+		INFO_MSG("[Server::handle_file_chunk] Chunk " + std::to_string(chunk_number) + " uploaded");
+		sender_response["status"] = "success";
+		upload_state.last_chunk_received = chunk_number;
 
-        if (is_last) {
-            upload_state.completed = true;
-            INFO_MSG("[Server::handle_file_chunk] File upload completed: " + filename);
+		if (is_last) {
+			upload_state.completed = true;
+			INFO_MSG("[Server::handle_file_chunk] File upload completed: " + filename);
 
-            std::lock_guard<std::mutex> lock(_pending_transfers_mutex);
-            auto pending_it = std::find_if(_pending_file_transfers.begin(),
-                                         _pending_file_transfers.end(),
-                                         [&filename](const PendingFileTransfer& transfer) {
-                return transfer.filename == filename;
-            });
+			std::lock_guard<std::mutex> lock(_pending_transfers_mutex);
+			auto pending_it = std::find_if(_pending_file_transfers.begin(),
+			                               _pending_file_transfers.end(),
+			                               [&filename](const PendingFileTransfer& transfer) {
+				return transfer.filename == filename;
+			});
 
-            if (pending_it != _pending_file_transfers.end()) {
-                auto receiver_socket = _connected_clients_manager.get_client_socket(pending_it->receiver_id);
-                if (receiver_socket) {
-                    try {
-                        nlohmann::json file_transfer_notification;
-                        file_transfer_notification["type"] = "incoming_file";
-                        file_transfer_notification["filename"] = filename;
-                        file_transfer_notification["sender_id"] = pending_it->sender_id;
+			if (pending_it != _pending_file_transfers.end()) {
+				auto receiver_socket = _connected_clients_manager.get_client_socket(pending_it->receiver_id);
+				if (receiver_socket) {
+					try {
+						nlohmann::json file_transfer_notification;
+						file_transfer_notification["type"] = "incoming_file";
+						file_transfer_notification["filename"] = filename;
+						file_transfer_notification["sender_id"] = pending_it->sender_id;
 
-                        DEBUG_MSG("[Server::handle_file_chunk] Sending file transfer notification: "
-                                + file_transfer_notification.dump());
+						DEBUG_MSG("[Server::handle_file_chunk] Sending file transfer notification: "
+						          + file_transfer_notification.dump());
 
-                        boost::asio::write(*receiver_socket,
-                                         boost::asio::buffer(file_transfer_notification.dump() + "\r\n\r\n"));
+						boost::asio::write(*receiver_socket,
+						                   boost::asio::buffer(file_transfer_notification.dump() + "\r\n\r\n"));
 
-                        send_file_to_client(receiver_socket, filename);
-                        _pending_file_transfers.erase(pending_it);
+						send_file_to_client(receiver_socket, filename);
+						_pending_file_transfers.erase(pending_it);
 
-                        INFO_MSG("[Server::handle_file_chunk] File " + filename
-                                + " successfully transferred to receiver "
-                                + std::to_string(pending_it->receiver_id));
-                    }
-                    catch (const std::exception& e) {
-                        ERROR_MSG("[Server::handle_file_chunk] Failed to send file to receiver: "
-                                + std::string(e.what()));
-                    }
-                } else {
-                    DEBUG_MSG("[Server::handle_file_chunk] Receiver "
-                            + std::to_string(pending_it->receiver_id)
-                            + " is offline. Transfer remains pending.");
-                }
-            } else {
-                WARN_MSG("[Server::handle_file_chunk] No pending transfer found for file: "
-                        + filename);
-            }
-        }
-    } else {
-        WARN_MSG("[Server::handle_file_chunk] Failed to upload chunk to file server");
-        sender_response["status"] = "error";
-        sender_response["error"] = "upload_failed";
-    }
+						INFO_MSG("[Server::handle_file_chunk] File " + filename
+						         + " successfully transferred to receiver "
+						         + std::to_string(pending_it->receiver_id));
+					}
+					catch (const std::exception& e) {
+						ERROR_MSG("[Server::handle_file_chunk] Failed to send file to receiver: "
+						          + std::string(e.what()));
+					}
+				} else {
+					DEBUG_MSG("[Server::handle_file_chunk] Receiver "
+					          + std::to_string(pending_it->receiver_id)
+					          + " is offline. Transfer remains pending.");
+				}
+			} else {
+				WARN_MSG("[Server::handle_file_chunk] No pending transfer found for file: "
+				         + filename);
+			}
+		}
+	} else {
+		WARN_MSG("[Server::handle_file_chunk] Failed to upload chunk to file server");
+		sender_response["status"] = "error";
+		sender_response["error"] = "upload_failed";
+	}
 
-    try {
-        boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
-        DEBUG_MSG("[Server::handle_file_chunk] Sent acknowledgment: " + sender_response.dump());
-    }
-    catch (const std::exception& e) {
-        ERROR_MSG("[Server::handle_file_chunk] Failed to send acknowledgment: "
-                + std::string(e.what()));
-    }
+	try {
+		boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
+		DEBUG_MSG("[Server::handle_file_chunk] Sent acknowledgment: " + sender_response.dump());
+	}
+	catch (const std::exception& e) {
+		ERROR_MSG("[Server::handle_file_chunk] Failed to send acknowledgment: "
+		          + std::string(e.what()));
+	}
 }
 
 void RequestHandler::send_file_to_client(boost::shared_ptr<tcp::socket> client_socket, const std::string& filename) {
