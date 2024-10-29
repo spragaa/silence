@@ -12,7 +12,10 @@ Client::Client(const std::string& server_address,
 	, _server_port(server_port)
 	, _user(nick)
 	, _is_authorized(false)
-{
+    , _user_files_dir(std::string(SOURCE_DIR) + "/client/user_files/" + _user.get_nickname())
+	{
+	fs::create_directories(_user_files_dir);
+	
 	DEBUG_MSG("[Client::Client] Trying to read user data from json...");
 	std::string user_data_filename = get_user_data_filename();
 	_user = User::load_user_data_from_json(user_data_filename);
@@ -154,7 +157,7 @@ void Client::handle_user_interaction() {
 					message["sender_id"] = _user.get_id();
 					message["receiver_nickname"] = recipient;
 					message["message_text"] = message_text;
-
+					
 					// not sure if filepath is the best way of doing it
 					message["file_name"] = "none";
 					fs::path filepath = fs::path(_user_files_dir) / file_name;
@@ -313,21 +316,62 @@ void Client::send_message(const std::string& message) {
 }
 
 void Client::send_file_chunks(const std::string& filepath) {
-	if (filepath.empty() || !fs::exists(filepath)) {
-		ERROR_MSG("[Client::send_file_chunks] Invalid filepath: " + filepath);
-		return;
-	}
+    std::ifstream file(filepath, std::ios::binary);
+    if (!file) {
+        ERROR_MSG("[Client::send_file_chunks] Unable to open file: " + filepath);
+        return;
+    }
 
-	auto state = std::make_shared<FileTransferState>(filepath);
+    const size_t chunk_size = 512;
+    std::vector<char> buffer(chunk_size);
+    // get file size -> calculate the amount of chunk mark the chunk as the last when chunk_number is 0???
+    size_t chunk_number = 1;
+    size_t total_bytes_sent = 0;
 
-	if (!state->file) {
-		ERROR_MSG("[Client::send_file_chunks] Unable to open file: " + filepath);
-		return;
-	}
+    INFO_MSG("[Client::send_file_chunks] Starting to send file: " + filepath);
 
-	_io_service.post([this, state]() {
-		send_next_chunk(state);
-	});
+    while (file) {
+        file.read(buffer.data(), chunk_size);
+        std::streamsize bytes_read = file.gcount();
+        
+        if (bytes_read <= 0) {
+            break;
+        }
+
+        total_bytes_sent += bytes_read;
+        bool is_last = file.eof() || bytes_read < chunk_size;
+
+        nlohmann::json file_chunk_request;
+        file_chunk_request["type"] = "file_chunk";
+        file_chunk_request["filename"] = fs::path(filepath).filename().string();
+        file_chunk_request["chunk_data"] = std::string(buffer.data(), bytes_read);
+        file_chunk_request["chunk_number"] = chunk_number;
+        file_chunk_request["is_last"] = is_last;
+
+        DEBUG_MSG("[Client::send_file_chunks] Sending chunk " + std::to_string(chunk_number) + 
+                 " (bytes: " + std::to_string(bytes_read) + 
+                 ", is_last: " + (is_last ? "true" : "false") + ")");
+
+        async_write(file_chunk_request.dump());
+
+        {
+            std::unique_lock<std::mutex> lock(_mutex);
+            if (!_chunk_cv.wait_for(lock, 
+                std::chrono::seconds(5), 
+                [this] { return _chunk_acknowledged; })) {
+                ERROR_MSG("[Client::send_file_chunks] Timeout waiting for chunk acknowledgment");
+                return;
+            }
+            _chunk_acknowledged = false;
+        }
+
+        chunk_number++;
+    }
+
+    INFO_MSG("[Client::send_file_chunks] File transfer completed: " + 
+             filepath + " (" + 
+             std::to_string(total_bytes_sent) + " bytes in " + 
+             std::to_string(chunk_number - 1) + " chunks)");
 }
 
 void Client::send_next_chunk(std::shared_ptr<FileTransferState> state) {
