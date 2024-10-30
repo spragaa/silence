@@ -33,7 +33,7 @@ int RepositoryManager::create_message(const Message& message) {
 	// 	WARN_MSG("[RepositoryManager::create_message] Failed to insert messages into dbs: msg ids are different. metadata_id "
 	// 	         + std::to_string(msg_metadata_id) + ", text_id " + std::to_string(msg_text_id));
 	// }
-	 
+
 	return msg_metadata_id;
 }
 
