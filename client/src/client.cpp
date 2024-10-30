@@ -3,7 +3,7 @@
 namespace client {
 
 constexpr uint8_t filename_len = 16;
-const std::string alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+inline const std::string alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 Client::Client(const std::string& server_address,
                unsigned short server_port, const std::string& nick)
