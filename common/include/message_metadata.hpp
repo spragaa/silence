@@ -9,20 +9,18 @@
 
 class MessageMetadata {
 public:
-
 	MessageMetadata() = default;
-
 	MessageMetadata(
 		const int& id,
 		const int& sender_id,
 		const int& receiver_id
 		);
 
-	bool                    is_deleted() const noexcept;
-	int                     get_id() const noexcept;
-	int                     get_sender_id() const noexcept;
-	int                     get_receiver_id() const noexcept;
-	Timestamp               get_created_timestamp() const noexcept;
+	bool is_deleted() const noexcept;
+	int get_id() const noexcept;
+	int get_sender_id() const noexcept;
+	int get_receiver_id() const noexcept;
+	Timestamp get_created_timestamp() const noexcept;
 	std::optional<Timestamp>get_deleted_timestamp() const noexcept;
 	std::optional<Timestamp>get_last_edited_timestamp() const noexcept;
 
@@ -37,7 +35,6 @@ public:
 	MessageMetadata from_json(const nlohmann::json& j);
 
 private:
-
 	int _id;
 	int _sender_id;
 	int _receiver_id;

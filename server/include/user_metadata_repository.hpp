@@ -24,6 +24,5 @@ private:
 	nlohmann::json pqxx_result_to_json(const pqxx::result& r) const;
 
 private:
-	// move inside base repo
-	std::string _connection_name;
+	std::string _connection_name; // move inside base repo
 };

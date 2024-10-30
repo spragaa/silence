@@ -32,7 +32,6 @@ private:
 	tcp::acceptor _acceptor;
 	boost::shared_ptr<boost::asio::io_service::work> _work;
 	std::vector<boost::shared_ptr<boost::thread> > _thread_pool;
-
 	ServerConfig _config;
 	RepositoryManager _repo_manager;
 	ConnectedClientsManager _connected_clients_manager;

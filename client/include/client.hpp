@@ -19,7 +19,6 @@ namespace fs = std::filesystem;
 
 class Client {
 public:
-
 	Client(const std::string& server_address,
 	       unsigned short server_port, const std::string& nick);
 	~Client();
@@ -58,7 +57,6 @@ private:
 	void process_server_message(const std::string& message);
 
 private:
-
 	struct FileTransferState {
 		std::ifstream file;
 		size_t chunk_number = 0;
