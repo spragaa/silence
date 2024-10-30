@@ -1,9 +1,11 @@
 #include "file_server.hpp"
 
-const std::string FileServer::UPLOAD_ROUTE = "/upload/:filename";
-const std::string FileServer::DOWNLOAD_ROUTE = "/download/:filename";
-const std::string FileServer::DELETE_ROUTE = "/delete/:filename";
-const std::string FileServer::LIST_ROUTE = "/list";
+namespace file_server {
+
+inline const std::string FileServer::UPLOAD_ROUTE = "/upload/:filename";
+inline const std::string FileServer::DOWNLOAD_ROUTE = "/download/:filename";
+inline const std::string FileServer::DELETE_ROUTE = "/delete/:filename";
+inline const std::string FileServer::LIST_ROUTE = "/list";
 
 constexpr size_t CHUNK_SIZE_BYTES = 512;
 constexpr uint8_t FILENAME_LEN = 16;
@@ -210,4 +212,6 @@ bool FileServer::is_valid_filename(const std::string& filename) const {
 		}
 	}
 	return true;
+}
+
 }

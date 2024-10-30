@@ -10,6 +10,8 @@
 #include <vector>
 #include <filesystem>
 
+namespace file_server {
+
 class FileServer {
 public:
 	FileServer(
@@ -46,3 +48,5 @@ private:
 	std::string _storage_dir;
 	size_t _max_file_size; // 10mb by default -> document it
 };
+
+}
