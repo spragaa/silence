@@ -12,6 +12,8 @@
 #include <fstream>
 #include <chrono>
 
+namespace server {
+
 class FileServerClient {
 public:
 	FileServerClient(const std::string& host, const std::string& port);
@@ -37,3 +39,5 @@ private:
 	boost::asio::ip::tcp::resolver _resolver;
 	boost::beast::tcp_stream _stream;
 };
+
+}

@@ -1,5 +1,7 @@
 #include "message_metadata.hpp"
 
+namespace common {
+
 MessageMetadata::MessageMetadata(
 	const int& id,
 	const int& sender_id,
@@ -100,4 +102,6 @@ MessageMetadata MessageMetadata::from_json(const nlohmann::json& j) {
 		msg._last_edited_timestamp = Timestamp(std::chrono::nanoseconds(j["last_edited_timestamp"]));
 	}
 	return msg;
+}
+
 }

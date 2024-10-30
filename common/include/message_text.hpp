@@ -7,6 +7,8 @@
 #include <optional>
 #include <nlohmann/json.hpp>
 
+namespace common {
+
 class MessageText {
 public:
 	MessageText() = default;
@@ -25,3 +27,5 @@ private:
 	int _id;
 	std::string _text;
 };
+
+}

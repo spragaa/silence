@@ -7,6 +7,8 @@
 #include <memory>
 #include <unordered_map>
 
+namespace server {
+
 // rename to postgre db manager
 class PostgresDBManager {
 public:
@@ -19,3 +21,5 @@ public:
 private:
 	std::unordered_map<std::string, std::unique_ptr<pqxx::connection> > _connections;
 };
+
+}

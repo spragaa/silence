@@ -9,7 +9,7 @@ protected:
 	std::string user_metadata_dir;
 	std::string default_nickname;
 	std::string default_password;
-	User default_user;
+	common::User default_user;
 
 	void SetUp() override {
 		user_metadata_dir = std::string(SOURCE_DIR) + "/tests/user_metadata";
@@ -17,7 +17,7 @@ protected:
 
 		default_nickname = "primeagen";
 		default_password = "primeagen_pass";
-		default_user = User(default_nickname, default_password);
+		default_user = common::User(default_nickname, default_password);
 	}
 
 	void TearDown() override {
@@ -26,7 +26,7 @@ protected:
 };
 
 TEST_F(UserTests, default_constructor_test) {
-	User u;
+	common::User u;
 
 	EXPECT_EQ(u.get_id(), 0);
 	EXPECT_EQ(u.get_nickname(), "");
@@ -34,7 +34,7 @@ TEST_F(UserTests, default_constructor_test) {
 }
 
 TEST_F(UserTests, constructor_with_nickname_and_pass_test) {
-	User u(default_nickname, default_password);
+	common::User u(default_nickname, default_password);
 
 	EXPECT_EQ(u.get_id(), 3); // consider removing id_counter if needed
 	EXPECT_EQ(u.get_nickname(), default_nickname);
@@ -45,10 +45,10 @@ TEST_F(UserTests, constructor_with_nickname_and_pass_test) {
 TEST_F(UserTests, to_json_test) {
 	int u_id = 666;
 	bool u_online = true;
-	Timestamp u_registered_timestamp = Timestamp(std::chrono::nanoseconds(7459324));
-	Timestamp u_last_online_timestamp = Timestamp(std::chrono::nanoseconds(2302102));
+	common::Timestamp u_registered_timestamp = common::Timestamp(std::chrono::nanoseconds(7459324));
+	common::Timestamp u_last_online_timestamp = common::Timestamp(std::chrono::nanoseconds(2302102));
 
-	User u(default_nickname, default_password);
+	common::User u(default_nickname, default_password);
 	u.set_id(u_id);
 	u.set_online(u_online);
 	u.set_registered_timestamp(u_registered_timestamp);
@@ -77,7 +77,7 @@ TEST_F(UserTests, check_password_test) {
 }
 
 TEST_F(UserTests, constructor_with_nickname_test) {
-	User u(default_nickname);
+	common::User u(default_nickname);
 
 	EXPECT_EQ(u.get_id(), 0);
 	EXPECT_EQ(u.get_nickname(), default_nickname);
@@ -85,11 +85,11 @@ TEST_F(UserTests, constructor_with_nickname_test) {
 }
 
 TEST_F(UserTests, setter_getter_tests) {
-	User u;
+	common::User u;
 	int id = 42;
 	std::string nickname = "newprimeagen";
 	std::string password = "newprimeagenpass";
-	Timestamp now = std::chrono::system_clock::now();
+	common::Timestamp now = std::chrono::system_clock::now();
 	bool online = true;
 
 	u.set_id(id);
@@ -117,7 +117,7 @@ TEST_F(UserTests, from_json_test) {
 		{"online", true}
 	};
 
-	User u = User::from_json(j);
+	common::User u = common::User::from_json(j);
 
 	EXPECT_EQ(u.get_id(), 123);
 	EXPECT_EQ(u.get_nickname(), "primeagen");
@@ -154,7 +154,7 @@ TEST_F(UserTests, load_user_data_nonexistent_file_test) {
 	std::string nonexistent_filename = user_metadata_dir + "/nonexisting_test_user_data.json";
 
 	testing::internal::CaptureStderr();
-	User loaded_user = User::load_user_data_from_json(nonexistent_filename);
+	common::User loaded_user = common::User::load_user_data_from_json(nonexistent_filename);
 	std::string output = testing::internal::GetCapturedStderr();
 
 	EXPECT_EQ(loaded_user.get_id(), 0);

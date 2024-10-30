@@ -8,6 +8,8 @@
 #include <filesystem>
 #include <fstream>
 
+namespace common {
+
 class User {
 public:
 	User();
@@ -45,3 +47,5 @@ private:
 	Timestamp _last_online_timestamp;
 	bool _online;
 };
+
+}

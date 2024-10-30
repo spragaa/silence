@@ -15,6 +15,8 @@
 #include <filesystem>
 #include <random>
 
+namespace client {
+
 class Client {
 public:
 	Client(const std::string& server_address,
@@ -22,7 +24,7 @@ public:
 	~Client();
 
 	void run();
-	User get_user();
+	common::User get_user();
 
 private:
 	struct FileTransferState;
@@ -80,9 +82,11 @@ private:
 	bool _chunk_acknowledged = false;
 	std::string _server_address;
 	unsigned short _server_port;
-	User _user;
-	std::vector<Message> _messages;
+	common::User _user;
+	std::vector<common::Message> _messages;
 	bool _is_authorized;
 	std::string _user_files_dir = std::string(SOURCE_DIR) + "/client/user_files";
 	std::map<std::string, std::ofstream> _incoming_files;
 };
+
+}

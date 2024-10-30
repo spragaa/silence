@@ -4,6 +4,8 @@
 #include "message_metadata.hpp"
 #include "message_text.hpp"
 
+namespace common {
+    
 class Message {
 public:
 	Message() = default;
@@ -21,3 +23,5 @@ private:
 	MessageMetadata _metadata;
 	MessageText _text;
 };
+
+}

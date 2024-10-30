@@ -1,16 +1,18 @@
 #include "user_metadata_repository.hpp"
 
+namespace server {
+
 UserMetadataRepository::UserMetadataRepository(PostgresDBManager& postgres_db_manager, const std::string& connection_name) : BaseRepository(postgres_db_manager), _connection_name(connection_name) {
 	DEBUG_MSG("UserMetadataRepository created");
 }
 
 UserMetadataRepository::~UserMetadataRepository() = default;
 
-int UserMetadataRepository::create(const User& user) {
+int UserMetadataRepository::create(const common::User& user) {
 	try {
 		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 
-		auto format_timestamp = [](const Timestamp& ts) {
+		auto format_timestamp = [](const common::Timestamp& ts) {
 									auto time_t = std::chrono::system_clock::to_time_t(ts);
 									std::stringstream ss;
 									ss << std::put_time(std::gmtime(&time_t), "%Y-%m-%d %H:%M:%S");
@@ -47,7 +49,7 @@ int UserMetadataRepository::create(const User& user) {
 	}
 }
 
-std::optional<User> UserMetadataRepository::read(int id) {
+std::optional<common::User> UserMetadataRepository::read(int id) {
 	try {
 		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 		pqxx::result r = txn.exec_params("SELECT * FROM USERS WHERE id = $1", id);
@@ -76,11 +78,11 @@ std::optional<User> UserMetadataRepository::read(int id) {
 	}
 }
 
-bool UserMetadataRepository::update(const User& user) {
+bool UserMetadataRepository::update(const common::User& user) {
 	try {
 		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 
-		auto format_timestamp = [](const Timestamp& ts) {
+		auto format_timestamp = [](const common::Timestamp& ts) {
 									auto time_t = std::chrono::system_clock::to_time_t(ts);
 									std::stringstream ss;
 									ss << std::put_time(std::gmtime(&time_t), "%Y-%m-%d %H:%M:%S");
@@ -201,8 +203,8 @@ int UserMetadataRepository::get_id(const std::string& nickname) {
 	}
 }
 
-User UserMetadataRepository::construct_user(const nlohmann::json& user_json) {
-	User user;
+common::User UserMetadataRepository::construct_user(const nlohmann::json& user_json) {
+	common::User user;
 	return user.from_json(user_json);
 }
 
@@ -219,4 +221,6 @@ nlohmann::json UserMetadataRepository::pqxx_result_to_json(const pqxx::result& r
 	j["online"] = (is_online_str == "t");
 
 	return j;
+}
+
 }

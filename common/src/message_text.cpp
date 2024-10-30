@@ -1,5 +1,7 @@
 #include "message_text.hpp"
 
+namespace common {
+
 MessageText::MessageText(const int& id, const std::string& text) :
 	_id(id), _text(text)
 {
@@ -33,4 +35,6 @@ MessageText MessageText::from_json(const nlohmann::json& j) {
 	msg._id = j["id"];
 	msg._text = j["text"];
 	return msg;
+}
+
 }
