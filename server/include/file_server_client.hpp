@@ -12,12 +12,6 @@
 #include <fstream>
 #include <chrono>
 
-namespace fs = std::filesystem;
-namespace beast = boost::beast;
-namespace http = beast::http;
-namespace net = boost::asio;
-using tcp = net::ip::tcp;
-
 class FileServerClient {
 public:
 	FileServerClient(const std::string& host, const std::string& port);
@@ -33,13 +27,13 @@ public:
 	std::vector<std::string> download_file_chunks(const std::string& filename);
 
 private:
-	std::string send_request(const std::string& target, http::verb method, const std::string& body = "");
+	std::string send_request(const std::string& target, boost::beast::http::verb method, const std::string& body = "");
 
 private:
 	std::string _host;
 	std::string _port;
 	const int _version = 11;
-	net::io_context _io_context;
-	tcp::resolver _resolver;
-	beast::tcp_stream _stream;
+	boost::asio::io_context _io_context;
+	boost::asio::ip::tcp::resolver _resolver;
+	boost::beast::tcp_stream _stream;
 };

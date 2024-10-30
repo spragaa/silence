@@ -26,7 +26,6 @@
 - integrate file server client into server workflow
 
 ### tasks:
-- implement some kind of db manager, that will manage all 4 dbs
 - is int enough for id? -> probably not
 - message statuses (created, sent, undelivered, delivered, read, unread)
 - disable multiple users in one app
@@ -40,7 +39,7 @@
 - messenger interface in terminal
 - most of the runtime errors (db interactions, request/response hadling) should not prevent server/client from running
 - fix policy warnings while building
-- use fs::filepath instead of strings
+- use std::filesystem::filepath instead of strings
 - add namespaces
 - research pkcs# 5 standart for safe password storage
 - https://stackoverflow.com/questions/45710667/defining-global-constants-in-c17
@@ -88,3 +87,4 @@
 - solve this: client -> server -> file server, maybe there is way to skip server and pass data directly to file server?
 - fix file sending
 - refactor server
+- implement some kind of db manager, that will manage all 4 dbs
