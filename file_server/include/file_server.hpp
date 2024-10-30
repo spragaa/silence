@@ -10,9 +10,6 @@
 #include <vector>
 #include <filesystem>
 
-using namespace Pistache;
-namespace fs = std::filesystem;
-
 class FileServer {
 public:
 	FileServer(
@@ -40,7 +37,7 @@ private:
 
 	void generate_folder_structure();
 	bool is_valid_filename(const std::string& filename) const;
-	fs::path get_filepath_by_name(const std::string& filename) const;
+	std::filesystem::path get_filepath_by_name(const std::string& filename) const;
 
 private:
 	std::shared_ptr<Pistache::Http::Endpoint> _http_endpoint;

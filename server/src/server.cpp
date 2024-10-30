@@ -1,6 +1,8 @@
 #include "server.hpp"
 #include <boost/bind.hpp>
 
+using tcp = boost::asio::ip::tcp;
+
 Server::Server(const ServerConfig& config)
 	: _config(config),
 	_repo_manager(config),

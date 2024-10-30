@@ -24,7 +24,7 @@ FileServer::FileServer(uint16_t port, unsigned int threads, const std::string& s
 	, _storage_dir(storage_dir)
 	, _max_file_size(max_file_size)
 {
-	fs::create_directory(_storage_dir);
+	std::filesystem::create_directory(_storage_dir);
 	INFO_MSG("[FileServer::FileServer] File server created. Port: " + std::to_string(port) + ", with " + std::to_string(threads) + " threads");
 	INFO_MSG("[FileServer::FileServer] Storage dir: " + _storage_dir + ", with max file size of: " + std::to_string(_max_file_size) + " bytes");
 }
@@ -54,11 +54,11 @@ void FileServer::setup_routes() {
 	INFO_MSG("[FileServer::setup_routes] Routes created:\n" + UPLOAD_ROUTE + "\n" + DOWNLOAD_ROUTE + "\n" + DELETE_ROUTE + "\n" + LIST_ROUTE);
 }
 
-fs::path FileServer::get_filepath_by_name(const std::string& filename) const {
+std::filesystem::path FileServer::get_filepath_by_name(const std::string& filename) const {
 	std::string lvl1_dir = filename.substr(0, 2);
 	std::string lvl2_dir = filename.substr(2, 2);
 
-	fs::path directories_path = fs::path(_storage_dir) / lvl1_dir / lvl2_dir;
+	std::filesystem::path directories_path = std::filesystem::path(_storage_dir) / lvl1_dir / lvl2_dir;
 	std::filesystem::create_directories(directories_path);
 	return directories_path / filename;
 }
@@ -72,7 +72,7 @@ void FileServer::upload_file(const Pistache::Rest::Request& request, Pistache::H
 		return;
 	}
 
-	fs::path filepath = get_filepath_by_name(filename);
+	std::filesystem::path filepath = get_filepath_by_name(filename);
 	DEBUG_MSG("[FileServer::upload_file] Filepath is " + filepath.string());
 
 	const std::string& body = request.body();
@@ -81,15 +81,15 @@ void FileServer::upload_file(const Pistache::Rest::Request& request, Pistache::H
 	if (raw_data_bytes > CHUNK_SIZE_BYTES) {
 		response.send(Pistache::Http::Code::Bad_Request, "Received raw data size is bigger than acceptable chunk size!");
 		WARN_MSG("[FileServer::upload_file] Received raw data size is bigger than acceptable chunk size. Removing it!");
-		fs::remove(filepath);
+		std::filesystem::remove(filepath);
 		return;
 	}
 
-	size_t file_size = fs::exists(filepath) ? fs::file_size(filepath) : 0;
+	size_t file_size = std::filesystem::exists(filepath) ? std::filesystem::file_size(filepath) : 0;
 	if (file_size > _max_file_size - raw_data_bytes) {
 		response.send(Pistache::Http::Code::Bad_Request, "Size of " + filepath.string() + " is: " + std::to_string(file_size) + ", that's more than system limit, removing it");
 		WARN_MSG("[FileServer::upload_file] Size of " + filepath.string() + " is: " + std::to_string(file_size) + ", that's more than system limit, removing it");
-		fs::remove(filepath);
+		std::filesystem::remove(filepath);
 		return;
 	}
 
@@ -109,7 +109,7 @@ void FileServer::upload_file(const Pistache::Rest::Request& request, Pistache::H
 		response.send(Pistache::Http::Code::Ok, "File uploaded successfully");
 		INFO_MSG("[FileServer::upload_file] File " + filepath.string() +  " uploaded successfully");
 	} else {
-		fs::remove(filepath);
+		std::filesystem::remove(filepath);
 		response.send(Pistache::Http::Code::Internal_Server_Error, "Failed to write file");
 		WARN_MSG("[FileServer::upload_file] Failed to write file: " + filepath.string());
 	}
@@ -121,7 +121,7 @@ void FileServer::download_file(const Pistache::Rest::Request& request, Pistache:
 
 	DEBUG_MSG("[FileServer::download_file] Download file called, filepath:" + filepath.string());
 
-	if (!fs::exists(filepath)) {
+	if (!std::filesystem::exists(filepath)) {
 		response.send(Pistache::Http::Code::Not_Found, "File not found");
 		WARN_MSG("[FileServer::download_file] File " + filepath.string() +  " not found");
 		return;
@@ -146,16 +146,16 @@ void FileServer::download_file(const Pistache::Rest::Request& request, Pistache:
 
 void FileServer::delete_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
 	auto filename = request.param(":filename").as<std::string>();
-	auto filepath = fs::path(_storage_dir) / filename;
+	auto filepath = std::filesystem::path(_storage_dir) / filename;
 	DEBUG_MSG("[FileServer::delete_file] Delete file called, filepath:" + filepath.string());
 
-	if (!fs::exists(filepath)) {
+	if (!std::filesystem::exists(filepath)) {
 		response.send(Pistache::Http::Code::Not_Found, "File not found");
 		WARN_MSG("[FileServer::delete_file] File " + filepath.string() + " not found");
 		return;
 	}
 
-	if (fs::remove(filepath)) {
+	if (std::filesystem::remove(filepath)) {
 		response.send(Pistache::Http::Code::Ok, "File deleted successfully");
 		DEBUG_MSG("[FileServer::delete_file] File " + filepath.string() + " deleted successfully");
 	} else {
@@ -177,7 +177,7 @@ void FileServer::list_files(const Pistache::Rest::Request& request, Pistache::Ht
 	std::string file_list;
 	int file_count = 0;
 
-	for (const auto& entry : fs::directory_iterator(_storage_dir)) {
+	for (const auto& entry : std::filesystem::directory_iterator(_storage_dir)) {
 		file_list += entry.path().filename().string() + "\n";
 		file_count++;
 	}
@@ -189,7 +189,7 @@ void FileServer::list_files(const Pistache::Rest::Request& request, Pistache::Ht
 }
 
 bool FileServer::is_valid_filename(const std::string& filename) const {
-	fs::path file_path(filename);
+	std::filesystem::path file_path(filename);
 	std::string str = file_path.stem().string();
 
 	if (str.size() != FILENAME_LEN) {

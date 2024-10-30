@@ -13,9 +13,9 @@
 #include <vector>
 #include <memory>
 
-using boost::asio::ip::tcp;
-
 class Server : public boost::enable_shared_from_this<Server> {
+    using tcp = boost::asio::ip::tcp;
+    
 public:
 	Server(const ServerConfig& config);
 	~Server();
