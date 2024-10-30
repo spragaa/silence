@@ -25,14 +25,16 @@ int RepositoryManager::get_user_id(const std::string& nickname) {
 
 int RepositoryManager::create_message(const Message& message) {
 	int msg_metadata_id = _msg_metadata_repo->create(message.get_metadata());
-	int msg_text_id = _msg_text_repo->create(message.get_text());
+	// int msg_text_id = _msg_text_repo->create(message.get_text());
 
-	if (msg_text_id == msg_metadata_id) {
-		return msg_text_id;
-	} else {
-		WARN_MSG("[RepositoryManager::create_message] Failed to insert messages into dbs: msg ids are different. metadata_id "
-		         + std::to_string(msg_metadata_id) + ", text_id " + std::to_string(msg_text_id));
-	}
+	// if (msg_text_id == msg_metadata_id) {
+	// 	return msg_text_id;
+	// } else {
+	// 	WARN_MSG("[RepositoryManager::create_message] Failed to insert messages into dbs: msg ids are different. metadata_id "
+	// 	         + std::to_string(msg_metadata_id) + ", text_id " + std::to_string(msg_text_id));
+	// }
+	 
+	return msg_metadata_id;
 }
 
 bool RepositoryManager::upload_file_chunk(const std::string& filename, const std::string& chunk_data) {
