@@ -13,6 +13,8 @@
 #include <vector>
 #include <memory>
 
+namespace server {
+
 class Server : public boost::enable_shared_from_this<Server> {
     using tcp = boost::asio::ip::tcp;
     
@@ -37,3 +39,5 @@ private:
 	ConnectedClientsManager _connected_clients_manager;
 	RequestHandler _request_handler;
 };
+
+}

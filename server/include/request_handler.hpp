@@ -14,6 +14,8 @@
 #include <map>
 #include <vector>
 
+namespace server {
+
 class RequestHandler {
     using tcp = boost::asio::ip::tcp;
 
@@ -48,3 +50,5 @@ private:
 	std::mutex _pending_transfers_mutex;
 	std::map<std::string, UploadState> _file_uploads;
 };
+
+}

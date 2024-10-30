@@ -4,6 +4,8 @@
 #include <chrono>
 #include <ctime>
 
+namespace common {
+
 std::string get_current_timestamp() {
 	auto now        = std::chrono::system_clock::now();
 	auto time_t_now = std::chrono::system_clock::to_time_t(now);
@@ -31,4 +33,6 @@ std::string get_socket_info(boost::asio::ip::tcp::socket& socket) {
 	}
 
 	return info.str();
+}
+
 }

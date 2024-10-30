@@ -1,6 +1,8 @@
 #include "server.hpp"
 #include <boost/bind.hpp>
 
+namespace server {
+
 using tcp = boost::asio::ip::tcp;
 
 Server::Server(const ServerConfig& config)
@@ -136,11 +138,13 @@ void Server::start_request_handling() {
 
 void Server::handle_accept(boost::shared_ptr<tcp::socket> socket,
                            const boost::system::error_code& error) {
-	DEBUG_MSG("[Server::handle_accept] Called on a socket: " + get_socket_info(*socket));
+	DEBUG_MSG("[Server::handle_accept] Called on a socket: " + common::get_socket_info(*socket));
 	if (!error) {
 		boost::asio::post(_io_service, [this, socket]() {
 			_request_handler.handle_request(socket);
 		});
 		start_request_handling();
 	}
+}
+
 }

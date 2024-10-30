@@ -13,17 +13,19 @@
 #include <string>
 #include <vector>
 
+namespace server {
+
 class RepositoryManager {
 public:
 	explicit RepositoryManager(const ServerConfig& config);
 	~RepositoryManager() = default;
 
-	int create_user(const User& user);
+	int create_user(const common::User& user);
 	bool authorize_user(int user_id, const std::string& nickname, const std::string& password);
 	int get_user_id(const std::string& nickname);
 
-	int create_message(const Message& message);
-	Message get_message(int message_id);
+	int create_message(const common::Message& message);
+	common::Message get_message(int message_id);
 
 	bool upload_file_chunk(const std::string& filename, const std::string& chunk_data);
 	std::vector<std::string> download_file_chunks(const std::string& filename);
@@ -35,3 +37,5 @@ private:
 	std::unique_ptr<MessageTextRepository> _msg_text_repo;
 	std::unique_ptr<FileServerClient> _file_server_client;
 };
+
+}

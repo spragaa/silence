@@ -4,15 +4,15 @@
 
 class MessageTextRepositoryTests : public ::testing::Test {
 protected:
-	std::unique_ptr<MessageTextRepository> _repo;
+	std::unique_ptr<server::MessageTextRepository> _repo;
 
 	void SetUp() override {
-		_repo = std::make_unique<MessageTextRepository>("redis://spraga@127.0.0.1:6380");
+		_repo = std::make_unique<server::MessageTextRepository>("redis://spraga@127.0.0.1:6380");
 	}
 };
 
 TEST_F(MessageTextRepositoryTests, create_test) {
-	MessageText msg(1, "Test message");
+	common::MessageText msg(1, "Test message");
 	int result = _repo->create(msg);
 	EXPECT_EQ(result, 1);
 
@@ -28,10 +28,10 @@ TEST_F(MessageTextRepositoryTests, read_non_existent_messag_text) {
 }
 
 TEST_F(MessageTextRepositoryTests, update_existing_message) {
-	MessageText msg(2, "Original message");
+	common::MessageText msg(2, "Original message");
 	_repo->create(msg);
 
-	MessageText updated_msg(2, "Updated message");
+	common::MessageText updated_msg(2, "Updated message");
 	bool update_result = _repo->update(updated_msg);
 	EXPECT_TRUE(update_result);
 
@@ -41,13 +41,13 @@ TEST_F(MessageTextRepositoryTests, update_existing_message) {
 }
 
 TEST_F(MessageTextRepositoryTests, update_non_existing_message) {
-	MessageText msg(999, "Non-existent message");
+	common::MessageText msg(999, "Non-existent message");
 	bool result = _repo->update(msg);
 	EXPECT_FALSE(result);
 }
 
 TEST_F(MessageTextRepositoryTests, remove_existing_message) {
-	MessageText msg(3, "Message to be removed");
+	common::MessageText msg(3, "Message to be removed");
 	_repo->create(msg);
 
 	bool remove_result = _repo->remove(3);
@@ -63,11 +63,11 @@ TEST_F(MessageTextRepositoryTests, remove_non_existent_message) {
 }
 
 TEST_F(MessageTextRepositoryTests, CreateDuplicateMessage) {
-	MessageText msg1(4, "Original message");
+	common::MessageText msg1(4, "Original message");
 	int result1 = _repo->create(msg1);
 	EXPECT_EQ(result1, 4);
 
-	MessageText msg2(4, "Duplicate message");
+	common::MessageText msg2(4, "Duplicate message");
 	int result2 = _repo->create(msg2);
 	EXPECT_EQ(result2, 4);
 
@@ -77,7 +77,7 @@ TEST_F(MessageTextRepositoryTests, CreateDuplicateMessage) {
 }
 
 TEST_F(MessageTextRepositoryTests, read_after_remove) {
-	MessageText msg(5, "Temporary message");
+	common::MessageText msg(5, "Temporary message");
 	_repo->create(msg);
 	_repo->remove(5);
 

@@ -7,6 +7,8 @@
 #include <optional>
 #include <nlohmann/json.hpp>
 
+namespace common {
+
 class MessageMetadata {
 public:
 	MessageMetadata() = default;
@@ -43,3 +45,5 @@ private:
 	std::optional<Timestamp> _deleted_timestamp;
 	std::optional<Timestamp> _last_edited_timestamp;
 };
+
+}

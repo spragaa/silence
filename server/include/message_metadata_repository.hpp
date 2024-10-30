@@ -6,20 +6,24 @@
 #include <vector>
 #include <optional>
 
-class MessageMetadataRepository : public BaseRepository<MessageMetadata> {
+namespace server {
+
+class MessageMetadataRepository : public BaseRepository<common::MessageMetadata> {
 public:
 	MessageMetadataRepository(PostgresDBManager& postgres_db_manager, const std::string& connection_name);
 	virtual ~MessageMetadataRepository() override;
 
-	int create(const MessageMetadata& message) override;
-	std::optional<MessageMetadata> read(int id) override;
-	bool update(const MessageMetadata& message) override;
+	int create(const common::MessageMetadata& message) override;
+	std::optional<common::MessageMetadata> read(int id) override;
+	bool update(const common::MessageMetadata& message) override;
 	bool remove(int id) override;
 
-	std::vector<MessageMetadata> getMessagesBetweenUsers(int user1_id, int user2_id);
+	std::vector<common::MessageMetadata> getMessagesBetweenUsers(int user1_id, int user2_id);
 
 private:
-	MessageMetadata construct_message(const pqxx::row& row);
+	common::MessageMetadata construct_message(const pqxx::row& row);
 	// move inside base repo
 	std::string _connection_name;
 };
+
+}

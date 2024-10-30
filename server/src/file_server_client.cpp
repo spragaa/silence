@@ -1,6 +1,8 @@
 #include "file_server_client.hpp"
 #include <iostream>
 
+namespace server {
+
 namespace beast = boost::beast;
 namespace http = beast::http;
 using tcp = boost::asio::ip::tcp;
@@ -221,4 +223,6 @@ std::string FileServerClient::download_file(const std::string& filename) {
 
 std::string FileServerClient::delete_file(const std::string& filename) {
 	return send_request("/delete/" + filename, http::verb::delete_);
+}
+
 }

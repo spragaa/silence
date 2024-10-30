@@ -1,5 +1,7 @@
 #include "message.hpp"
 
+namespace common {
+
 Message::Message(const int& sender_id, const int& receiver_id, const std::string& text) :
 	_metadata(0, sender_id, receiver_id), _text(0, text)
 {
@@ -28,4 +30,6 @@ MessageMetadata Message::get_metadata() const {
 void Message::set_id(const int& id) {
 	_metadata.set_id(id);
 	_text.set_id(id);
+}
+
 }

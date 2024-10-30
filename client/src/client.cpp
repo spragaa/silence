@@ -1,5 +1,7 @@
 #include "client.hpp"
 
+namespace client {
+
 constexpr uint8_t filename_len = 16;
 const std::string alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
@@ -18,9 +20,9 @@ Client::Client(const std::string& server_address,
 
 	DEBUG_MSG("[Client::Client] Trying to read user data from json...");
 	std::string user_data_filename = get_user_data_filename();
-	_user = User::load_user_data_from_json(user_data_filename);
+	_user = common::User::load_user_data_from_json(user_data_filename);
 	if (_user.get_id() == 0) {
-		_user = User();
+		_user = common::User();
 		_user.set_nickname(nick);
 		DEBUG_MSG("[Client::Client] Temporary user created with nickname: '" + _user.get_nickname() + "'");
 	}
@@ -247,7 +249,7 @@ void Client::register_user() {
 		}
 		if (response.contains("registered_timestamp") && !response["registered_timestamp"].is_null()) {
 			std::chrono::nanoseconds ns(response["registered_timestamp"].get<int64_t>());
-			Timestamp registered_timestamp = std::chrono::system_clock::time_point(ns);
+			common::Timestamp registered_timestamp = std::chrono::system_clock::time_point(ns);
 			_user.set_registered_timestamp(registered_timestamp);
 		} else {
 			WARN_MSG("[Client::register_user] Registered timestamp not provided in the response");
@@ -288,7 +290,7 @@ void Client::authorize_user() {
 			// this is not yet finished on server side
 			// if (user_data.contains("last_online_timestamp") && !user_data["last_online_timestamp"].is_null()) {
 			//     std::chrono::nanoseconds ns(user_data["last_online_timestamp"].get<int64_t>());
-			//     Timestamp last_online = std::chrono::system_clock::time_point(ns);
+			//     common::Timestamp last_online = std::chrono::system_clock::time_point(ns);
 			//     _user.set_last_online_timestamp(last_online);
 			// }
 			// if (user_data.contains("is_online") && !user_data["is_online"].is_null()) {
@@ -311,7 +313,7 @@ void Client::authorize_user() {
 }
 
 void Client::send_message(const std::string& message) {
-	DEBUG_MSG("send_message" + get_socket_info(_socket));
+	DEBUG_MSG("send_message" + common::get_socket_info(_socket));
 	boost::asio::write(_socket, boost::asio::buffer(message + "\r\n\r\n"));
 }
 
@@ -577,7 +579,7 @@ void Client::handle_incoming_file_chunk(const nlohmann::json& chunk_message) {
 	}
 }
 
-User Client::get_user() {
+common::User Client::get_user() {
 	return _user;
 }
 
@@ -605,4 +607,6 @@ std::string Client::generate_random_string(const int& len) {
 
 std::string Client::get_user_data_filename() const noexcept {
 	return std::string(SOURCE_DIR) + "/client/user_data/" + "user_" + _user.get_nickname() + "_" + _server_address + "_" + std::to_string(_server_port) + ".json";
+}
+
 }

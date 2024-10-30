@@ -1,12 +1,14 @@
 #include "message_metadata_repository.hpp"
 
+namespace server {
+
 MessageMetadataRepository::MessageMetadataRepository(PostgresDBManager& postgres_db_manager, const std::string& connection_name) : BaseRepository(postgres_db_manager), _connection_name(connection_name) {
 	DEBUG_MSG("MessageMetadataRepository created");
 }
 
 MessageMetadataRepository::~MessageMetadataRepository() = default;
 
-int MessageMetadataRepository::create(const MessageMetadata& message) {
+int MessageMetadataRepository::create(const common::MessageMetadata& message) {
 	try {
 		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 
@@ -39,7 +41,7 @@ int MessageMetadataRepository::create(const MessageMetadata& message) {
 	}
 }
 
-std::optional<MessageMetadata> MessageMetadataRepository::read(int id) {
+std::optional<common::MessageMetadata> MessageMetadataRepository::read(int id) {
 	try {
 		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 		pqxx::result r = txn.exec_params("SELECT * FROM messages WHERE id = $1", id);
@@ -55,7 +57,7 @@ std::optional<MessageMetadata> MessageMetadataRepository::read(int id) {
 	}
 }
 
-bool MessageMetadataRepository::update(const MessageMetadata& message) {
+bool MessageMetadataRepository::update(const common::MessageMetadata& message) {
 	try {
 		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 
@@ -125,8 +127,8 @@ std::chrono::system_clock::time_point parse_timestamp(const std::string& timesta
 	return std::chrono::system_clock::from_time_t(std::mktime(&tm));
 }
 
-MessageMetadata MessageMetadataRepository::construct_message(const pqxx::row& row) {
-	MessageMetadata msg(
+common::MessageMetadata MessageMetadataRepository::construct_message(const pqxx::row& row) {
+	common::MessageMetadata msg(
 		row["id"].as<int>(),
 		row["sender_id"].as<int>(),
 		row["receiver_id"].as<int>()
@@ -138,4 +140,6 @@ MessageMetadata MessageMetadataRepository::construct_message(const pqxx::row& ro
 	if (!row["last_edited_timestamp"].is_null())
 		msg.set_last_edited_timestamp(parse_timestamp(row["last_edited_timestamp"].as<std::string>()));
 	return msg;
+}
+
 }

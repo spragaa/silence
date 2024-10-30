@@ -1,5 +1,7 @@
 #include "request_handler.hpp"
 
+namespace server {
+
 using tcp = boost::asio::ip::tcp;
 
 RequestHandler::RequestHandler(RepositoryManager& repo_manager,
@@ -16,11 +18,11 @@ void RequestHandler::handle_request(boost::shared_ptr<tcp::socket> socket) {
 		boost::asio::read_until(*socket, request_buf, "\r\n\r\n", error);
 
 		if (error == boost::asio::error::eof) {
-			DEBUG_MSG("[Server::handle_request] Client closed connection on socket: " + get_socket_info(*socket));
+			DEBUG_MSG("[Server::handle_request] Client closed connection on socket: " + common::get_socket_info(*socket));
 
 			_connected_clients_manager.remove_client_by_socket(socket);
 
-			DEBUG_MSG("[Server::handle_authorize] Client removed from connected list: " + get_socket_info(*socket));
+			DEBUG_MSG("[Server::handle_authorize] Client removed from connected list: " + common::get_socket_info(*socket));
 			DEBUG_MSG("[Server::handle_authorize] Currently, there are " + std::to_string(_connected_clients_manager.get_connected_count()) + " users connected");
 
 			break;
@@ -80,7 +82,7 @@ void RequestHandler::handle_register(boost::shared_ptr<tcp::socket> socket, cons
 	std::string nickname = request["nickname"];
 	std::string password = request["password"];
 
-	User new_user(nickname, password);
+	common::User new_user(nickname, password);
 	int user_id = _repo_manager.create_user(new_user);
 	nlohmann::json response;
 
@@ -111,7 +113,7 @@ void RequestHandler::handle_authorize(boost::shared_ptr<tcp::socket> socket, con
 
 		_connected_clients_manager.add_client(user_id, socket);
 		// "New user connected" in handle authorize may be counterintuitive?
-		DEBUG_MSG("[Server::handle_authorize] New user connected, with id: " + std::to_string(user_id) + " on socket: " + get_socket_info(*socket));
+		DEBUG_MSG("[Server::handle_authorize] New user connected, with id: " + std::to_string(user_id) + " on socket: " + common::get_socket_info(*socket));
 		DEBUG_MSG("[Server::handle_authorize] Currently, there are " + std::to_string(_connected_clients_manager.get_connected_count()) + " users connected");
 	} else {
 		response["status"] = "error";
@@ -138,7 +140,7 @@ void RequestHandler::handle_send_message(boost::shared_ptr<tcp::socket> socket, 
 		return;
 	}
 
-	Message new_msg(sender_id, receiver_id, request_text);
+	common::Message new_msg(sender_id, receiver_id, request_text);
 	int msg_metadata_id = _repo_manager.create_message(new_msg);
 
 	if (msg_metadata_id) {
@@ -343,4 +345,6 @@ void RequestHandler::send_file_to_client(boost::shared_ptr<tcp::socket> client_s
 
 	INFO_MSG("[Server::send_file_to_client] Successfully sent file " + filename
 	         + " (" + std::to_string(chunks.size()) + " chunks)");
+}
+
 }

@@ -6,6 +6,8 @@
 #include <boost/asio.hpp>
 #include <boost/shared_ptr.hpp>
 
+namespace server {
+
 class ConnectedClientsManager {
     using tcp = boost::asio::ip::tcp;
 
@@ -36,3 +38,5 @@ public:
 private:
 	std::map<int, boost::shared_ptr<tcp::socket> > _connected_clients;
 };
+
+}

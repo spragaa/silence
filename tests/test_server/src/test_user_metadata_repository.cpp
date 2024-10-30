@@ -4,18 +4,18 @@
 
 class UserMetadataRepositoryTests : public ::testing::Test {
 protected:
-	std::unique_ptr<UserMetadataRepository> _repo;
-	PostgresDBManager postgres_db_manager;
+	std::unique_ptr<server::UserMetadataRepository> _repo;
+	server::PostgresDBManager postgres_db_manager;
 
 	void SetUp() override {
 		postgres_db_manager.add_connection("test_user_metadata", "host=localhost port=5432 dbname=test_user_metadata user=postgres password=pass");
-		_repo = std::make_unique<UserMetadataRepository>(postgres_db_manager, "test_user_metadata");
+		_repo = std::make_unique<server::UserMetadataRepository>(postgres_db_manager, "test_user_metadata");
 	}
 };
 
 TEST_F(UserMetadataRepositoryTests, read_user_with_id_1) {
 	int user_id = 1;
-	std::optional<User> user = _repo->read(user_id);
+	std::optional<common::User> user = _repo->read(user_id);
 
 	ASSERT_TRUE(user.has_value());
 
@@ -44,7 +44,7 @@ TEST_F(UserMetadataRepositoryTests, create_user) {
 	ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
 	auto timestamp = std::chrono::system_clock::from_time_t(std::mktime(&tm));
 
-	User user_to_create(nickname, pass);
+	common::User user_to_create(nickname, pass);
 	user_to_create.set_id(user_id);
 	user_to_create.set_registered_timestamp(timestamp);
 	user_to_create.set_last_online_timestamp(timestamp);
@@ -54,7 +54,7 @@ TEST_F(UserMetadataRepositoryTests, create_user) {
 
 	ASSERT_TRUE(is_created);
 
-	std::optional<User> user = _repo->read(user_id);
+	std::optional<common::User> user = _repo->read(user_id);
 	ASSERT_TRUE(user.has_value());
 
 	auto n_user = *user;
@@ -76,7 +76,7 @@ TEST_F(UserMetadataRepositoryTests, remove_existing_user) {
 
 	ASSERT_TRUE(is_removed);
 
-	std::optional<User> user = _repo->read(user_id);
+	std::optional<common::User> user = _repo->read(user_id);
 	ASSERT_FALSE(user.has_value());
 }
 
@@ -86,7 +86,7 @@ TEST_F(UserMetadataRepositoryTests, remove_non_existing_user) {
 
 	ASSERT_FALSE(is_removed);
 
-	std::optional<User> user = _repo->read(user_id);
+	std::optional<common::User> user = _repo->read(user_id);
 	ASSERT_FALSE(user.has_value());
 }
 
@@ -102,7 +102,7 @@ TEST_F(UserMetadataRepositoryTests, update_existing_user) {
 	ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
 	auto timestamp = std::chrono::system_clock::from_time_t(std::mktime(&tm));
 
-	User user_to_update(nickname, pass);
+common::	User user_to_update(nickname, pass);
 	user_to_update.set_id(user_id);
 	user_to_update.set_registered_timestamp(timestamp);
 	user_to_update.set_last_online_timestamp(timestamp);
@@ -112,7 +112,7 @@ TEST_F(UserMetadataRepositoryTests, update_existing_user) {
 
 	ASSERT_TRUE(is_updated);
 
-	std::optional<User> user = _repo->read(user_id);
+	std::optional<common::User> user = _repo->read(user_id);
 	ASSERT_TRUE(user.has_value());
 
 	auto n_user = *user;
@@ -140,7 +140,7 @@ TEST_F(UserMetadataRepositoryTests, update_non_existing_user) {
 	ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
 	auto timestamp = std::chrono::system_clock::from_time_t(std::mktime(&tm));
 
-	User user_to_update(nickname, pass);
+	common::User user_to_update(nickname, pass);
 	user_to_update.set_id(user_id);
 	user_to_update.set_registered_timestamp(timestamp);
 	user_to_update.set_last_online_timestamp(timestamp);
@@ -150,7 +150,7 @@ TEST_F(UserMetadataRepositoryTests, update_non_existing_user) {
 
 	ASSERT_FALSE(is_updated);
 
-	std::optional<User> user = _repo->read(user_id);
+	std::optional<common::User> user = _repo->read(user_id);
 	ASSERT_FALSE(user.has_value());
 }
 
@@ -183,14 +183,14 @@ TEST_F(UserMetadataRepositoryTests, authorize_non_existing_user) {
 //         {"online", true}
 //     };
 
-//     User constructed_user = _repo->construct_user(user_json);
+//     common::User constructed_user = _repo->construct_user(user_json);
 
 //     EXPECT_EQ(constructed_user.get_id(), 1);
 //     EXPECT_EQ(constructed_user.get_nickname(), "test_user");
 //     EXPECT_EQ(constructed_user.get_password(), "test_password");
 //     EXPECT_TRUE(constructed_user.is_online());
 
-//     auto to_string = [](const Timestamp& ts) {
+//     auto to_string = [](const common::Timestamp& ts) {
 //         auto time_t = std::chrono::system_clock::to_time_t(ts);
 //         std::stringstream ss;
 //         ss << std::put_time(std::gmtime(&time_t), "%Y-%m-%d %H:%M:%S");
