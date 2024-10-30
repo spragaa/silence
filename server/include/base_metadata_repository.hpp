@@ -3,6 +3,8 @@
 #include "postgres_db_manager.hpp"
 #include <optional>
 
+namespace server {
+
 template<typename T>
 class BaseRepository {
 public:
@@ -19,3 +21,5 @@ public:
 protected:
 	PostgresDBManager& _postgres_db_manager;
 };
+
+}

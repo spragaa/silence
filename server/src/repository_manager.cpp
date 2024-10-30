@@ -1,6 +1,8 @@
 #include "repository_manager.hpp"
 #include "debug.hpp"
 
+namespace server {
+
 RepositoryManager::RepositoryManager(const ServerConfig& config) {
 	_postgres_db_manager.add_connection("user_metadata_db", config._user_metadata_db_connection_string);
 	_postgres_db_manager.add_connection("message_metadata_db", config._msg_metadata_db_connection_string);
@@ -11,7 +13,7 @@ RepositoryManager::RepositoryManager(const ServerConfig& config) {
 	_file_server_client = std::make_unique<FileServerClient>(config._file_server_host, config._file_server_port);
 }
 
-int RepositoryManager::create_user(const User& user) {
+int RepositoryManager::create_user(const common::User& user) {
 	return _user_metadata_repo->create(user);
 }
 
@@ -23,7 +25,7 @@ int RepositoryManager::get_user_id(const std::string& nickname) {
 	return _user_metadata_repo->get_id(nickname);
 }
 
-int RepositoryManager::create_message(const Message& message) {
+int RepositoryManager::create_message(const common::Message& message) {
 	int msg_metadata_id = _msg_metadata_repo->create(message.get_metadata());
 	// int msg_text_id = _msg_text_repo->create(message.get_text());
 
@@ -43,4 +45,6 @@ bool RepositoryManager::upload_file_chunk(const std::string& filename, const std
 
 std::vector<std::string> RepositoryManager::download_file_chunks(const std::string& filename) {
 	return _file_server_client->download_file_chunks(filename);
+}
+
 }

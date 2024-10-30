@@ -8,16 +8,16 @@
 //     int sender_id;
 //     int receiver_id;
 //     std::string text;
-//     Message msg;
+//     common::Message msg;
 
 //     void SetUp() override {
 //         sender_id = 1;
 //         receiver_id = 2;
 //         text = "Zig is future?";
-//         msg = Message(sender_id, receiver_id, text);
+//         msg = common::Message(sender_id, receiver_id, text);
 //     }
 
-//     Timestamp create_timestamp() {
+//     common::Timestamp create_timestamp() {
 //         return std::chrono::system_clock::now();
 //     }
 // };
@@ -36,7 +36,7 @@
 //     msg.set_sender(3);
 //     EXPECT_EQ(msg.get_sender_id(), 3);
 
-//     Timestamp ts = create_timestamp();
+//     common::Timestamp ts = create_timestamp();
 //     msg.set_created_timestamp(ts);
 //     EXPECT_EQ(msg.get_created_timestamp(), ts);
 
@@ -45,11 +45,11 @@
 // }
 
 // TEST_F(MessageTests, timestamps_test) {
-//     Timestamp created_ts = create_timestamp();
+//     common::Timestamp created_ts = create_timestamp();
 //     msg.set_created_timestamp(created_ts);
 //     EXPECT_EQ(msg.get_created_timestamp(), created_ts);
 
-//     Timestamp edited_ts = create_timestamp();
+//     common::Timestamp edited_ts = create_timestamp();
 //     msg.set_last_edited_timestamp(edited_ts);
 //     EXPECT_EQ(msg.get_last_edited_timestamp().value(), edited_ts);
 
@@ -67,7 +67,7 @@
 //     EXPECT_EQ(j["text"], text);
 //     EXPECT_TRUE(j["deleted"]);
 
-//     Message deserialized_msg = Message::from_json(j);
+//     common::Message deserialized_msg = common::Message::from_json(j);
 //     EXPECT_EQ(deserialized_msg.get_sender_id(), sender_id);
 //     EXPECT_EQ(deserialized_msg.get_receiver_id(), receiver_id);
 //     EXPECT_EQ(deserialized_msg.get_text(), text);

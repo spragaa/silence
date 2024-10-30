@@ -1,4 +1,6 @@
 #include "connected_clients_manager.hpp"
+namespace server {
+
 using tcp = boost::asio::ip::tcp;
 
 void ConnectedClientsManager::add_client(int user_id, boost::shared_ptr<tcp::socket> socket) {
@@ -32,4 +34,6 @@ bool ConnectedClientsManager::is_client_connected(int user_id) const {
 
 size_t ConnectedClientsManager::get_connected_count() const {
 	return _connected_clients.size();
+}
+
 }

@@ -2,6 +2,8 @@
 
 #include <string>
 
+namespace server {
+
 struct ServerConfig {
 	unsigned short _port;
 	unsigned int _thread_pool_size;
@@ -11,3 +13,5 @@ struct ServerConfig {
 	std::string _file_server_host;
 	std::string _file_server_port;
 };
+
+}

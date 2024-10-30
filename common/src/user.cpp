@@ -1,5 +1,7 @@
 #include "user.hpp"
 
+namespace common {
+
 int User::_user_id_counter = 1;
 
 User::User() : _id(0), _nickname(""), _password("") {
@@ -143,4 +145,6 @@ User User::load_user_data_from_json(const std::string& filename) {
 		DEBUG_MSG("Unable to open file for reading: " + filename);
 		return User();
 	}
+}
+
 }
