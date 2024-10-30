@@ -23,7 +23,6 @@
 - fix redis db connection
 - add tests for file_server, file_server_client and their interaction
 - handle the filenames on server side (message_metadata, responses for client, status feedback)
-- refactor server
 - integrate file server client into server workflow
 
 ### tasks:
@@ -88,3 +87,4 @@
 - implement hashing for filenames
 - solve this: client -> server -> file server, maybe there is way to skip server and pass data directly to file server?
 - fix file sending
+- refactor server
