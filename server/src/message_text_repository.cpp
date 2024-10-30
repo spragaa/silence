@@ -14,8 +14,8 @@ MessageTextRepository::MessageTextRepository(const std::string& connection_strin
 		          ", Password: " + connection_options.password +
 		          ", DB: " + std::to_string(connection_options.db));
 		_redis = std::make_unique<sw::redis::Redis>(connection_options);
-		auto ping_result = _redis->ping();
-		DEBUG_MSG("[MessageTextRepository::MessageTextRepository] PING response: " + ping_result);
+		// auto ping_result = _redis->ping();
+		// DEBUG_MSG("[MessageTextRepository::MessageTextRepository] PING response: " + ping_result);
 		INFO_MSG("[MessageTextRepository::MessageTextRepository] Successfully connected to message_text Redis database");
 	}
 	catch (const std::exception& e) {
