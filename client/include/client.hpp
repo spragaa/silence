@@ -15,8 +15,6 @@
 #include <filesystem>
 #include <random>
 
-namespace fs = std::filesystem;
-
 class Client {
 public:
 	Client(const std::string& server_address,
@@ -67,7 +65,7 @@ private:
 		FileTransferState(const std::string& path) :
 			file(path, std::ios::binary),
 			buffer(chunk_size),
-			filename(fs::path(path).filename().string()) {
+			filename(std::filesystem::path(path).filename().string()) {
 		}
 	};
 

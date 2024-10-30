@@ -14,9 +14,9 @@
 #include <map>
 #include <vector>
 
-using boost::asio::ip::tcp;
-
 class RequestHandler {
+    using tcp = boost::asio::ip::tcp;
+
 public:
 	RequestHandler(RepositoryManager& repo_manager,
 	               ConnectedClientsManager& connected_clients_manager);

@@ -1,5 +1,7 @@
 #include "request_handler.hpp"
 
+using tcp = boost::asio::ip::tcp;
+
 RequestHandler::RequestHandler(RepositoryManager& repo_manager,
                                ConnectedClientsManager& connected_clients_manager)
 	: _repo_manager(repo_manager),

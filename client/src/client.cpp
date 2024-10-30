@@ -14,7 +14,7 @@ Client::Client(const std::string& server_address,
 	, _is_authorized(false)
 	, _user_files_dir(std::string(SOURCE_DIR) + "/client/user_files/" + _user.get_nickname())
 {
-	fs::create_directories(_user_files_dir);
+	std::filesystem::create_directories(_user_files_dir);
 
 	DEBUG_MSG("[Client::Client] Trying to read user data from json...");
 	std::string user_data_filename = get_user_data_filename();
@@ -160,8 +160,8 @@ void Client::handle_user_interaction() {
 
 					// not sure if filepath is the best way of doing it
 					message["file_name"] = "none";
-					fs::path filepath = fs::path(_user_files_dir) / file_name;
-					if (!fs::exists(filepath)) {
+					std::filesystem::path filepath = std::filesystem::path(_user_files_dir) / file_name;
+					if (!std::filesystem::exists(filepath)) {
 						WARN_MSG("File doesn't exist: " + filepath.string());
 						WARN_MSG("Sending message without file");
 					} else {
@@ -181,21 +181,21 @@ void Client::handle_user_interaction() {
 					std::string input;
 					std::getline(std::cin, input);
 
-					fs::path filepath = fs::path(input);
+					std::filesystem::path filepath = std::filesystem::path(input);
 
-					if (!fs::exists(filepath)) {
+					if (!std::filesystem::exists(filepath)) {
 						WARN_MSG("File doesn't exist: " + filepath.string());
 						break;
 					}
 
 					std::string random_filename = generate_random_string(filename_len) +
 					                              filepath.extension().string();
-					fs::path destination = fs::path(_user_files_dir) / random_filename;
+					std::filesystem::path destination = std::filesystem::path(_user_files_dir) / random_filename;
 
 					try {
-						fs::copy_file(filepath, destination);
+						std::filesystem::copy_file(filepath, destination);
 						INFO_MSG("File " + filepath.string() + " was moved successfully and renamed to: " + random_filename);
-					} catch (const fs::filesystem_error& e) {
+					} catch (const std::filesystem::filesystem_error& e) {
 						ERROR_MSG("Error while copying file: " + std::string(e.what()));
 					}
 					break;
@@ -343,7 +343,7 @@ void Client::send_file_chunks(const std::string& filepath) {
 
 		nlohmann::json file_chunk_request;
 		file_chunk_request["type"] = "file_chunk";
-		file_chunk_request["filename"] = fs::path(filepath).filename().string();
+		file_chunk_request["filename"] = std::filesystem::path(filepath).filename().string();
 		file_chunk_request["chunk_data"] = std::string(buffer.data(), bytes_read);
 		file_chunk_request["chunk_number"] = chunk_number;
 		file_chunk_request["is_last"] = is_last;

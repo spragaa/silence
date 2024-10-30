@@ -1,4 +1,5 @@
 #include "connected_clients_manager.hpp"
+using tcp = boost::asio::ip::tcp;
 
 void ConnectedClientsManager::add_client(int user_id, boost::shared_ptr<tcp::socket> socket) {
 	_connected_clients[user_id] = socket;

@@ -1,6 +1,10 @@
 #include "file_server_client.hpp"
 #include <iostream>
 
+namespace beast = boost::beast;
+namespace http = beast::http;
+using tcp = boost::asio::ip::tcp;
+
 FileServerClient::FileServerClient(const std::string& host, const std::string& port)
 	: _host(host), _port(port), _resolver(_io_context), _stream(_io_context) {
 }
@@ -51,7 +55,7 @@ std::string FileServerClient::list_files() {
 // std::string FileServerClient::upload_file(const std::string& filename, const std::string& filepath) {
 // 	auto start_time = std::chrono::high_resolution_clock::now();
 
-// 	fs::path full_path = fs::path(filepath) / filename;
+// 	std::filesystem::path full_path = std::filesystem::path(filepath) / filename;
 // 	std::ifstream file(full_path, std::ios::binary);
 // 	if (!file) {
 // 		ERROR_MSG("[FileServerClient::upload_file] Unable to open file: " + full_path.string());
