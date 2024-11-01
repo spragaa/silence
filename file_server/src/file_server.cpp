@@ -20,21 +20,34 @@ constexpr std::array<char, 62> ALPHABET = {
 	'y', 'z'
 };
 
-FileServer::FileServer(uint16_t port, unsigned int threads, const std::string& storage_dir, size_t max_file_size)
+FileServer::FileServer(uint16_t port, unsigned int thread_count, const std::string& storage_dir, size_t max_file_size)
 	: _http_endpoint(std::make_shared<Pistache::Http::Endpoint>(Pistache::Address("*:" + std::to_string(port))))
-	, _threads(threads)
+	, _thread_count(thread_count)
 	, _storage_dir(storage_dir)
 	, _max_file_size(max_file_size)
 {
 	std::filesystem::create_directory(_storage_dir);
-	INFO_MSG("[FileServer::FileServer] File server created. Port: " + std::to_string(port) + ", with " + std::to_string(threads) + " threads");
+	INFO_MSG("[FileServer::FileServer] File server created. Port: " + std::to_string(port) + ", with " + std::to_string(thread_count) + " threads");
 	INFO_MSG("[FileServer::FileServer] Storage dir: " + _storage_dir + ", with max file size of: " + std::to_string(_max_file_size) + " bytes");
 }
 
+
+FileServer::~FileServer() {
+    stop();
+}
+
 void FileServer::init() {
-	auto opts = Pistache::Http::Endpoint::options()
-	            .threads(_threads);
-	_http_endpoint->init(opts);
+    try {
+        auto opts = Pistache::Http::Endpoint::options()
+            .threads(_thread_count)
+            .flags(Pistache::Tcp::Options::ReuseAddr);
+            
+        _http_endpoint->init(opts);
+    } catch (const std::exception& e) {
+        FATAL_MSG("[FileServer::init] Failed to initialize server: " + std::string(e.what()));
+        throw std::runtime_error("Failed to inкitialize server: " + std::string(e.what()));
+    }
+    
 	INFO_MSG("[FileServer::init] Initialization successful!");
 	setup_routes();
 }
@@ -43,6 +56,13 @@ void FileServer::start() {
 	_http_endpoint->setHandler(_router.handler());
 	_http_endpoint->serve();
 	INFO_MSG("[FileServer::start] File server started");
+}
+
+void FileServer::stop() {
+    if (_http_endpoint) {
+        _http_endpoint->shutdown();
+        _http_endpoint.reset();
+    }
 }
 
 void FileServer::setup_routes() {
