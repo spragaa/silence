@@ -51,7 +51,6 @@ void FileServer::setup_routes() {
 	Routes::Post(_router, UPLOAD_ROUTE, Routes::bind(&FileServer::upload_file, this));
 	Routes::Get(_router, DOWNLOAD_ROUTE, Routes::bind(&FileServer::download_file, this));
 	Routes::Delete(_router, DELETE_ROUTE, Routes::bind(&FileServer::delete_file, this));
-	Routes::Get(_router, LIST_ROUTE, Routes::bind(&FileServer::list_files, this));
 
 	INFO_MSG("[FileServer::setup_routes] Routes created:\n" + UPLOAD_ROUTE + "\n" + DOWNLOAD_ROUTE + "\n" + DELETE_ROUTE + "\n" + LIST_ROUTE);
 }
@@ -131,7 +130,7 @@ void FileServer::upload_file(const Pistache::Rest::Request& request, Pistache::H
 	}
 }
 
-// send incorrect amount of chunks and bytes too
+// sends incorrect amount of chunks and bytes
 void FileServer::download_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
 	auto filename = request.param(":filename").as<std::string>();
 	
@@ -149,7 +148,7 @@ void FileServer::download_file(const Pistache::Rest::Request& request, Pistache:
 		return *_file_mutexes[filepath.string()];
     }();
 	
-	std::shared_lock<std::shared_mutex> file_lock(file_mutex); // exclusive write lock for specific file 
+	std::shared_lock<std::shared_mutex> file_lock(file_mutex); // shared read lock for specific file 
 
 	DEBUG_MSG("[FileServer::download_file] Download file called, filepath:" + filepath.string());
 
@@ -218,29 +217,6 @@ void FileServer::delete_file(const Pistache::Rest::Request& request, Pistache::H
 		WARN_MSG("[FileServer::delete_file] File " + filepath.string() + " not found");
 		return;
 	}
-}
-
-// should iterate recursively
-// why do we need this one?
-// this will take a lot of time, and doesn't make any sense
-// maybe we can use it for file system status?
-void FileServer::list_files(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
-	DEBUG_MSG("[FileServer::list_files] Entering list_files function");
-
-	auto start_time = std::chrono::high_resolution_clock::now();
-
-	std::string file_list;
-	int file_count = 0;
-
-	for (const auto& entry : std::filesystem::directory_iterator(_storage_dir)) {
-		file_list += entry.path().filename().string() + "\n";
-		file_count++;
-	}
-
-	DEBUG_MSG("[FileServer::list_files] Found " + std::to_string(file_count) << " files");
-	DEBUG_MSG("[FileServer::list_files] Sending 'Pistache::Http::Code::Ok' response");
-
-	response.send(Pistache::Http::Code::Ok, file_list);
 }
 
 bool FileServer::is_valid_filename(const std::string& filename) const {
