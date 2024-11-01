@@ -37,7 +37,6 @@ private:
 	void upload_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
 	void download_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
 	void delete_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
-	void list_files(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
 
 	void generate_folder_structure();
 	bool is_valid_filename(const std::string& filename) const;
