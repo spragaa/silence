@@ -1,8 +1,11 @@
 # silence (IN PROGRESS)
+A modern C++ messenger application focusing on secure and efficient communication.
 
-## for docs:
-- two different postgres sql dbs for better scalability
-- user takes the public key of receiver, encypt the message (text, media and maybe something more) 
-  only encrypted data is stored in the dbs and file server -> server is 'blind'
-  
-  
+**Currently Under Active Development**
+
+## License
+
+Copyright (c) 2024 Didukh Maksym. All Rights Reserved.
+
+This project is currently under development and is not licensed for any use.
+A final license will be added upon release.
