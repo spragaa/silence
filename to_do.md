@@ -7,7 +7,7 @@
 - if file size % chunk_size == 0 => there are n+1 chunks and last one is not marked as the last one
 
 ## general goals
-- end to end encryption (probably el hamal system)
+- end to end encryption (probably el hamal system for initial key exchange for aes + aes itself)
 - docs (mb auto docs)
 - good test coverage
 - not sure about UI tho, I'd like to implement all of the ui in terminal, but I think that default app is better?
@@ -39,10 +39,7 @@
 - messenger interface in terminal
 - most of the runtime errors (db interactions, request/response hadling) should not prevent server/client from running
 - fix policy warnings while building
-- use std::filesystem::filepath instead of strings
-- add namespaces
 - research pkcs# 5 standart for safe password storage
-- https://stackoverflow.com/questions/45710667/defining-global-constants-in-c17
 - add another msg type, smt like json/req/res (not sure if needed)
 
 ### refactoring
@@ -89,3 +86,6 @@
 - fix file sending
 - refactor server
 - implement some kind of db manager, that will manage all 4 dbs
+- use std::filesystem::filepath instead of strings
+- add namespaces
+- https://stackoverflow.com/questions/45710667/defining-global-constants-in-c17
