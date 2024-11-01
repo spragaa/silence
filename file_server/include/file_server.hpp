@@ -9,6 +9,8 @@
 #include <fstream>
 #include <vector>
 #include <filesystem>
+#include <mutex>
+#include <shared_mutex>
 
 namespace file_server {
 
@@ -44,6 +46,9 @@ private:
 private:
 	std::shared_ptr<Pistache::Http::Endpoint> _http_endpoint;
 	Pistache::Rest::Router _router;
+	std::shared_mutex _file_system_mutex;
+	std::unordered_map<std::string, std::unique_ptr<std::shared_mutex>> _file_mutexes;
+	std::mutex _file_mutexes_map_mutex;
 	unsigned int _threads;
 	std::string _storage_dir;
 	size_t _max_file_size; // 10mb by default -> document it

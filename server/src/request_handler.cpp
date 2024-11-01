@@ -324,7 +324,7 @@ void RequestHandler::send_file_to_client(boost::shared_ptr<tcp::socket> client_s
 		nlohmann::json chunk_message;
 		chunk_message["type"] = "file_chunk";
 		chunk_message["filename"] = filename;
-		chunk_message["chunk_number"] = i + 1;
+		chunk_message["chunk_number"] = i;
 		chunk_message["chunk_data"] = chunks[i];
 		chunk_message["is_last"] = (i == chunks.size() - 1);
 
