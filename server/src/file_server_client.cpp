@@ -50,9 +50,6 @@ std::string FileServerClient::send_request(const std::string& target, http::verb
 	}
 }
 
-std::string FileServerClient::list_files() {
-	return send_request("/list", http::verb::get);
-}
 
 // std::string FileServerClient::upload_file(const std::string& filename, const std::string& filepath) {
 // 	auto start_time = std::chrono::high_resolution_clock::now();
