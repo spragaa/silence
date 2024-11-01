@@ -22,9 +22,12 @@ public:
 		const std::string& storage_dir = std::string(SOURCE_DIR) + "/file_server/media_file_system/",
 		size_t max_file_size = 10000000
 		);
-
+	~FileServer();
+	
 	void init();
 	void start();
+	void stop();
+	bool is_valid_filename(const std::string& filename) const;
 
 public:
 	static const std::string UPLOAD_ROUTE;
@@ -38,8 +41,6 @@ private:
 	void download_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
 	void delete_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
 
-	void generate_folder_structure();
-	bool is_valid_filename(const std::string& filename) const;
 	std::filesystem::path get_filepath_by_name(const std::string& filename) const;
 
 private:
@@ -48,7 +49,7 @@ private:
 	std::shared_mutex _file_system_mutex;
 	std::unordered_map<std::string, std::unique_ptr<std::shared_mutex>> _file_mutexes;
 	std::mutex _file_mutexes_map_mutex;
-	unsigned int _threads;
+	unsigned int _thread_count;
 	std::string _storage_dir;
 	size_t _max_file_size; // 10mb by default -> document it
 };

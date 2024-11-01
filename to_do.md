@@ -41,6 +41,9 @@
 - fix policy warnings while building
 - research pkcs# 5 standart for safe password storage
 - add another msg type, smt like json/req/res (not sure if needed)
+- github community standarts
+- what is the correct naming for unit tests? camel case or snake? (and overall tests naming: in class Test or Tests?, is_valid_filename_test or is_valid_filename)
+
 
 ### refactoring
 - unify the way to compare Timestamps, parse them from/to string, int, json and pqxx::response
