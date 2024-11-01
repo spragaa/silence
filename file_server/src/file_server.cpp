@@ -1,5 +1,4 @@
 #include "file_server.hpp"
-#include <cstddef>
 
 namespace file_server {
 
