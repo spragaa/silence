@@ -12,7 +12,7 @@
 #include <fstream>
 #include <chrono>
 
-namespace server {
+namespace file_server {
 
 class FileServerClient {
 public:

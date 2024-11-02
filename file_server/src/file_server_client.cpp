@@ -1,7 +1,7 @@
 #include "file_server_client.hpp"
 #include <iostream>
 
-namespace server {
+namespace file_server {
 
 namespace beast = boost::beast;
 namespace http = beast::http;

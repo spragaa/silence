@@ -10,7 +10,7 @@ RepositoryManager::RepositoryManager(const ServerConfig& config) {
 	_user_metadata_repo = std::make_unique<UserMetadataRepository>(_postgres_db_manager, "user_metadata_db");
 	_msg_metadata_repo = std::make_unique<MessageMetadataRepository>(_postgres_db_manager, "message_metadata_db");
 	_msg_text_repo = std::make_unique<MessageTextRepository>(config._msg_text_db_connection_string);
-	_file_server_client = std::make_unique<FileServerClient>(config._file_server_host, config._file_server_port);
+	_file_server_client = std::make_unique<file_server::FileServerClient>(config._file_server_host, config._file_server_port);
 }
 
 int RepositoryManager::create_user(const common::User& user) {
