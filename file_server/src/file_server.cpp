@@ -13,8 +13,6 @@ FileServer::FileServer(uint16_t port, unsigned int thread_count, const std::stri
 	, _max_file_size(max_file_size)
 {
 	std::filesystem::create_directory(_storage_dir);
-	// INFO_MSG("[FileServer::FileServer] File server created. Port: " + std::to_string(port) + ", with " + std::to_string(thread_count) + " threads");
-	// INFO_MSG("[FileServer::FileServer] Storage dir: " + _storage_dir + ", with max file size of: " + std::to_string(_max_file_size) + " bytes");
 }
 
 FileServer::~FileServer() {
