@@ -35,7 +35,7 @@ private:
 	std::unique_ptr<UserMetadataRepository> _user_metadata_repo;
 	std::unique_ptr<MessageMetadataRepository> _msg_metadata_repo;
 	std::unique_ptr<MessageTextRepository> _msg_text_repo;
-	std::unique_ptr<FileServerClient> _file_server_client;
+	std::unique_ptr<file_server::FileServerClient> _file_server_client;
 };
 
 }
