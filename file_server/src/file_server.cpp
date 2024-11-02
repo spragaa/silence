@@ -5,24 +5,10 @@ namespace file_server {
 inline const std::string FileServer::UPLOAD_ROUTE = "/upload/:filename";
 inline const std::string FileServer::DOWNLOAD_ROUTE = "/download/:filename";
 inline const std::string FileServer::DELETE_ROUTE = "/delete/:filename";
-inline const std::string FileServer::LIST_ROUTE = "/list";
-
-constexpr size_t CHUNK_SIZE_BYTES = 512;
-constexpr uint8_t FILENAME_LEN = 16;
-
-constexpr std::array<char, 62> ALPHABET = {
-	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-	'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-	'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',
-	'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
-	'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
-	'y', 'z'
-};
 
 FileServer::FileServer(uint16_t port, unsigned int thread_count, const std::string& storage_dir, size_t max_file_size)
-	: _http_endpoint(std::make_shared<Pistache::Http::Endpoint>(Pistache::Address("*:" + std::to_string(port))))
-	, _thread_count(thread_count)
+	: _thread_count(thread_count)
+	, _server_port(port)
 	, _storage_dir(storage_dir)
 	, _max_file_size(max_file_size)
 {
@@ -31,48 +17,66 @@ FileServer::FileServer(uint16_t port, unsigned int thread_count, const std::stri
 	INFO_MSG("[FileServer::FileServer] Storage dir: " + _storage_dir + ", with max file size of: " + std::to_string(_max_file_size) + " bytes");
 }
 
-
 FileServer::~FileServer() {
     stop();
 }
 
-void FileServer::init() {
+void FileServer::start() {
+    std::lock_guard<std::mutex> lock(_init_mutex);
+    if (_initialized) {
+        return;
+    }
+    
+    stop();
     try {
         auto opts = Pistache::Http::Endpoint::options()
             .threads(_thread_count)
             .flags(Pistache::Tcp::Options::ReuseAddr);
             
+        _http_endpoint = std::make_shared<Pistache::Http::Endpoint>(
+            Pistache::Address("*:" + std::to_string(_server_port))
+        );
         _http_endpoint->init(opts);
+        setup_routes();
+        _initialized = true;
     } catch (const std::exception& e) {
-        FATAL_MSG("[FileServer::init] Failed to initialize server: " + std::string(e.what()));
-        throw std::runtime_error("Failed to inкitialize server: " + std::string(e.what()));
+        FATAL_MSG("[FileServer::start] Failed to initialize server: " + std::string(e.what()));
+        throw std::runtime_error("Failed to initialize server: " + std::string(e.what()));
     }
     
-	INFO_MSG("[FileServer::init] Initialization successful!");
-	setup_routes();
-}
-
-void FileServer::start() {
+	INFO_MSG("[FileServer::start] Initialization successful!");
+	
 	_http_endpoint->setHandler(_router.handler());
 	_http_endpoint->serve();
 	INFO_MSG("[FileServer::start] File server started");
 }
 
 void FileServer::stop() {
+    std::lock_guard<std::mutex> lock(_init_mutex);
     if (_http_endpoint) {
         _http_endpoint->shutdown();
+        _router = Pistache::Rest::Router();
+        {
+            std::lock_guard<std::mutex> lock(_file_mutexes_map_mutex);
+            _file_mutexes.clear();
+        }
+        _initialized = false;
         _http_endpoint.reset();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }
 
 void FileServer::setup_routes() {
 	using namespace Pistache::Rest;
+	DEBUG_MSG("[FileServer::setup_routes] Setting up routes...");
 
+	_router = Pistache::Rest::Router();
+    
 	Routes::Post(_router, UPLOAD_ROUTE, Routes::bind(&FileServer::upload_file, this));
 	Routes::Get(_router, DOWNLOAD_ROUTE, Routes::bind(&FileServer::download_file, this));
 	Routes::Delete(_router, DELETE_ROUTE, Routes::bind(&FileServer::delete_file, this));
 
-	INFO_MSG("[FileServer::setup_routes] Routes created:\n" + UPLOAD_ROUTE + "\n" + DOWNLOAD_ROUTE + "\n" + DELETE_ROUTE + "\n" + LIST_ROUTE);
+	INFO_MSG("[FileServer::setup_routes] Routes created:\n" + UPLOAD_ROUTE + "\n" + DOWNLOAD_ROUTE + "\n" + DELETE_ROUTE);
 }
 
 std::filesystem::path FileServer::get_filepath_by_name(const std::string& filename) const {

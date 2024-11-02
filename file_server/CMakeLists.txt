@@ -9,11 +9,13 @@ add_executable(file_server_client
 )
 
 target_link_libraries(file_server 
+    PRIVATE
     file_server_lib 
     common_lib
 )
 
 target_link_libraries(file_server_client 
+    PRIVATE
     file_server_client_lib 
     common_lib
 )
