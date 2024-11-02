@@ -2,18 +2,6 @@
 
 #include <gtest/gtest.h>
 
-// CMake Error at /home/logi/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.29/Modules/GoogleTestAddTests.cmake:112 (message):
-//   Error running test executable.
-
-//     Path: '/home/logi/myself/programming/cpp/chat_application/build/tests/test_file_server/test_file_server'
-//     Working directory: '/home/logi/myself/programming/cpp/chat_application/build/tests/test_file_server'
-//     Result: Subprocess aborted
-//     Output:
-      
-
-// Call Stack (most recent call first):
-//   /home/logi/.local/lib/python3.10/site-packages/cmake/data/share/cmake-3.29/Modules/GoogleTestAddTests.cmake:226 (gtest_discover_tests_impl)
-
 class FileServerTests : public ::testing::Test {
 protected:
     void SetUp() override {
@@ -24,10 +12,9 @@ protected:
             54444, 
             4, 
             _test_dir.string(), 
-            1024*1024*1024
+            1024*1024*10
         );
         
-        _server->init();
         _server_thread = std::thread([this]() {
            _server->start(); 
         });
@@ -36,10 +23,18 @@ protected:
     }
     
     void TearDown() override {
-        std::filesystem::remove_all(_test_dir);
+        if (_server) {
+            _server->stop();
+        }
         
         if (_server_thread.joinable()) {
             _server_thread.join();
+        }
+        
+        _server.reset();
+        
+        if (std::filesystem::exists(_test_dir)) {
+            std::filesystem::remove_all(_test_dir);
         }
     }
     
@@ -48,7 +43,7 @@ protected:
     std::thread _server_thread;
 };
 
-TEST_F(FileServerTests, is_valid_filename) {
+TEST_F(FileServerTests, is_valid_filename_test) {
     EXPECT_TRUE(_server->is_valid_filename("abcDEF123456789"));
     EXPECT_TRUE(_server->is_valid_filename("ABCDEF1234567890"));
     EXPECT_FALSE(_server->is_valid_filename("abc"));
