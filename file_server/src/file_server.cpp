@@ -28,6 +28,7 @@ void FileServer::start() {
     }
     
     stop();
+    
     try {
         auto opts = Pistache::Http::Endpoint::options()
             .threads(_thread_count)
