@@ -16,16 +16,19 @@ FileServer::~FileServer() {
 
 void FileServer::start() {
     stop();
+    Pistache::Address addr(Pistache::Ipv4::any(), Pistache::Port(9080));
     auto opts = Pistache::Http::Endpoint::options()
         .threads(_thread_count)
-        .flags(Pistache::Tcp::Options::ReuseAddr)
-        .flags(Pistache::Tcp::Options::ReusePort)
         .flags(Pistache::Tcp::Options::CloseOnExec);
             
-    _http_endpoint = std::make_shared<Pistache::Http::Endpoint>(
-        Pistache::Address("*:" + std::to_string(_server_port))
-    );
+    // _http_endpoint = std::make_shared<Pistache::Http::Endpoint>(
+    //     Pistache::Address("*:" + std::to_string(_server_port))
+    // );
+
+    _http_endpoint = std::make_shared<Pistache::Http::Endpoint>(addr);
+
     _http_endpoint->init(opts);
+    _http_endpoint->serveThreaded();
     setup_routes();
 	_http_endpoint->setHandler(_router.handler());
 	_http_endpoint->serve();
@@ -36,7 +39,7 @@ void FileServer::stop() {
         _http_endpoint->shutdown();
         _router = Pistache::Rest::Router();
         _http_endpoint.reset();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10000));
     }
 }
 
