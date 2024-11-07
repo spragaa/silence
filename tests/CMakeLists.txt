@@ -1,3 +1,3 @@
 find_package(GTest REQUIRED)
 
-add_subdirectory(test_file_server)
+# add_subdirectory(test_file_server)

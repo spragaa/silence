@@ -10,7 +10,7 @@ namespace file_server {
 class FileServer {
 public:
 	FileServer(
-		uint16_t port = 55544,
+		uint16_t port = 9080,
 		unsigned int threads = 16
 		);
 	~FileServer();
