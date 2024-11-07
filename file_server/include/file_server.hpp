@@ -30,10 +30,10 @@ constexpr std::array<char, 62> ALPHABET = {
 class FileServer {
 public:
 	FileServer(
-		uint16_t port = 55544,
+		uint16_t port = 9080,
 		unsigned int threads = 16,
 		const std::string& storage_dir = std::string(SOURCE_DIR) + "/file_server/media_file_system/",
-		size_t max_file_size = 10000000
+		size_t max_file_size = 1024 * 1024 * 10
 		);
 	~FileServer();
 	
