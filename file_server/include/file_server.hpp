@@ -35,6 +35,8 @@ public:
 		const std::string& storage_dir = std::string(SOURCE_DIR) + "/file_server/media_file_system/",
 		size_t max_file_size = 1024 * 1024 * 10
 		);
+	FileServer(const FileServer&) = delete;
+    FileServer& operator=(const FileServer&) = delete;
 	~FileServer();
 	
 	void start();
@@ -56,12 +58,12 @@ private:
 	std::filesystem::path get_filepath_by_name(const std::string& filename) const;
 
 private:
-	std::shared_ptr<Pistache::Http::Endpoint> _http_endpoint;
-	Pistache::Rest::Router _router;
+    std::shared_ptr<Pistache::Http::Endpoint> _http_endpoint;
+    std::shared_ptr<Pistache::Rest::Router> _router; 
 	std::shared_mutex _file_system_mutex;
 	std::unordered_map<std::string, std::unique_ptr<std::shared_mutex>> _file_mutexes;
 	std::mutex _file_mutexes_map_mutex;
-    bool _initialized = false;
+    bool _running = false;
     std::mutex _init_mutex;
 	unsigned int _thread_count;
 	unsigned short _server_port;

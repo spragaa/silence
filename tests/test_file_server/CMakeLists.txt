@@ -1,5 +1,5 @@
 add_executable(test_file_server
-    main.cpp
+    # main.cpp
     src/test_file_server.cpp
 )
 
