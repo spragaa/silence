@@ -22,32 +22,35 @@ FileServer::~FileServer() {
 }
 
 void FileServer::start() {
+    INFO_MSG("[FileServer::start] Trying to start the file server");
     std::lock_guard<std::mutex> lock(_init_mutex);
-    if (_initialized) {
+    if (_running) {
+        INFO_MSG("[FileServer::start] Server already initialized, skipping this action")
         return;
     }
-    
-    stop();
     
     try {
         auto opts = Pistache::Http::Endpoint::options()
             .threads(_thread_count)
             .flags(Pistache::Tcp::Options::ReuseAddr);
             
-        _http_endpoint = std::make_shared<Pistache::Http::Endpoint>(
+        _http_endpoint = std::make_unique<Pistache::Http::Endpoint>(
             Pistache::Address("*:" + std::to_string(_server_port))
         );
         _http_endpoint->init(opts);
         setup_routes();
-        _initialized = true;
+        _running = true;
     } catch (const std::exception& e) {
         FATAL_MSG("[FileServer::start] Failed to initialize server: " + std::string(e.what()));
         throw std::runtime_error("Failed to initialize server: " + std::string(e.what()));
+    } catch(...) {
+        FATAL_MSG("[FileServer::start] Unknown error occured, shutting down");
+        throw std::runtime_error("Unknown error occured, shutting down");
     }
     
 	INFO_MSG("[FileServer::start] Initialization successful!");
 	
-	_http_endpoint->setHandler(_router.handler());
+	_http_endpoint->setHandler(_router->handler());
 	_http_endpoint->serve();
 	INFO_MSG("[FileServer::start] File server started");
 }
@@ -56,12 +59,16 @@ void FileServer::stop() {
     std::lock_guard<std::mutex> lock(_init_mutex);
     if (_http_endpoint) {
         _http_endpoint->shutdown();
-        _router = Pistache::Rest::Router();
+        
+        if (!_router) {
+            _router = std::make_shared<Pistache::Rest::Router>();
+        }
+
         {
             std::lock_guard<std::mutex> lock(_file_mutexes_map_mutex);
             _file_mutexes.clear();
         }
-        _initialized = false;
+        _running = false;
         _http_endpoint.reset();
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
@@ -69,13 +76,16 @@ void FileServer::stop() {
 
 void FileServer::setup_routes() {
 	using namespace Pistache::Rest;
+	
 	DEBUG_MSG("[FileServer::setup_routes] Setting up routes...");
+	
+    if (!_router) {
+        _router = std::make_shared<Pistache::Rest::Router>();
+    }
 
-	_router = Pistache::Rest::Router();
-    
-	Routes::Post(_router, UPLOAD_ROUTE, Routes::bind(&FileServer::upload_file, this));
-	Routes::Get(_router, DOWNLOAD_ROUTE, Routes::bind(&FileServer::download_file, this));
-	Routes::Delete(_router, DELETE_ROUTE, Routes::bind(&FileServer::delete_file, this));
+	Routes::Post(*_router, UPLOAD_ROUTE, Routes::bind(&FileServer::upload_file, this));
+	Routes::Get(*_router, DOWNLOAD_ROUTE, Routes::bind(&FileServer::download_file, this));
+	Routes::Delete(*_router, DELETE_ROUTE, Routes::bind(&FileServer::delete_file, this));
 
 	INFO_MSG("[FileServer::setup_routes] Routes created:\n" + UPLOAD_ROUTE + "\n" + DOWNLOAD_ROUTE + "\n" + DELETE_ROUTE);
 }
