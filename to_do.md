@@ -45,7 +45,7 @@
 - what is the correct naming for unit tests? camel case or snake? (and overall tests naming: in class Test or Tests?, is_valid_filename_test or is_valid_filename)
 - should file_server and file_server_client be named server and client?
 - can I move all constexpr into .hpp?
-
+- https://coveralls.io
 ### refactoring
 - unify the way to compare Timestamps, parse them from/to string, int, json and pqxx::response
 - go through all comments in source code
