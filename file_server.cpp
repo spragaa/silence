@@ -1,7 +1,5 @@
 #include "file_server.hpp"
 
-namespace file_server {
-
 inline const std::string FileServer::UPLOAD_ROUTE = "/upload/:filename";
 
 FileServer::FileServer(uint16_t port, unsigned int thread_count)
@@ -47,6 +45,4 @@ void FileServer::setup_routes() {
 }
 
 void FileServer::upload_file(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
-}
-
 }

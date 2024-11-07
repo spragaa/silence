@@ -5,7 +5,7 @@
 class FileServerTests : public ::testing::Test {
 protected:
     void SetUp() override {
-        _server = std::make_unique<file_server::FileServer>(
+        _server = std::make_unique<FileServer>(
             9081, 
             4
         );
@@ -29,7 +29,7 @@ protected:
         _server.reset();
     }
     
-    std::unique_ptr<file_server::FileServer> _server;
+    std::unique_ptr<FileServer> _server;
     std::thread _server_thread;
 };
 
@@ -37,6 +37,9 @@ TEST_F(FileServerTests, test1) {
     EXPECT_EQ(1, 1);
 }
 
-TEST_F(FileServerTests, test2) {
-    EXPECT_EQ(2, 2);
+int main(int argc, char** argv) {
+	::testing::InitGoogleTest(&argc, argv);
+	auto result = RUN_ALL_TESTS();
+	
+	return result;
 }

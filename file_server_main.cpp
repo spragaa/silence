@@ -1,7 +1,7 @@
 #include "file_server.hpp"
 
 int main() {
-	file_server::FileServer server(
+	FileServer server(
 	    9080, 
 		16 
 	);
