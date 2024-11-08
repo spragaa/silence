@@ -25,7 +25,7 @@ private:
     
 private:
 	std::shared_ptr<Pistache::Http::Endpoint> _http_endpoint;
-	Pistache::Rest::Router _router;
+	std::shared_ptr<Pistache::Rest::Router> _router;
 	unsigned int _thread_count;
 	unsigned short _server_port;
 };
