@@ -98,32 +98,32 @@ void Server::start_request_handling() {
 
 		_acceptor.async_accept(*socket,
 		                       [this, socket](const boost::system::error_code& error) {
-			if (!error) {
-				try {
-					boost::system::error_code ec;
-					socket->set_option(tcp::socket::reuse_address(true), ec);
-					if (ec) {
-						ERROR_MSG("Failed to set socket options: " + ec.message());
+				if (!error) {
+					try {
+						boost::system::error_code ec;
+						socket->set_option(tcp::socket::reuse_address(true), ec);
+						if (ec) {
+							ERROR_MSG("Failed to set socket options: " + ec.message());
+						}
+
+						socket->set_option(boost::asio::socket_base::keep_alive(true), ec);
+						if (ec) {
+							ERROR_MSG("Failed to set keep-alive option: " + ec.message());
+						}
+
+						boost::asio::post(_io_service, [this, socket]() {
+							_request_handler.handle_request(socket);
+						});
 					}
-
-					socket->set_option(boost::asio::socket_base::keep_alive(true), ec);
-					if (ec) {
-						ERROR_MSG("Failed to set keep-alive option: " + ec.message());
+					catch (const std::exception& e) {
+						ERROR_MSG("Error handling accepted connection: " + std::string(e.what()));
 					}
-
-					boost::asio::post(_io_service, [this, socket]() {
-						_request_handler.handle_request(socket);
-					});
+				} else {
+					ERROR_MSG("Accept error: " + error.message());
 				}
-				catch (const std::exception& e) {
-					ERROR_MSG("Error handling accepted connection: " + std::string(e.what()));
-				}
-			} else {
-				ERROR_MSG("Accept error: " + error.message());
-			}
 
-			start_request_handling();
-		});
+				start_request_handling();
+			});
 	}
 	catch (const std::exception& e) {
 		ERROR_MSG("Error in start_request_handling: " + std::string(e.what()));
@@ -131,8 +131,8 @@ void Server::start_request_handling() {
 		boost::shared_ptr<boost::asio::deadline_timer> timer =
 			boost::make_shared<boost::asio::deadline_timer>(_io_service, boost::posix_time::seconds(1));
 		timer->async_wait([this](const boost::system::error_code&) {
-			start_request_handling();
-		});
+				start_request_handling();
+			});
 	}
 }
 
@@ -141,8 +141,8 @@ void Server::handle_accept(boost::shared_ptr<tcp::socket> socket,
 	DEBUG_MSG("[Server::handle_accept] Called on a socket: " + common::get_socket_info(*socket));
 	if (!error) {
 		boost::asio::post(_io_service, [this, socket]() {
-			_request_handler.handle_request(socket);
-		});
+				_request_handler.handle_request(socket);
+			});
 		start_request_handling();
 	}
 }

@@ -186,10 +186,10 @@ void RequestHandler::handle_send_message(boost::shared_ptr<tcp::socket> socket, 
 		{
 			std::lock_guard<std::mutex> lock(_pending_transfers_mutex);
 			_pending_file_transfers.push_back(PendingFileTransfer{
-				filename,
-				sender_id,
-				receiver_id
-			});
+					filename,
+					sender_id,
+					receiver_id
+				});
 			DEBUG_MSG("[Server::handle_send_message] Created pending transfer for file: " +
 			          filename + " from user " + std::to_string(sender_id) +
 			          " to user " + std::to_string(receiver_id));
@@ -257,8 +257,8 @@ void RequestHandler::handle_file_chunk(boost::shared_ptr<tcp::socket> socket, co
 			auto pending_it = std::find_if(_pending_file_transfers.begin(),
 			                               _pending_file_transfers.end(),
 			                               [&filename](const PendingFileTransfer& transfer) {
-				return transfer.filename == filename;
-			});
+					return transfer.filename == filename;
+				});
 
 			if (pending_it != _pending_file_transfers.end()) {
 				auto receiver_socket = _connected_clients_manager.get_client_socket(pending_it->receiver_id);

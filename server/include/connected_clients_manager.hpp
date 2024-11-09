@@ -9,10 +9,10 @@
 namespace server {
 
 class ConnectedClientsManager {
-    using tcp = boost::asio::ip::tcp;
+	using tcp = boost::asio::ip::tcp;
 
 public:
-    ConnectedClientsManager() = default;
+	ConnectedClientsManager() = default;
 	~ConnectedClientsManager() = default;
 
 	void add_client(int user_id, boost::shared_ptr<tcp::socket> socket);

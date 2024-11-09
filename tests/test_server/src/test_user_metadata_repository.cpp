@@ -102,7 +102,7 @@ TEST_F(UserMetadataRepositoryTests, update_existing_user) {
 	ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
 	auto timestamp = std::chrono::system_clock::from_time_t(std::mktime(&tm));
 
-common::	User user_to_update(nickname, pass);
+	common::    User user_to_update(nickname, pass);
 	user_to_update.set_id(user_id);
 	user_to_update.set_registered_timestamp(timestamp);
 	user_to_update.set_last_online_timestamp(timestamp);

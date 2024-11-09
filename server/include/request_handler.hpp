@@ -17,7 +17,7 @@
 namespace server {
 
 class RequestHandler {
-    using tcp = boost::asio::ip::tcp;
+	using tcp = boost::asio::ip::tcp;
 
 public:
 	RequestHandler(RepositoryManager& repo_manager,
