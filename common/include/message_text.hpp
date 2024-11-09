@@ -7,6 +7,8 @@
 #include <optional>
 #include <nlohmann/json.hpp>
 
+namespace common {
+
 class MessageText {
 public:
 	MessageText() = default;
@@ -22,7 +24,8 @@ public:
 	MessageText from_json(const nlohmann::json& j);
 
 private:
-
 	int _id;
 	std::string _text;
 };
+
+}

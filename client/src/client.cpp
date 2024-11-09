@@ -1,7 +1,9 @@
 #include "client.hpp"
 
+namespace client {
+
 constexpr uint8_t filename_len = 16;
-const std::string alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+inline const std::string alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 Client::Client(const std::string& server_address,
                unsigned short server_port, const std::string& nick)
@@ -12,12 +14,15 @@ Client::Client(const std::string& server_address,
 	, _server_port(server_port)
 	, _user(nick)
 	, _is_authorized(false)
+	, _user_files_dir(std::string(SOURCE_DIR) + "/client/user_files/" + _user.get_nickname())
 {
+	std::filesystem::create_directories(_user_files_dir);
+
 	DEBUG_MSG("[Client::Client] Trying to read user data from json...");
 	std::string user_data_filename = get_user_data_filename();
-	_user = User::load_user_data_from_json(user_data_filename);
+	_user = common::User::load_user_data_from_json(user_data_filename);
 	if (_user.get_id() == 0) {
-		_user = User();
+		_user = common::User();
 		_user.set_nickname(nick);
 		DEBUG_MSG("[Client::Client] Temporary user created with nickname: '" + _user.get_nickname() + "'");
 	}
@@ -157,8 +162,8 @@ void Client::handle_user_interaction() {
 
 					// not sure if filepath is the best way of doing it
 					message["file_name"] = "none";
-					fs::path filepath = fs::path(_user_files_dir) / file_name;
-					if (!fs::exists(filepath)) {
+					std::filesystem::path filepath = std::filesystem::path(_user_files_dir) / file_name;
+					if (!std::filesystem::exists(filepath)) {
 						WARN_MSG("File doesn't exist: " + filepath.string());
 						WARN_MSG("Sending message without file");
 					} else {
@@ -178,21 +183,21 @@ void Client::handle_user_interaction() {
 					std::string input;
 					std::getline(std::cin, input);
 
-					fs::path filepath = fs::path(input);
+					std::filesystem::path filepath = std::filesystem::path(input);
 
-					if (!fs::exists(filepath)) {
+					if (!std::filesystem::exists(filepath)) {
 						WARN_MSG("File doesn't exist: " + filepath.string());
 						break;
 					}
 
 					std::string random_filename = generate_random_string(filename_len) +
 					                              filepath.extension().string();
-					fs::path destination = fs::path(_user_files_dir) / random_filename;
+					std::filesystem::path destination = std::filesystem::path(_user_files_dir) / random_filename;
 
 					try {
-						fs::copy_file(filepath, destination);
+						std::filesystem::copy_file(filepath, destination);
 						INFO_MSG("File " + filepath.string() + " was moved successfully and renamed to: " + random_filename);
-					} catch (const fs::filesystem_error& e) {
+					} catch (const std::filesystem::filesystem_error& e) {
 						ERROR_MSG("Error while copying file: " + std::string(e.what()));
 					}
 					break;
@@ -244,7 +249,7 @@ void Client::register_user() {
 		}
 		if (response.contains("registered_timestamp") && !response["registered_timestamp"].is_null()) {
 			std::chrono::nanoseconds ns(response["registered_timestamp"].get<int64_t>());
-			Timestamp registered_timestamp = std::chrono::system_clock::time_point(ns);
+			common::Timestamp registered_timestamp = std::chrono::system_clock::time_point(ns);
 			_user.set_registered_timestamp(registered_timestamp);
 		} else {
 			WARN_MSG("[Client::register_user] Registered timestamp not provided in the response");
@@ -285,7 +290,7 @@ void Client::authorize_user() {
 			// this is not yet finished on server side
 			// if (user_data.contains("last_online_timestamp") && !user_data["last_online_timestamp"].is_null()) {
 			//     std::chrono::nanoseconds ns(user_data["last_online_timestamp"].get<int64_t>());
-			//     Timestamp last_online = std::chrono::system_clock::time_point(ns);
+			//     common::Timestamp last_online = std::chrono::system_clock::time_point(ns);
 			//     _user.set_last_online_timestamp(last_online);
 			// }
 			// if (user_data.contains("is_online") && !user_data["is_online"].is_null()) {
@@ -308,11 +313,10 @@ void Client::authorize_user() {
 }
 
 void Client::send_message(const std::string& message) {
-	DEBUG_MSG("send_message" + get_socket_info(_socket));
+	DEBUG_MSG("send_message" + common::get_socket_info(_socket));
 	boost::asio::write(_socket, boost::asio::buffer(message + "\r\n\r\n"));
 }
 
-// should be async!
 void Client::send_file_chunks(const std::string& filepath) {
 	std::ifstream file(filepath, std::ios::binary);
 	if (!file) {
@@ -322,7 +326,11 @@ void Client::send_file_chunks(const std::string& filepath) {
 
 	const size_t chunk_size = 512;
 	std::vector<char> buffer(chunk_size);
-	size_t chunk_number = 0;
+	// get file size -> calculate the amount of chunk mark the chunk as the last when chunk_number is 0???
+	size_t chunk_number = 1;
+	size_t total_bytes_sent = 0;
+
+	INFO_MSG("[Client::send_file_chunks] Starting to send file: " + filepath);
 
 	while (file) {
 		file.read(buffer.data(), chunk_size);
@@ -332,27 +340,86 @@ void Client::send_file_chunks(const std::string& filepath) {
 			break;
 		}
 
+		total_bytes_sent += bytes_read;
+		bool is_last = file.eof() || bytes_read < chunk_size;
+
 		nlohmann::json file_chunk_request;
 		file_chunk_request["type"] = "file_chunk";
-		file_chunk_request["filename"] = fs::path(filepath).filename().string();
+		file_chunk_request["filename"] = std::filesystem::path(filepath).filename().string();
 		file_chunk_request["chunk_data"] = std::string(buffer.data(), bytes_read);
 		file_chunk_request["chunk_number"] = chunk_number;
-		file_chunk_request["is_last"] = file.eof();
+		file_chunk_request["is_last"] = is_last;
 
-		DEBUG_MSG("[Client::send_file_chunks] Sending file chunk request: " + file_chunk_request.dump());
+		DEBUG_MSG("[Client::send_file_chunks] Sending chunk " + std::to_string(chunk_number) +
+		          " (bytes: " + std::to_string(bytes_read) +
+		          ", is_last: " + (is_last ? "true" : "false") + ")");
 
 		async_write(file_chunk_request.dump());
 
-		std::unique_lock<std::mutex> lock(_mutex);
-		_chunk_cv.wait(lock, [this] {
-			return _chunk_acknowledged;
-		});
-		_chunk_acknowledged = false;
+		{
+			std::unique_lock<std::mutex> lock(_mutex);
+			if (!_chunk_cv.wait_for(lock,
+			                        std::chrono::seconds(5),
+			                        [this] {
+				return _chunk_acknowledged;
+			})) {
+				ERROR_MSG("[Client::send_file_chunks] Timeout waiting for chunk acknowledgment");
+				return;
+			}
+			_chunk_acknowledged = false;
+		}
 
 		chunk_number++;
 	}
 
-	file.close();
+	INFO_MSG("[Client::send_file_chunks] File transfer completed: " +
+	         filepath + " (" +
+	         std::to_string(total_bytes_sent) + " bytes in " +
+	         std::to_string(chunk_number - 1) + " chunks)");
+}
+
+void Client::send_next_chunk(std::shared_ptr<FileTransferState> state) {
+	if (!state->file) {
+		return;
+	}
+
+	state->file.read(state->buffer.data(), state->chunk_size);
+	std::streamsize bytes_read = state->file.gcount();
+
+	if (bytes_read <= 0) {
+		state->file.close();
+		DEBUG_MSG("[Client::send_next_chunk] File transfer completed");
+		return;
+	}
+
+	nlohmann::json chunk_request;
+	chunk_request["type"] = "file_chunk";
+	chunk_request["filename"] = state->filename;
+	chunk_request["chunk_data"] = std::string(state->buffer.data(), bytes_read);
+	chunk_request["chunk_number"] = state->chunk_number + 1;
+	chunk_request["is_last"] = state->file.eof();
+
+	DEBUG_MSG("[Client::send_next_chunk] Sending chunk " + std::to_string(state->chunk_number + 1));
+
+	async_write(chunk_request.dump());
+	wait_for_chunk_ack(state);
+}
+
+void Client::wait_for_chunk_ack(std::shared_ptr<FileTransferState> state) {
+	auto timer = std::make_shared<boost::asio::steady_timer>(_io_service,
+	                                                         std::chrono::milliseconds(50));
+
+	// ec is needed here
+	timer->async_wait([this, timer, state](const boost::system::error_code& /*ec*/) {
+		std::lock_guard<std::mutex> lock(_mutex);
+		if (_chunk_acknowledged) {
+			_chunk_acknowledged = false;
+			state->chunk_number++;
+			send_next_chunk(state);
+		} else {
+			wait_for_chunk_ack(state);
+		}
+	});
 }
 
 void Client::async_read() {
@@ -447,19 +514,72 @@ void Client::process_server_message(const std::string& message) {
 		nlohmann::json json_message = nlohmann::json::parse(message);
 		DEBUG_MSG("[Client::process_server_message] Parsed response: " + json_message.dump());
 
-		// we can add chunk and filename here, in case we want to send few files in the same time in future
 		if (json_message["type"] == "chunk_acknowledgment") {
-			std::lock_guard<std::mutex> lock(_mutex);
-			_chunk_acknowledged = true;
-			_chunk_cv.notify_one();
+			handle_chunk_acknowledgment(json_message);
 		}
-
+		else if (json_message["type"] == "incoming_file") {
+			handle_incoming_file(json_message);
+		}
+		else if (json_message["type"] == "file_chunk") {
+			handle_incoming_file_chunk(json_message);
+		}
 	} catch (const nlohmann::json::parse_error& e) {
 		ERROR_MSG("[Client::process_server_message] Failed to parse message: " + std::string(e.what()));
 	}
 }
 
-User Client::get_user() {
+void Client::handle_chunk_acknowledgment(const nlohmann::json& response) {
+	if (response["status"] == "success") {
+		std::lock_guard<std::mutex> lock(_mutex);
+		_chunk_acknowledged = true;
+		_chunk_cv.notify_one();
+	} else {
+		ERROR_MSG("[Client::handle_chunk_acknowledgment] Chunk upload failed: "
+		          + response["error"].get<std::string>());
+	}
+}
+
+void Client::handle_incoming_file(const nlohmann::json& notification) {
+	std::string filename = notification["filename"];
+	int sender_id = notification["sender_id"];
+
+	INFO_MSG("[Client::handle_incoming_file] Receiving file '" + filename
+	         + "' from " + std::to_string(sender_id));
+
+	_incoming_files[filename] = std::ofstream(
+		_user_files_dir + "/" + filename,
+		std::ios::binary
+		);
+}
+
+void Client::handle_incoming_file_chunk(const nlohmann::json& chunk_message) {
+	std::string filename = chunk_message["filename"];
+	std::string chunk_data = chunk_message["chunk_data"];
+	size_t chunk_number = chunk_message["chunk_number"];
+	bool is_last = chunk_message["is_last"];
+
+	auto file_it = _incoming_files.find(filename);
+	if (file_it == _incoming_files.end()) {
+		ERROR_MSG("[Client::handle_incoming_file_chunk] No open file for " + filename);
+		return;
+	}
+
+	file_it->second.write(chunk_data.c_str(), chunk_data.length());
+
+	nlohmann::json ack;
+	ack["type"] = "chunk_received";
+	ack["filename"] = filename;
+	ack["chunk_number"] = chunk_number;
+	async_write(ack.dump());
+
+	if (is_last) {
+		INFO_MSG("[Client::handle_incoming_file_chunk] File " + filename + " received completely");
+		file_it->second.close();
+		_incoming_files.erase(file_it);
+	}
+}
+
+common::User Client::get_user() {
 	return _user;
 }
 
@@ -487,4 +607,6 @@ std::string Client::generate_random_string(const int& len) {
 
 std::string Client::get_user_data_filename() const noexcept {
 	return std::string(SOURCE_DIR) + "/client/user_data/" + "user_" + _user.get_nickname() + "_" + _server_address + "_" + std::to_string(_server_port) + ".json";
+}
+
 }

@@ -1,269 +1,150 @@
 #include "server.hpp"
 #include <boost/bind.hpp>
-#include <boost/thread.hpp>
-#include <iostream>
 
-Server::Server(unsigned short port,
-               unsigned int thread_pool_size,
-               const std::string& user_metadata_db_connection_string,
-               const std::string& msg_metadata_db_connection_string,
-               const std::string& msg_text_db_connection_string,
-               const std::string& file_server_host,
-               const std::string& file_server_port
-               )
-	: _acceptor(_io_service, tcp::endpoint(tcp::v4(), port)),
-	_work(new boost::asio::io_service::work(_io_service)) {
+namespace server {
 
-	_postgres_db_manager.add_connection("user_metadata_db", user_metadata_db_connection_string);
-	_postgres_db_manager.add_connection("message_metadata_db", msg_metadata_db_connection_string);
+using tcp = boost::asio::ip::tcp;
 
-	_user_repo = std::make_unique<UserMetadataRepository>(_postgres_db_manager, "user_metadata_db");
-	_msg_metadata_repo = std::make_unique<MessageMetadataRepository>(_postgres_db_manager, "message_metadata_db");
-	_msg_text_repo = std::make_unique<MessageTextRepository>(msg_text_db_connection_string);
+Server::Server(const ServerConfig& config)
+	: _config(config),
+	_repo_manager(config),
+	_io_service(),
+	_acceptor(_io_service),
+	_work(new boost::asio::io_service::work(_io_service)),
+	_request_handler(_repo_manager, _connected_clients_manager) {
 
-	_file_server_client = std::make_unique<FileServerClient>(file_server_host, file_server_port);
+	try {
+		tcp::endpoint endpoint(tcp::v4(), _config._port);
+
+		_acceptor.open(tcp::v4());
+
+		boost::system::error_code ec;
+		_acceptor.set_option(tcp::acceptor::reuse_address(true), ec);
+		if (ec) {
+			throw boost::system::system_error(ec, "Failed to set acceptor reuse_address option");
+		}
+
+		_acceptor.bind(endpoint);
+		_acceptor.listen();
+
+		for (unsigned int i = 0; i < _config._thread_pool_size; ++i) {
+			_thread_pool.push_back(boost::make_shared<boost::thread>(
+									   boost::bind(&boost::asio::io_service::run, &_io_service)));
+		}
+
+		INFO_MSG("Server initialized successfully on port " + std::to_string(_config._port));
+	}
+	catch (const boost::system::system_error& e) {
+		FATAL_MSG("Failed to initialize server: " + std::string(e.what()));
+		throw;
+	}
 }
 
 Server::~Server() {
-	_io_service.stop();
+	try {
+		if (_acceptor.is_open()) {
+			boost::system::error_code ec;
+			_acceptor.close(ec);
+			if (ec) {
+				ERROR_MSG("Error closing acceptor: " + ec.message());
+			}
+		}
+
+		_work.reset();
+		_io_service.stop();
+
+		for (auto& thread : _thread_pool) {
+			if (thread && thread->joinable()) {
+				thread->join();
+			}
+		}
+
+		INFO_MSG("Server shutdown completed");
+	}
+	catch (const std::exception& e) {
+		ERROR_MSG("Error during server cleanup: " + std::string(e.what()));
+	}
 }
 
 void Server::start() {
-	INFO_MSG("Server started");
-	start_request_handling();
-
-	while (true) {
-		try {
-			_io_service.run();
-		} catch (const std::exception& e) {
-			FATAL_MSG("[Server::start()] " + std::string(e.what()));
-			_io_service.reset();
+	try {
+		INFO_MSG("Server starting on port " + std::to_string(_config._port));
+		if (!_acceptor.is_open()) {
+			ERROR_MSG("Acceptor is not open!");
+			return;
 		}
+		start_request_handling();
+
+		while (true) {
+			try {
+				_io_service.run();
+			} catch (const std::exception& e) {
+				FATAL_MSG("[Server::start()] " + std::string(e.what()));
+				_io_service.reset();
+			}
+		}
+	}
+	catch (const std::exception& e) {
+		FATAL_MSG("Failed to start server: " + std::string(e.what()));
+		throw;
 	}
 }
 
 void Server::start_request_handling() {
-	DEBUG_MSG("[Server::start_request_handling] Start request handling");
-	boost::shared_ptr<tcp::socket> socket = boost::make_shared<tcp::socket>(_io_service);
-	_acceptor.async_accept(*socket,
-	                       boost::bind(&Server::handle_accept, this, socket, boost::asio::placeholders::error));
+	try {
+		DEBUG_MSG("[Server::start_request_handling] Start request handling");
+
+		boost::shared_ptr<tcp::socket> socket = boost::make_shared<tcp::socket>(_io_service);
+
+		_acceptor.async_accept(*socket,
+		                       [this, socket](const boost::system::error_code& error) {
+			if (!error) {
+				try {
+					boost::system::error_code ec;
+					socket->set_option(tcp::socket::reuse_address(true), ec);
+					if (ec) {
+						ERROR_MSG("Failed to set socket options: " + ec.message());
+					}
+
+					socket->set_option(boost::asio::socket_base::keep_alive(true), ec);
+					if (ec) {
+						ERROR_MSG("Failed to set keep-alive option: " + ec.message());
+					}
+
+					boost::asio::post(_io_service, [this, socket]() {
+						_request_handler.handle_request(socket);
+					});
+				}
+				catch (const std::exception& e) {
+					ERROR_MSG("Error handling accepted connection: " + std::string(e.what()));
+				}
+			} else {
+				ERROR_MSG("Accept error: " + error.message());
+			}
+
+			start_request_handling();
+		});
+	}
+	catch (const std::exception& e) {
+		ERROR_MSG("Error in start_request_handling: " + std::string(e.what()));
+
+		boost::shared_ptr<boost::asio::deadline_timer> timer =
+			boost::make_shared<boost::asio::deadline_timer>(_io_service, boost::posix_time::seconds(1));
+		timer->async_wait([this](const boost::system::error_code&) {
+			start_request_handling();
+		});
+	}
 }
 
-void Server::handle_accept(boost::shared_ptr<tcp::socket> socket, const boost::system::error_code& error) {
-	DEBUG_MSG("[Server::handle_accept] Called on a socket: " + get_socket_info(*socket));
+void Server::handle_accept(boost::shared_ptr<tcp::socket> socket,
+                           const boost::system::error_code& error) {
+	DEBUG_MSG("[Server::handle_accept] Called on a socket: " + common::get_socket_info(*socket));
 	if (!error) {
 		boost::asio::post(_io_service, [this, socket]() {
-			handle_request(socket);
+			_request_handler.handle_request(socket);
 		});
 		start_request_handling();
 	}
 }
 
-void Server::handle_request(boost::shared_ptr<tcp::socket> socket) {
-	boost::asio::streambuf request_buf;
-	boost::system::error_code error;
-
-	while (true) {
-		boost::asio::read_until(*socket, request_buf, "\r\n\r\n", error);
-
-		if (error == boost::asio::error::eof) {
-			DEBUG_MSG("[Server::handle_request] Client closed connection on socket: " + get_socket_info(*socket));
-
-			for(auto it = _connected_clients.begin(); it != _connected_clients.end(); ++it) {
-				if(it->second == socket) {
-					_connected_clients.erase(it);
-					break;
-				}
-			}
-			DEBUG_MSG("[Server::handle_authorize] Client removed from connected list: " + get_socket_info(*socket));
-			DEBUG_MSG("[Server::handle_authorize] Currently, there are " + std::to_string(_connected_clients.size()) + " users connected");
-
-			break;
-		} else if (error) {
-			ERROR_MSG(std::string(error.message()));
-		}
-
-		std::istream request_stream(&request_buf);
-		std::string request_line;
-		std::getline(request_stream, request_line);
-
-		try {
-			nlohmann::json request = nlohmann::json::parse(request_line);
-
-			if (request.contains("type")) {
-				if (request["type"] == "register") {
-					handle_register(socket, request);
-				} else if (request["type"] == "authorize") {
-					handle_authorize(socket, request);
-				} else if(request["type"] == "send_message") {
-					handle_send_message(socket, request);
-				} else if (request["type"] == "file_chunk") {
-					handle_file_chunk(socket, request);
-				}
-				else {
-					nlohmann::json response = {
-						{"status", "error"},
-						{"response", "Unknown request type"}
-					};
-					boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"), error);
-				}
-			} else {
-				nlohmann::json response = {
-					{"status", "error"},
-					{"response", "Missing request type"}
-				};
-				boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"), error);
-			}
-		} catch (const nlohmann::json::parse_error& e) {
-			nlohmann::json response = {
-				{"status", "error"},
-				{"response", "Invalid JSON format"}
-			};
-			boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"), error);
-		}
-
-		if (error) {
-			ERROR_MSG("[Server::handle_request] While sending response" + std::string(error.message()))
-		}
-
-		request_buf.consume(request_buf.size());
-	}
-}
-
-void Server::handle_register(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
-	DEBUG_MSG("[Server::handle_register] Received request: " + request.dump());
-	std::string nickname = request["nickname"];
-	std::string password = request["password"];
-
-	User new_user(nickname, password);
-	int user_id = _user_repo->create(new_user);
-	nlohmann::json response;
-
-	if (user_id != 0) {
-		response["status"] = "success";
-		response["response"] =  "User registered successfully";
-		response["user_id"] = user_id;
-	} else {
-		response["status"] = "error";
-		response["response"] =  "Failed to register user";
-	}
-
-	DEBUG_MSG("[Server::handle_register] Sending response: " + response.dump());
-	boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
-}
-
-void Server::handle_authorize(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
-	std::string nickname = request["nickname"];
-	std::string password = request["password"];
-	int user_id = request["user_id"];
-
-	bool auth_success = _user_repo->authorize(user_id, nickname, password);
-	nlohmann::json response;
-
-	if (auth_success) {
-		response["status"] = "success";
-		response["response"] = "Authorization successful";
-		// User user = _user_repo.get_user(user_id);
-		// response["user_data"] = {
-		//     {"last_online_timestamp", std::chrono::system_clock::to_time_t(user.get_last_online_timestamp())},
-		//     {"is_online", true}
-		// };
-		// _user_repo.update_user_status(user_id, true);
-
-		_connected_clients[user_id] = socket;
-		// "New user connected" in handle authorize may be counterintuitive?
-		DEBUG_MSG("[Server::handle_authorize] New user connected, with id: " + std::to_string(user_id) + " on socket: " + get_socket_info(*socket));
-		DEBUG_MSG("[Server::handle_authorize] Currently, there are " + std::to_string(_connected_clients.size()) + " users connected");
-	} else {
-		response["status"] = "error";
-		response["response"] = "Authorization failed: Invalid credentials";
-	}
-	DEBUG_MSG("[Server::handle_authorize] Sending request: " + request.dump());
-	boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
-}
-
-void Server::handle_send_message(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
-	DEBUG_MSG("[Server::handle_send_message] Called on request: " + request.dump());
-
-	int sender_id = request["sender_id"];
-	std::string receiver_nickname = request["receiver_nickname"];
-	std::string request_text = request["message_text"];
-	// std::string request_filename = request["filename"];
-
-	nlohmann::json sender_response, receiver_response;
-
-	int receiver_id = _user_repo->get_id(receiver_nickname);
-	if (receiver_id == 0) {
-		sender_response["status"] = "error";
-		sender_response["response"] = "Receiver not found";
-		boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
-		return;
-	}
-
-	// get id, how?
-	Message new_msg(sender_id, receiver_id, request_text);
-
-	int msg_metadata_id = _msg_metadata_repo->create(new_msg.get_metadata());
-	// [MessageTextRepository::create] unknown error code: Failed to connect to Redis: tu
-	// int msg_text_id = _msg_text_repo->create(new_msg.get_text());
-	// if (msg_metadata_id == msg_text_id) {
-	if (msg_metadata_id) {
-		new_msg.set_id(msg_metadata_id);
-	} else {
-		WARN_MSG("[Server::handle_send_message] msg_text_id and msg_metadata_id are not equal");
-		// add more info, msg id ...
-		sender_response["status"] = "error";
-		sender_response["response"] = "Failed to correctly save messages in database";
-		boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
-		return;
-	}
-
-	// we should not return failure here, some kind of retry logic or/and buffer is better
-	// we also can do it async
-	// if (msg_metadata_id == 0 || msg_text_id == 0) { // connection to redis is broken now :(
-	if (msg_metadata_id == 0) {
-		sender_response["status"] = "error";
-		sender_response["response"] = "Failed to save message into db/s";
-		boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
-		return;
-	}
-
-	sender_response["status"] = "success";
-	sender_response["response"] = "Message sent successfully";
-	sender_response.update(new_msg.to_json());
-	DEBUG_MSG("[Server::handle_send_message] Response for sender: " + sender_response.dump());
-	boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
-
-	for(auto it = _connected_clients.begin(); it != _connected_clients.end(); ++it) {
-		if (it->first == receiver_id) {
-			receiver_response.update(new_msg.to_json());
-			receiver_response["type"] = "receive_msg";
-
-			DEBUG_MSG("[Server::handle_send_message] Response for receiver: " + receiver_response.dump());
-			boost::asio::write(*(it->second), boost::asio::buffer(receiver_response.dump() + "\r\n\r\n"));
-		}
-	}
-}
-
-void Server::handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
-	DEBUG_MSG("[Server::handle_file_chunk] Request: " + request.dump());
-	std::string filename = request["filename"];
-	std::string chunk_data = request["chunk_data"];
-	int chunk_number = request["chunk_number"];
-	bool is_last = request["is_last"];
-
-	nlohmann::json sender_response, receiver_response;
-	sender_response["type"] = "chunk_acknowledgment";
-	sender_response["status"] = "success";
-	sender_response["filename"] = filename;
-
-	if(_file_server_client->upload_chunk(filename, chunk_data)) {
-		INFO_MSG("[Server::handle_file_chunk] Chunk uploaded to file server");
-		sender_response["status"] = "success";
-	} else {
-		WARN_MSG("[Server::handle_file_chunk] Failed to upload chunk to file server");
-		sender_response["status"] = "error";
-	}
-
-	boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
 }

@@ -15,19 +15,19 @@
 #include <filesystem>
 #include <random>
 
-namespace fs = std::filesystem;
+namespace client {
 
 class Client {
 public:
-
 	Client(const std::string& server_address,
 	       unsigned short server_port, const std::string& nick);
 	~Client();
 
 	void run();
-	User get_user();
+	common::User get_user();
 
 private:
+	struct FileTransferState;
 
 	void        send_message(const std::string& message);
 	void inline show_actions();
@@ -35,6 +35,12 @@ private:
 	std::string receive_response();
 	std::string get_user_data_filename() const noexcept;
 	void send_file_chunks(const std::string& filepath);
+	void send_next_chunk(std::shared_ptr<FileTransferState> state);
+	void wait_for_chunk_ack(std::shared_ptr<FileTransferState> state);
+
+	void handle_chunk_acknowledgment(const nlohmann::json& response);
+	void handle_incoming_file(const nlohmann::json& notification);
+	void handle_incoming_file_chunk(const nlohmann::json& chunk_message);
 
 	bool is_registered() const noexcept;
 	bool is_connected();
@@ -51,6 +57,19 @@ private:
 	void process_server_message(const std::string& message);
 
 private:
+	struct FileTransferState {
+		std::ifstream file;
+		size_t chunk_number = 0;
+		std::vector<char> buffer;
+		static const size_t chunk_size = 512;
+		std::string filename;
+
+		FileTransferState(const std::string& path) :
+			file(path, std::ios::binary),
+			buffer(chunk_size),
+			filename(std::filesystem::path(path).filename().string()) {
+		}
+	};
 
 	boost::asio::io_service _io_service;
 	std::unique_ptr<boost::asio::io_service::work> _work;
@@ -58,14 +77,16 @@ private:
 	boost::asio::ip::tcp::socket _socket;
 	boost::asio::streambuf _read_buffer;
 	std::queue<std::string> _write_queue;
-	// in future if we want to send several files in the same time, we can use a map of these
 	std::condition_variable _chunk_cv;
 	std::mutex _mutex;
 	bool _chunk_acknowledged = false;
 	std::string _server_address;
 	unsigned short _server_port;
-	User _user;
-	std::vector<Message> _messages;
+	common::User _user;
+	std::vector<common::Message> _messages;
 	bool _is_authorized;
 	std::string _user_files_dir = std::string(SOURCE_DIR) + "/client/user_files";
+	std::map<std::string, std::ofstream> _incoming_files;
 };
+
+}

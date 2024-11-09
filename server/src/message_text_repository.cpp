@@ -1,6 +1,8 @@
 #include "message_text_repository.hpp"
 #include <regex>
 
+namespace server {
+
 MessageTextRepository::MessageTextRepository(const std::string& connection_string) {
 	try {
 		DEBUG_MSG("[MessageTextRepository::MessageTextRepository] Parsing message_text database connection string: " + connection_string);
@@ -13,21 +15,22 @@ MessageTextRepository::MessageTextRepository(const std::string& connection_strin
 		          ", User: " + connection_options.user +
 		          ", Password: " + connection_options.password +
 		          ", DB: " + std::to_string(connection_options.db));
-
 		_redis = std::make_unique<sw::redis::Redis>(connection_options);
+		// auto ping_result = _redis->ping();
+		// DEBUG_MSG("[MessageTextRepository::MessageTextRepository] PING response: " + ping_result);
 		INFO_MSG("[MessageTextRepository::MessageTextRepository] Successfully connected to message_text Redis database");
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		ERROR_MSG("[MessageTextRepository::MessageTextRepository] " +  std::string(e.what()));
 		FATAL_MSG("[MessageTextRepository::MessageTextRepository] Failed to connect to Redis database");
+		throw;
 	}
 }
 
 sw::redis::ConnectionOptions MessageTextRepository::parse_config_string(const std::string& connection_string) {
 	sw::redis::ConnectionOptions options;
-
 	std::regex connection_regex("redis://(?:(\\w+):)?([^@]+)@([\\w.]+):(\\d+)(?:/(\\d+))?");
 	std::smatch matches;
-
 	if (std::regex_match(connection_string, matches, connection_regex)) {
 		if (matches[1].matched) {
 			options.user = matches[1].str();
@@ -39,15 +42,13 @@ sw::redis::ConnectionOptions MessageTextRepository::parse_config_string(const st
 			options.db = std::stoi(matches[5].str());
 		}
 	} else {
-		ERROR_MSG("[MessageTextRepository::parse_config_string] Invalid connection string format");
+		throw std::invalid_argument("[MessageTextRepository::parse_config_string] Invalid connection string format");
 	}
-
-	INFO_MSG("[MessageTextRepository::parse_config_string] Parsed successfully!");
-
+	DEBUG_MSG("[MessageTextRepository::parseConnectionString] Parsed successfully!");
 	return options;
 }
 
-int MessageTextRepository::create(const MessageText& msg) {
+int MessageTextRepository::create(const common::MessageText& msg) {
 	try {
 		std::string value = msg.get_text();
 		INFO_MSG("[MessageTextRepository::create] Attempting to insert value: " + value);
@@ -73,12 +74,12 @@ int MessageTextRepository::create(const MessageText& msg) {
 	}
 }
 
-std::optional<MessageText> MessageTextRepository::read(int id) {
+std::optional<common::MessageText> MessageTextRepository::read(int id) {
 	try {
 		auto result = _redis->get(std::to_string(id));
 		if (result) {
 			INFO_MSG("[MessageTextRepository::read] Successfully read message with id: " + std::to_string(id));
-			return MessageText(id, *result);
+			return common::MessageText(id, *result);
 		} else {
 			WARN_MSG("[MessageTextRepository::read] No message found with id: " + std::to_string(id));
 			return std::nullopt;
@@ -92,7 +93,7 @@ std::optional<MessageText> MessageTextRepository::read(int id) {
 	}
 }
 
-bool MessageTextRepository::update(const MessageText& message) {
+bool MessageTextRepository::update(const common::MessageText& message) {
 	try {
 		auto key = std::to_string(message.get_id());
 		auto exists = _redis->exists(key);
@@ -131,4 +132,6 @@ bool MessageTextRepository::remove(int id) {
 		ERROR_MSG("[MessageTextRepository::remove] " + std::string(e.what()));
 		return false;
 	}
+}
+
 }

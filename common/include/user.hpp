@@ -8,9 +8,10 @@
 #include <filesystem>
 #include <fstream>
 
+namespace common {
+
 class User {
 public:
-
 	User();
 	User(const std::string& nick);
 	User(const std::string& nick, const std::string& pass);
@@ -38,8 +39,7 @@ public:
 	static Timestamp parse_timestamp(const std::string& timestamp_str);
 
 private:
-	// should rm this logic, or should I?
-	static int _user_id_counter;
+	static int _user_id_counter; // should rm this logic, or should I?
 	int _id;
 	std::string _nickname;
 	std::string _password;
@@ -47,3 +47,5 @@ private:
 	Timestamp _last_online_timestamp;
 	bool _online;
 };
+
+}

@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 	std::getline(std::cin, nickname);
 
 
-	Client client("127.0.0.1", 55555, nickname);
+	client::Client client("127.0.0.1", 55555, nickname);
 	client.run();
 
 	return 0;

@@ -1,6 +1,12 @@
 #include "file_server_client.hpp"
 #include <iostream>
 
+namespace file_server {
+
+namespace beast = boost::beast;
+namespace http = beast::http;
+using tcp = boost::asio::ip::tcp;
+
 FileServerClient::FileServerClient(const std::string& host, const std::string& port)
 	: _host(host), _port(port), _resolver(_io_context), _stream(_io_context) {
 }
@@ -44,14 +50,11 @@ std::string FileServerClient::send_request(const std::string& target, http::verb
 	}
 }
 
-std::string FileServerClient::list_files() {
-	return send_request("/list", http::verb::get);
-}
 
 // std::string FileServerClient::upload_file(const std::string& filename, const std::string& filepath) {
 // 	auto start_time = std::chrono::high_resolution_clock::now();
 
-// 	fs::path full_path = fs::path(filepath) / filename;
+// 	std::filesystem::path full_path = std::filesystem::path(filepath) / filename;
 // 	std::ifstream file(full_path, std::ios::binary);
 // 	if (!file) {
 // 		ERROR_MSG("[FileServerClient::upload_file] Unable to open file: " + full_path.string());
@@ -155,10 +158,68 @@ bool FileServerClient::upload_chunk(const std::string& filename, const std::stri
 	}
 }
 
+std::vector<std::string> FileServerClient::download_file_chunks(const std::string& filename) {
+	std::vector<std::string> chunks;
+
+	try {
+		auto const results = _resolver.resolve(_host, _port);
+		_stream.connect(results);
+
+		http::request<http::string_body> req{http::verb::get, "/download/" + filename, _version};
+		req.set(http::field::host, _host);
+		req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+
+		http::write(_stream, req);
+
+		beast::flat_buffer buffer;
+		http::response<http::dynamic_body> res;
+
+		while(true) {
+			buffer.clear();
+			res.clear();
+
+			boost::system::error_code ec;
+			http::read(_stream, buffer, res, ec);
+
+			if (ec == http::error::end_of_stream) {
+				break;
+			}
+
+			if (ec) {
+				throw beast::system_error{ec};
+			}
+
+			std::string chunk_data = beast::buffers_to_string(res.body().data());
+			if (chunk_data.empty()) {
+				break;
+			}
+
+			chunks.push_back(chunk_data);
+			DEBUG_MSG("[FileServerClient::download_file_chunks] Received chunk "
+			          + std::to_string(chunks.size()) + " size: "
+			          + std::to_string(chunk_data.size()));
+		}
+
+		beast::error_code ec;
+		_stream.socket().shutdown(tcp::socket::shutdown_both, ec);
+
+		if(ec && ec != beast::errc::not_connected) {
+			throw beast::system_error{ec};
+		}
+	}
+	catch(std::exception const& e) {
+		ERROR_MSG("[FileServerClient::download_file_chunks] " + std::string(e.what()));
+	}
+
+	return chunks;
+}
+
 std::string FileServerClient::download_file(const std::string& filename) {
 	return send_request("/download/" + filename, http::verb::get);
 }
 
 std::string FileServerClient::delete_file(const std::string& filename) {
 	return send_request("/delete/" + filename, http::verb::delete_);
+}
+
 }

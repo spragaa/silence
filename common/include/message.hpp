@@ -4,9 +4,10 @@
 #include "message_metadata.hpp"
 #include "message_text.hpp"
 
+namespace common {
+    
 class Message {
 public:
-
 	Message() = default;
 	Message(const int& sender_id, const int& receiver_id, const std::string& text);
 
@@ -22,3 +23,5 @@ private:
 	MessageMetadata _metadata;
 	MessageText _text;
 };
+
+}
