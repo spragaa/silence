@@ -6,7 +6,7 @@
 #include <iomanip>
 #include <stdexcept>
 
-namespace {
+namespace aes {
     
 constexpr size_t Nk = 8;            // number of 32-bit words in the key (256/32 = 8)
 constexpr size_t Nb = 4;            // number of columns in state (fixed in AES)
@@ -58,7 +58,6 @@ constexpr uint32_t round_const[10] = {
     0x01000000, 0x02000000, 0x04000000, 0x08000000, 0x10000000,
     0x20000000, 0x40000000, 0x80000000, 0x1b000000, 0x36000000
 };
-}
 
 uint8_t gmul(uint8_t a, uint8_t b) {
     uint8_t p = 0;
@@ -128,16 +127,16 @@ std::array<uint8_t, 4> sub_word(const std::array<uint8_t, 4>& word) {
 }
 
 std::array<uint8_t, 4 * Nb * (Nr + 1)> key_expansion(const std::array<uint8_t, 4 * Nk>& key) {
-    std::array<uint8_t, 4 * Nb * (Nr + 1)> expanded_keys{};
+    std::array<uint8_t, 4 * Nb * (Nr + 1)> w{};
     std::array<uint8_t, 4> temp;
     
     for(size_t i = 0; i < 4 * Nk; i++) {
-        expanded_keys[i] = key[i];
+        w[i] = key[i];
     }
     
     for(size_t i = Nk; i < Nb * (Nr + 1); i++) {
         for(size_t j = 0; j < 4; j++) {
-            temp[j] = expanded_keys[4 * (i - 1) + j];
+            temp[j] = w[4 * (i - 1) + j];
         }
         
         if(i % Nk == 0) {
@@ -149,11 +148,11 @@ std::array<uint8_t, 4 * Nb * (Nr + 1)> key_expansion(const std::array<uint8_t, 4
         }
         
         for(size_t j = 0; j < 4; j++) {
-            expanded_keys[4 * i + j] = expanded_keys[4*(i-Nk) + j] ^ temp[j];
+            w[4 * i + j] = w[4*(i-Nk) + j] ^ temp[j];
         }
     }
     
-    return expanded_keys;
+    return w;
 }
 
 std::array<uint8_t, state_size> sub_bytes(const std::array<uint8_t, state_size>& state) {
@@ -317,7 +316,7 @@ std::string pkcs7_unpad(const std::vector<uint8_t>& input) {
     return std::string(input.begin(), input.end() - padding_len);
 }
 
-std::array<uint8_t, state_size> aes256_encrypt(
+std::array<uint8_t, state_size> encrypt(
     const std::array<uint8_t, state_size>& input, 
     const std::array<uint8_t, 32>& key) {
     
@@ -341,7 +340,7 @@ std::array<uint8_t, state_size> aes256_encrypt(
     return state;
 }
 
-std::string aes256_encrypt_wrapper(const std::string& input, const std::array<uint8_t, 32>& key) {
+std::string aes256_encrypt(const std::string& input, const std::array<uint8_t, 32>& key) {
     if (input.empty()) {
         throw std::invalid_argument("Input cannot be empty");
     }
@@ -353,14 +352,14 @@ std::string aes256_encrypt_wrapper(const std::string& input, const std::array<ui
         std::array<uint8_t, state_size> block{};
         std::copy(padded.begin() + i, padded.begin() + i + state_size, block.begin());
         
-        auto encrypted_block = aes256_encrypt(block, key);
+        auto encrypted_block = encrypt(block, key);
         output.append(encrypted_block.begin(), encrypted_block.end());
     }
     
     return output;
 }
 
-std::array<uint8_t, state_size> aes256_decrypt(
+std::array<uint8_t, state_size> decrypt(
     const std::array<uint8_t, state_size>& input, 
     const std::array<uint8_t, 32>& key) {
     
@@ -384,7 +383,7 @@ std::array<uint8_t, state_size> aes256_decrypt(
     return state;
 }
 
-std::string aes256_decrypt_wrapper(const std::string& input, const std::array<uint8_t, 32>& key) {
+std::string aes256_decrypt(const std::string& input, const std::array<uint8_t, 32>& key) {
     if (input.empty() || input.length() % state_size != 0) {
         throw std::invalid_argument("Input length must be multiple of block size");
     }
@@ -394,22 +393,24 @@ std::string aes256_decrypt_wrapper(const std::string& input, const std::array<ui
         std::array<uint8_t, state_size> block;
         std::copy(input.begin() + i, input.begin() + i + state_size, block.begin());
         
-        auto decrypted_block = aes256_decrypt(block, key);
+        auto decrypted_block = decrypt(block, key);
         decrypted.insert(decrypted.end(), decrypted_block.begin(), decrypted_block.end());
     }
     
     return pkcs7_unpad(decrypted);
 }
 
+}
+
 int main() {
     std::string input = "DiSinGenu0uSness";
     std::string short_input = "DiSinGenu0";
     
-    auto key256 = generate_key<key_length>();
+    auto key256 = aes::generate_key<aes::key_length>();
     std::cout << "generated key: " << std::endl; 
-    print_key_hex(key256);
+    aes::print_key_hex(key256);
     
-    std::string encrypted = aes256_encrypt_wrapper(input, key256);
+    std::string encrypted = aes::aes256_encrypt(input, key256);
         
     std::cout << "\nencrypted text: " << encrypted << std::endl;
     std::cout << "\nencrypted (hex): ";
@@ -419,7 +420,7 @@ int main() {
     }
     std::cout << std::dec << std::endl;
     
-    std::string decrypted = aes256_decrypt_wrapper(encrypted, key256);
+    std::string decrypted = aes::aes256_decrypt(encrypted, key256);
     std::cout << "\nDecrypted: " << decrypted << std::endl;
     
     return 0;
