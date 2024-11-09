@@ -284,6 +284,39 @@ std::array<uint8_t, state_size> add_round_key(
     return output;
 }
 
+std::vector<uint8_t> pkcs7_pad(const std::string& input, size_t block_size) {
+    size_t padding_len = block_size - (input.length() % block_size);
+    if (padding_len == 0) {
+        padding_len = block_size;
+    }
+    
+    std::vector<uint8_t> padded(input.begin(), input.end());
+    for (size_t i = 0; i < padding_len; i++) {
+        padded.push_back(static_cast<uint8_t>(padding_len));
+    }
+    
+    return padded;
+}
+
+std::string pkcs7_unpad(const std::vector<uint8_t>& input) {
+    if (input.empty()) {
+        throw std::invalid_argument("Input cannot be empty");
+    }
+    
+    uint8_t padding_len = input.back();
+    if (padding_len == 0 || padding_len > input.size()) {
+        throw std::invalid_argument("Invalid padding");
+    }
+    
+    for (size_t i = input.size() - padding_len; i < input.size(); i++) {
+        if (input[i] != padding_len) {
+            throw std::invalid_argument("Invalid padding");
+        }
+    }
+    
+    return std::string(input.begin(), input.end() - padding_len);
+}
+
 std::array<uint8_t, state_size> aes256_encrypt(
     const std::array<uint8_t, state_size>& input, 
     const std::array<uint8_t, 32>& key) {
@@ -309,25 +342,19 @@ std::array<uint8_t, state_size> aes256_encrypt(
 }
 
 std::string aes256_encrypt_wrapper(const std::string& input, const std::array<uint8_t, 32>& key) {
-    if (input.empty() || input.length() > 16) {
-        throw std::invalid_argument("Input must be between 1 and 16 bytes");
+    if (input.empty()) {
+        throw std::invalid_argument("Input cannot be empty");
     }
     
-    std::array<uint8_t, state_size> in_block{};
-    for (size_t i = 0; i < input.length(); i++) {
-        in_block[i] = static_cast<uint8_t>(input[i]);
-    }
-    
-    // temp padding with 0
-    for (size_t i = input.length(); i < state_size; i++) {
-        in_block[i] = 0;
-    }
-    
-    auto encrypted_block = aes256_encrypt(in_block, key);
+    auto padded = pkcs7_pad(input, state_size);
     
     std::string output;
-    for (uint8_t byte : encrypted_block) {
-        output.push_back(static_cast<char>(byte));
+    for (size_t i = 0; i < padded.size(); i += state_size) {
+        std::array<uint8_t, state_size> block{};
+        std::copy(padded.begin() + i, padded.begin() + i + state_size, block.begin());
+        
+        auto encrypted_block = aes256_encrypt(block, key);
+        output.append(encrypted_block.begin(), encrypted_block.end());
     }
     
     return output;
@@ -358,27 +385,25 @@ std::array<uint8_t, state_size> aes256_decrypt(
 }
 
 std::string aes256_decrypt_wrapper(const std::string& input, const std::array<uint8_t, 32>& key) {
-    if (input.length() != 16) {
-        throw std::invalid_argument("Input must be exactly 16 bytes");
+    if (input.empty() || input.length() % state_size != 0) {
+        throw std::invalid_argument("Input length must be multiple of block size");
     }
     
-    std::array<uint8_t, state_size> in_block;
-    for (size_t i = 0; i < state_size; i++) {
-        in_block[i] = static_cast<uint8_t>(input[i]);
+    std::vector<uint8_t> decrypted;
+    for (size_t i = 0; i < input.length(); i += state_size) {
+        std::array<uint8_t, state_size> block;
+        std::copy(input.begin() + i, input.begin() + i + state_size, block.begin());
+        
+        auto decrypted_block = aes256_decrypt(block, key);
+        decrypted.insert(decrypted.end(), decrypted_block.begin(), decrypted_block.end());
     }
     
-    auto decrypted_block = aes256_decrypt(in_block, key);
-    
-    std::string output;
-    for (uint8_t byte : decrypted_block) {
-        output.push_back(static_cast<char>(byte));
-    }
-    
-    return output;
+    return pkcs7_unpad(decrypted);
 }
 
 int main() {
     std::string input = "DiSinGenu0uSness";
+    std::string short_input = "DiSinGenu0";
     
     auto key256 = generate_key<key_length>();
     std::cout << "generated key: " << std::endl; 
