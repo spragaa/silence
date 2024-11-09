@@ -6,7 +6,8 @@
 #include <iomanip>
 #include <stdexcept>
 
-namespace aes {
+namespace common {
+namespace crypto {
     
 constexpr size_t Nk = 8;            // number of 32-bit words in the key (256/32 = 8)
 constexpr size_t Nb = 4;            // number of columns in state (fixed in AES)
@@ -400,28 +401,29 @@ std::string aes256_decrypt(const std::string& input, const std::array<uint8_t, 3
     return pkcs7_unpad(decrypted);
 }
 
-}
+} // namespace crypto
+} // namespace common
 
-int main() {
-    std::string input = "DiSinGenu0uSness";
-    std::string short_input = "DiSinGenu0";
+// int main() {
+//     std::string input = "DiSinGenu0uSness";
+//     std::string short_input = "DiSinGenu0";
     
-    auto key256 = aes::generate_key<aes::key_length>();
-    std::cout << "generated key: " << std::endl; 
-    aes::print_key_hex(key256);
+//     auto key256 = common::crypto::generate_key<common::crypto::key_length>();
+//     std::cout << "generated key: " << std::endl; 
+//     common::crypto::print_key_hex(key256);
     
-    std::string encrypted = aes::aes256_encrypt(input, key256);
+//     std::string encrypted = common::crypto::aes256_encrypt(input, key256);
         
-    std::cout << "\nencrypted text: " << encrypted << std::endl;
-    std::cout << "\nencrypted (hex): ";
-    for (unsigned char c : encrypted) {
-        std::cout << std::hex << std::setw(2) << std::setfill('0') 
-                    << static_cast<int>(c) << " ";
-    }
-    std::cout << std::dec << std::endl;
+//     std::cout << "\nencrypted text: " << encrypted << std::endl;
+//     std::cout << "\nencrypted (hex): ";
+//     for (unsigned char c : encrypted) {
+//         std::cout << std::hex << std::setw(2) << std::setfill('0') 
+//                     << static_cast<int>(c) << " ";
+//     }
+//     std::cout << std::dec << std::endl;
     
-    std::string decrypted = aes::aes256_decrypt(encrypted, key256);
-    std::cout << "\nDecrypted: " << decrypted << std::endl;
+//     std::string decrypted = common::crypto::aes256_decrypt(encrypted, key256);
+//     std::cout << "\nDecrypted: " << decrypted << std::endl;
     
-    return 0;
-}
+//     return 0;
+// }
