@@ -1,4 +1,8 @@
-refer to: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197-upd1.pdf
+refer to aes docs: 
+https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197-upd1.pdf
+
+and article about pkcs7 padding:
+https://r3zz.io/posts/pkcs7-padding/
 
 ## initialization
 1. generate random 256 bits key - secret
