@@ -5,7 +5,7 @@
 #include "message_text.hpp"
 
 namespace common {
-    
+
 class Message {
 public:
 	Message() = default;

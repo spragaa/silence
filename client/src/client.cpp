@@ -48,8 +48,8 @@ void Client::run() {
 		unsigned int thread_count = std::thread::hardware_concurrency();
 		for (unsigned int i = 0; i < thread_count; ++i) {
 			_io_threads.emplace_back([this]() {
-				_io_service.run();
-			});
+					_io_service.run();
+				});
 		}
 
 		while (!is_registered()) {
@@ -361,8 +361,8 @@ void Client::send_file_chunks(const std::string& filepath) {
 			if (!_chunk_cv.wait_for(lock,
 			                        std::chrono::seconds(5),
 			                        [this] {
-				return _chunk_acknowledged;
-			})) {
+					return _chunk_acknowledged;
+				})) {
 				ERROR_MSG("[Client::send_file_chunks] Timeout waiting for chunk acknowledgment");
 				return;
 			}
@@ -411,26 +411,26 @@ void Client::wait_for_chunk_ack(std::shared_ptr<FileTransferState> state) {
 
 	// ec is needed here
 	timer->async_wait([this, timer, state](const boost::system::error_code& /*ec*/) {
-		std::lock_guard<std::mutex> lock(_mutex);
-		if (_chunk_acknowledged) {
-			_chunk_acknowledged = false;
-			state->chunk_number++;
-			send_next_chunk(state);
-		} else {
-			wait_for_chunk_ack(state);
-		}
-	});
+			std::lock_guard<std::mutex> lock(_mutex);
+			if (_chunk_acknowledged) {
+				_chunk_acknowledged = false;
+				state->chunk_number++;
+				send_next_chunk(state);
+			} else {
+				wait_for_chunk_ack(state);
+			}
+		});
 }
 
 void Client::async_read() {
 	DEBUG_MSG("[Client::async_read] Async read has been started");
 
 	_io_service.post([this]() {
-		boost::asio::async_read_until(_socket, _read_buffer, "\r\n\r\n",
-		                              boost::bind(&Client::handle_async_read, this,
-		                                          boost::asio::placeholders::error,
-		                                          boost::asio::placeholders::bytes_transferred));
-	});
+			boost::asio::async_read_until(_socket, _read_buffer, "\r\n\r\n",
+			                              boost::bind(&Client::handle_async_read, this,
+			                                          boost::asio::placeholders::error,
+			                                          boost::asio::placeholders::bytes_transferred));
+		});
 }
 
 void Client::handle_async_read(const boost::system::error_code& error, size_t bytes_transferred) {
@@ -461,13 +461,13 @@ void Client::async_write(const std::string& message) {
 	}
 
 	_io_service.post([this, message]() {
-		bool write_in_progress = !_write_queue.empty();
-		_write_queue.push(message + "\r\n\r\n");
+			bool write_in_progress = !_write_queue.empty();
+			_write_queue.push(message + "\r\n\r\n");
 
-		if (!write_in_progress) {
-			do_write();
-		}
-	});
+			if (!write_in_progress) {
+				do_write();
+			}
+		});
 }
 
 void Client::do_write() {
