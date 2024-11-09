@@ -14,6 +14,8 @@
 
 namespace file_server {
 
+// make them inline?
+// move to cpp ?
 constexpr size_t CHUNK_SIZE_BYTES = 512;
 constexpr uint8_t FILENAME_LEN = 16;
     
