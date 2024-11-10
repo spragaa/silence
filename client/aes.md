@@ -32,7 +32,7 @@ I want to implement aes_256:
 aes-256(input, key) = cipher(input, 14, key_expnasion(key))
   
 ### key_expansion()
-takes key and generated the 4 * (number_of_rounds + 1) words. 
+takes key and generatesd the 4 * (number_of_rounds + 1) words. 
 
 for aes_256: 
 key_expansion(uint32_t key) -> w[i], 0 <=i <=4 * (number_of_rounds + 1), where w[i] is an array of words (round keys)
