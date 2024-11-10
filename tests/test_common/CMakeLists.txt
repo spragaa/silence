@@ -18,3 +18,5 @@ target_include_directories(test_common
 
 include(GoogleTest)
 gtest_discover_tests(test_common)  
+
+add_subdirectory(crypto)
