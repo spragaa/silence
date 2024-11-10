@@ -3,7 +3,7 @@
 - prettier.sh is broken?
 - is test_message_database even created?
 - couldn't setup another intance of redis db for testing purposes -> test_message_text_repository.* - crap
-- if file already exists on the file_server side, it pushes new data to the end -> in such cases generate new name
+- if file already exists on the file_server side, it pushes new data to the end -> in such cases generates new name
 - if file size % chunk_size == 0 => there are n+1 chunks and last one is not marked as the last one
 
 ## general goals

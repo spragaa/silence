@@ -29,7 +29,7 @@ once file server client receives the file, it can upload it to file server
 ## file sending workflow
 1. client chooses the media file 
 2. we have a connection beetwen server and client -> we can send the file fully as a binary stream
-3. on server side we generate the hash name for the file and saves it message metadata
+3. on server side we generates the hash name for the file and saves it message metadata
    we have somekind of file packer worker, that packs the binary data into packages 
    we also have a file server client that takes these packages and sends post requests to the file server (name)
 4. file server 'merges' files into one (i think)
