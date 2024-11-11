@@ -33,3 +33,4 @@ std::string get_socket_info(boost::asio::ip::tcp::socket& socket);
 #define FATAL_MSG(msg) std::cout << RED << "[FATAL] [" << common::get_current_timestamp() << "] " << msg << RESET << std::endl;
 
 // add USER_MSG?
+// add spammy logs? full requests and aes rounds????
