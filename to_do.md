@@ -46,6 +46,8 @@
 - should file_server and file_server_client be named server and client?
 - can I move all constexpr into .hpp?
 - https://coveralls.io
+- --debug option for script is counter intuitive -> always print debug messages in scripts or remove them complitely
+
 ### refactoring
 - unify the way to compare Timestamps, parse them from/to string, int, json and pqxx::response
 - go through all comments in source code

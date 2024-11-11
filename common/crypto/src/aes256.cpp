@@ -71,7 +71,9 @@ std::array<uint8_t, 4 * Nb * (Nr + 1)> key_expansion(const std::array<uint8_t, 4
 			w[4 * i + j] = w[4*(i-Nk) + j] ^ temp[j];
 		}
 	}
-
+	
+	DEBUG_MSG("[aes256::key_expansion] Expanded key: " + bytes_array_to_string(w));
+	
 	return w;
 }
 
@@ -155,15 +157,15 @@ std::array<uint8_t, state_size> mix_columns(const std::array<uint8_t, state_size
 	std::array<uint8_t, state_size> output;
 
 	for (int c = 0; c < 4; c++) {
-		uint8_t s0 = state[4*c];
-		uint8_t s1 = state[4*c + 1];
-		uint8_t s2 = state[4*c + 2];
-		uint8_t s3 = state[4*c + 3];
+		uint8_t s0 = state[4 * c];
+		uint8_t s1 = state[4 * c + 1];
+		uint8_t s2 = state[4 * c + 2];
+		uint8_t s3 = state[4 * c + 3];
 
-		output[4*c] = gmul(0x02, s0) ^ gmul(0x03, s1) ^ s2 ^ s3;
-		output[4*c + 1] = s0 ^ gmul(0x02, s1) ^ gmul(0x03, s2) ^ s3;
-		output[4*c + 2] = s0 ^ s1 ^ gmul(0x02, s2) ^ gmul(0x03, s3);
-		output[4*c + 3] = gmul(0x03, s0) ^ s1 ^ s2 ^ gmul(0x02, s3);
+		output[4 * c] = gmul(0x02, s0) ^ gmul(0x03, s1) ^ s2 ^ s3;
+		output[4 * c + 1] = s0 ^ gmul(0x02, s1) ^ gmul(0x03, s2) ^ s3;
+		output[4 * c + 2] = s0 ^ s1 ^ gmul(0x02, s2) ^ gmul(0x03, s3);
+		output[4 * c + 3] = gmul(0x03, s0) ^ s1 ^ s2 ^ gmul(0x02, s3);
 	}
 
 	return output;
@@ -173,15 +175,15 @@ std::array<uint8_t, state_size> inv_mix_columns(const std::array<uint8_t, state_
 	std::array<uint8_t, state_size> output;
 
 	for (int c = 0; c < 4; c++) {
-		uint8_t s0 = state[4*c];
-		uint8_t s1 = state[4*c + 1];
-		uint8_t s2 = state[4*c + 2];
-		uint8_t s3 = state[4*c + 3];
+		uint8_t s0 = state[4 * c];
+		uint8_t s1 = state[4 * c + 1];
+		uint8_t s2 = state[4 * c + 2];
+		uint8_t s3 = state[4 * c + 3];
 
-		output[4*c] = gmul(0x0e, s0) ^ gmul(0x0b, s1) ^ gmul(0x0d, s2) ^ gmul(0x09, s3);
-		output[4*c + 1] = gmul(0x09, s0) ^ gmul(0x0e, s1) ^ gmul(0x0b, s2) ^ gmul(0x0d, s3);
-		output[4*c + 2] = gmul(0x0d, s0) ^ gmul(0x09, s1) ^ gmul(0x0e, s2) ^ gmul(0x0b, s3);
-		output[4*c + 3] = gmul(0x0b, s0) ^ gmul(0x0d, s1) ^ gmul(0x09, s2) ^ gmul(0x0e, s3);
+		output[4 * c] = gmul(0x0e, s0) ^ gmul(0x0b, s1) ^ gmul(0x0d, s2) ^ gmul(0x09, s3);
+		output[4 * c + 1] = gmul(0x09, s0) ^ gmul(0x0e, s1) ^ gmul(0x0b, s2) ^ gmul(0x0d, s3);
+		output[4 * c + 2] = gmul(0x0d, s0) ^ gmul(0x09, s1) ^ gmul(0x0e, s2) ^ gmul(0x0b, s3);
+		output[4 * c + 3] = gmul(0x0b, s0) ^ gmul(0x0d, s1) ^ gmul(0x09, s2) ^ gmul(0x0e, s3);
 	}
 
 	return output;
@@ -213,27 +215,32 @@ std::vector<uint8_t> pkcs7_pad(const std::string& input, size_t block_size) {
 	for (size_t i = 0; i < padding_len; i++) {
 		padded.push_back(static_cast<uint8_t>(padding_len));
 	}
-
+	
 	return padded;
 }
 
 std::string pkcs7_unpad(const std::vector<uint8_t>& input) {
 	if (input.empty()) {
+        FATAL_MSG("[aes256::pkcs7_unpad] Input cannot be empty");
 		throw std::invalid_argument("Input cannot be empty");
 	}
 
 	uint8_t padding_len = input.back();
 	if (padding_len == 0 || padding_len > input.size()) {
+	    FATAL_MSG("[aes256::pkcs7_unpad] Invalid padding");
 		throw std::invalid_argument("Invalid padding");
 	}
 
 	for (size_t i = input.size() - padding_len; i < input.size(); i++) {
 		if (input[i] != padding_len) {
+		    FATAL_MSG("[aes256::pkcs7_unpad] Invalid padding");
 			throw std::invalid_argument("Invalid padding");
 		}
 	}
 
-	return std::string(input.begin(), input.end() - padding_len);
+	std::string unpadded = std::string(input.begin(), input.end() - padding_len); 
+	DEBUG_MSG("[aes256::pkcs7_unpad] Unpaded result: " + unpadded);
+	return unpadded;
 }
 
 std::array<uint8_t, state_size> encrypt(
@@ -251,17 +258,22 @@ std::array<uint8_t, state_size> encrypt(
 		state = shift_rows(state);
 		state = mix_columns(state);
 		state = add_round_key(state, w, round);
+		
+		// add another variance of debug msg?
+		DEBUG_MSG("[aes256::encrypt] State after round " + std::to_string(round) + ":" + bytes_array_to_string(state));
 	}
-
+	
 	state = sub_bytes(state);
 	state = shift_rows(state);
 	state = add_round_key(state, w, Nr);
+	DEBUG_MSG("[aes256::encrypt] State after final round: " + bytes_array_to_string(state));
 
 	return state;
 }
 
 std::string aes256_encrypt(const std::string& input, const std::array<uint8_t, 32>& key) {
 	if (input.empty()) {
+	    FATAL_MSG("[aes256::aes256_encrypt] Input cannot be empty");
 		throw std::invalid_argument("Input cannot be empty");
 	}
 
@@ -294,17 +306,23 @@ std::array<uint8_t, state_size> decrypt(
 		state = inv_sub_bytes(state);
 		state = add_round_key(state, w, round);
 		state = inv_mix_columns(state);
+		
+		DEBUG_MSG("[aes256::decrypt] State after round " + std::to_string(round) + ":" + bytes_array_to_string(state));
 	}
 
 	state = inv_shift_rows(state);
 	state = inv_sub_bytes(state);
 	state = add_round_key(state, w, 0);
+	
+	// add another variance of debug msg?
+	DEBUG_MSG("[aes256::decrypt] State after final round: " + bytes_array_to_string(state));
 
 	return state;
 }
 
 std::string aes256_decrypt(const std::string& input, const std::array<uint8_t, 32>& key) {
 	if (input.empty() || input.length() % state_size != 0) {
+	    FATAL_MSG("[aes256::aes256_decrypt] Input length must be multiple of block size");
 		throw std::invalid_argument("Input length must be multiple of block size");
 	}
 

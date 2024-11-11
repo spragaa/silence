@@ -318,7 +318,7 @@ TEST_F(AESTests, special_characters_handling_test) {
 }
 
 TEST_F(AESTests, unicode_characters_handling_test) {
-	std::string input = "Hello 世界 🌍";
+	std::string input = "Привіт 世界 🌍";
 	std::string encrypted = common::crypto::aes256_encrypt(input, test_key);
 	std::string decrypted = common::crypto::aes256_decrypt(encrypted, test_key);
 	EXPECT_EQ(input, decrypted);

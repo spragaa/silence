@@ -1,6 +1,6 @@
 #pragma once
 
-// #include "debug.hpp"
+#include "debug.hpp"
 
 #include <string>
 #include <array>
@@ -68,9 +68,22 @@ constexpr uint32_t round_const[10] = {
 };
 
 template<size_t n>
+std::string bytes_array_to_string(const std::array<uint8_t, n>& arr) {
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0');
+    
+    for (const auto& byte : arr) {
+        ss << std::setw(2) << static_cast<int>(byte);
+    }
+    
+    return ss.str();
+}
+
+template<size_t n>
 std::array<uint8_t, n / 8> generate_key() {
 	static_assert(n == 128 || n == 192 || n == 256, "Key size must be 128, 192, or 256 bits");
-
+	DEBUG_MSG("[aes256::generate_key] Key size must be 128, 192, or 256 bits");
+	
 	std::array<uint8_t, n / 8> key;
 	std::random_device rd;
 
@@ -78,17 +91,9 @@ std::array<uint8_t, n / 8> generate_key() {
 		key[i] = static_cast<uint8_t>(rd());
 	}
 
-	return key;
-}
+	DEBUG_MSG("[aes256::generate_key] Generated key: " + bytes_array_to_string(key));
 
-template<size_t n>
-void print_key_hex(const std::array<uint8_t, n>& key) {
-	std::cout << "(" << (n * 8) << " bits) hex: \n";
-	for(auto byte : key) {
-		std::cout << std::hex << std::setw(2) << std::setfill('0')
-		          << static_cast<int>(byte) << " ";
-	}
-	std::cout << std::dec << std::endl;
+	return key;
 }
 
 std::string aes256_encrypt(const std::string& input, const std::array<uint8_t, 32>& key);
