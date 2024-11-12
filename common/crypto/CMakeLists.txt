@@ -5,6 +5,7 @@ add_library(crypto_lib
 
 target_link_libraries(crypto_lib
     common_lib
+    Boost::boost
 )
 
 target_include_directories(crypto_lib
