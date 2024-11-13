@@ -1,68 +1,34 @@
 #pragma once
 
+#include "utils.hpp"
+
 #include <boost/multiprecision/cpp_int.hpp>
 #include <random>
 #include <array>
 #include <vector>
 
+namespace  common {
+namespace crypto {
+
 class ElGamal {
 public:
-    struct KeyPair {
-        boost::multiprecision::cpp_int private_key;
-        boost::multiprecision::cpp_int public_key;
-    };
+    using cpp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>, boost::multiprecision::et_off>;
 
-    struct EncryptedMessage {
-        boost::multiprecision::cpp_int c1;
-        boost::multiprecision::cpp_int c2;
-    };
+    ElGamal(const cpp_int& prime_modulus, const cpp_int& generator);
+    
+    const KeyPair& get_keys() const;
+    EncryptedMessage encrypt(const cpp_int& message, const cpp_int& recipient_public_key);
+    cpp_int decrypt(const EncryptedMessage& encrypted_message);
 
 private:
-    boost::multiprecision::cpp_int p;
-    boost::multiprecision::cpp_int g;
+    cpp_int generate_random(const cpp_int& min, const cpp_int& max);
+    cpp_int modular_pow(const cpp_int& base, const cpp_int& exponent, const cpp_int& modulus);
+
+private:
+    cpp_int p;
+    cpp_int g;
     KeyPair keys;
-
-    boost::multiprecision::cpp_int generate_random(const boost::multiprecision::cpp_int& min, const boost::multiprecision::cpp_int& max) {
-        std::random_device rd;
-        std::mt19937_64 gen(rd());
-        
-        boost::multiprecision::cpp_int range = max - min + 1;
-        boost::multiprecision::cpp_int result;
-        
-        do {
-            result = 0;
-            for(size_t i = 0; i < sizeof(unsigned long long); ++i) {
-                result = (result << 64) | gen();
-            }
-            result = result % range;
-        } while (result < min);
-        
-        return result + min;
-    }
-
-public:
-    ElGamal(const boost::multiprecision::cpp_int& prime_modulus, const boost::multiprecision::cpp_int& generator) 
-        : p(prime_modulus), g(generator) {
-        keys.private_key = generate_random(2, p - 2);
-        keys.public_key = boost::multiprecision::powm(g, keys.private_key, p);
-    }
-
-    const KeyPair& get_keys() const { return keys; }
-
-    EncryptedMessage encrypt(const boost::multiprecision::cpp_int& message, const boost::multiprecision::cpp_int& recipient_public_key) {
-        boost::multiprecision::cpp_int k = generate_random(2, p - 2);
-        
-        EncryptedMessage encrypted;
-        encrypted.c1 = boost::multiprecision::powm(g, k, p);
-        encrypted.c2 = (message * boost::multiprecision::powm(recipient_public_key, k, p)) % p;
-        
-        return encrypted;
-    }
-
-    boost::multiprecision::cpp_int decrypt(const EncryptedMessage& encrypted_message) {
-        boost::multiprecision::cpp_int s = boost::multiprecision::powm(encrypted_message.c1, keys.private_key, p);
-        boost::multiprecision::cpp_int s_inverse = boost::multiprecision::powm(s, p - 2, p);
-        
-        return (encrypted_message.c2 * s_inverse) % p;
-    }
 };
+
+} // namespace common
+} // namespace crypto
