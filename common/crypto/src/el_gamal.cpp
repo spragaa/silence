@@ -1,48 +1,69 @@
 #include "el_gamal.hpp"
-#include <iostream>
-#include <iomanip>
-#include <sstream>
 
-cpp_int hex_to_cpp_int(const std::string& hex) {
+namespace common {
+namespace crypto {
+
+ElGamal::ElGamal(const cpp_int& prime_modulus, const cpp_int& generator) 
+    : p(prime_modulus), g(generator) {
+    keys.private_key = generate_random(2, p - 2);
+    keys.public_key = modular_pow(g, keys.private_key, p);
+}
+
+const KeyPair& ElGamal::get_keys() const { 
+    return keys; 
+}
+
+ElGamal::cpp_int ElGamal::generate_random(const cpp_int& min, const cpp_int& max) {
+    std::random_device rd;
+    std::mt19937_64 gen(rd());
+    
+    cpp_int range = max - min + 1;
     cpp_int result;
-    std::stringstream ss;
-    ss << std::hex << hex;
-    ss >> result;
+    
+    do {
+        result = 0;
+        for(size_t i = 0; i < sizeof(unsigned long long); ++i) {
+            result = (result << 64) | gen();
+        }
+        result = result % range;
+    } while (result < min);
+    
+    return result + min;
+}
+
+ElGamal::cpp_int ElGamal::modular_pow(const cpp_int& base, const cpp_int& exponent, const cpp_int& modulus) {
+    if (modulus == 1) return 0;
+    
+    cpp_int result = 1;
+    cpp_int b = base % modulus;
+    cpp_int exp = exponent;
+    
+    while (exp > 0) {
+        if (exp % 2 == 1)
+            result = (result * b) % modulus;
+        b = (b * b) % modulus;
+        exp /= 2;
+    }
+    
     return result;
 }
 
-std::string cpp_int_to_hex(const cpp_int& num) {
-    std::stringstream ss;
-    ss << std::hex << num;
-    return ss.str();
-}
-
-int main() {
-    cpp_int p("0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74"
-              "020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F1437"
-              "4FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED"
-              "EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF05"
-              "98DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB"
-              "9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3B"
-              "E39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF695581718"
-              "3995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF");
-
-    cpp_int g("2");
-
-    ElGamal alice(p, g);
+EncryptedMessage ElGamal::encrypt(const cpp_int& message, const cpp_int& recipient_public_key) {
+    cpp_int k = generate_random(2, p - 2);
     
-    ElGamal bob(p, g);
-
-    cpp_int aes_key = hex_to_cpp_int("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF");
-
-    std::cout << "Original AES Key: " << cpp_int_to_hex(aes_key) << std::endl;
-
-    auto encrypted = alice.encrypt(aes_key, bob.get_keys().public_key);
-
-    auto decrypted = bob.decrypt(encrypted);
-
-    std::cout << "Decrypted AES Key: " << cpp_int_to_hex(decrypted) << std::endl;
-    std::cout << "Keys match: " << (aes_key == decrypted ? "Yes" : "No") << std::endl;
-
-    return 0;
+    EncryptedMessage encrypted;
+    encrypted.c1 = modular_pow(g, k, p);
+    encrypted.c2 = (message * modular_pow(recipient_public_key, k, p)) % p;
+    
+    return encrypted;
 }
+
+ElGamal::cpp_int ElGamal::decrypt(const EncryptedMessage& encrypted_message) {
+    cpp_int s = modular_pow(encrypted_message.c1, keys.private_key, p);
+    cpp_int s_inverse = modular_pow(s, p - 2, p);
+    
+    return (encrypted_message.c2 * s_inverse) % p;
+}
+
+} // namespace common
+} // namespace crypto
