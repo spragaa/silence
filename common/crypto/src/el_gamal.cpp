@@ -3,10 +3,15 @@
 namespace common {
 namespace crypto {
 
-ElGamal::ElGamal(const cpp_int& prime_modulus, const cpp_int& generator)
-	: p(prime_modulus), g(generator) {
-	keys.private_key = generate_random(2, p - 2);
-	keys.public_key = modular_pow(g, keys.private_key, p);
+ElGamal::ElGamal(const cpp_int& prime_modulus, const cpp_int& generator) 
+    : p(prime_modulus), g(generator) {
+        
+    if (!validate_parameters(p, g)) {
+        throw std::invalid_argument("Invalid parameters");
+    }
+        
+    keys.private_key = generate_random(2, p - 2);
+    keys.public_key = modular_pow(g, keys.private_key, p);
 }
 
 const KeyPair& ElGamal::get_keys() const {
@@ -63,6 +68,99 @@ ElGamal::cpp_int ElGamal::decrypt(const EncryptedMessage& encrypted_message) {
 	cpp_int s_inverse = modular_pow(s, p - 2, p);
 
 	return (encrypted_message.c2 * s_inverse) % p;
+}
+
+bool ElGamal::miller_rabin_test(const cpp_int& n, const cpp_int& a) {
+    cpp_int d = n - 1;
+    cpp_int r = 0;
+    
+    while (d % 2 == 0) {
+        d /= 2;
+        r += 1;
+    }
+    
+    cpp_int x = modular_pow(a, d, n);
+    if (x == 1 || x == n - 1) return true;
+    
+    for (cpp_int i = 0; i < r - 1; i++) {
+        x = (x * x) % n;
+        if (x == n - 1) return true;
+        if (x == 1) return false;
+    }
+    
+    return false;
+}
+
+bool ElGamal::is_prime(const cpp_int& n, int iterations) {
+    if (n <= 1 || n == 4) return false;
+    if (n <= 3) return true;
+    
+    cpp_int small_primes[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37};
+    for (const auto& p : small_primes) {
+        if (n == p) return true;
+        if (n % p == 0) return false;
+    }
+    
+    std::random_device rd;
+    std::mt19937_64 gen(rd());
+    
+    for (int i = 0; i < iterations; i++) {
+        cpp_int a = generate_random(2, n - 2);
+        if (!miller_rabin_test(n, a))
+            return false;
+    }
+    
+    return true;
+}
+
+bool ElGamal::validate_parameters(const cpp_int& p, const cpp_int& g) {
+    if (!is_prime(p)) {
+        throw std::invalid_argument("The modulus p must be prime");
+    }
+    
+    if (g < 2 || g >= p) {
+        throw std::invalid_argument("Generator g must be in range [2, p-1]");
+    }
+    
+    cpp_int factors[] = {2, (p-1)/2};
+    for (const auto& factor : factors) {
+        if (modular_pow(g, (p-1)/factor, p) == 1) {
+            throw std::invalid_argument("g is not a primitive root modulo p");
+        }
+    }
+    
+    return true;
+}
+
+cpp_int ElGamal::generate_safe_prime(size_t bits) {
+    std::random_device rd;
+    std::mt19937_64 gen(rd());
+    
+    while (true) {
+        cpp_int q = generate_random(cpp_int(1) << (bits-2), cpp_int(1) << (bits-1));
+        
+        if (q % 2 == 0) q += 1;
+        
+        if (!is_prime(q)) continue;
+        
+        cpp_int p = 2 * q + 1;
+        
+        if (is_prime(p)) {
+            return p;
+        }
+    }
+}
+
+cpp_int ElGamal::find_generator(const cpp_int& p) {
+    cpp_int q = (p - 1) / 2;
+    
+    for (cpp_int g = 2; g < p; g++) {
+        if (modular_pow(g, 2, p) != 1 && modular_pow(g, q, p) != 1) {
+            return g;
+        }
+    }
+    
+    throw std::runtime_error("Generator not found");
 }
 
 std::string format_key_info(const std::string& label, const common::crypto::KeyPair& keys) {

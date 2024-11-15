@@ -21,6 +21,7 @@ struct EncryptedMessage {
 
 cpp_int hex_to_cpp_int(const std::string& hex);
 std::string cpp_int_to_hex(const cpp_int& num);
+cpp_int find_valid_generator(const cpp_int& p);
 
 } // namespace common
 } // namespace crypto
