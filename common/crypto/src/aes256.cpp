@@ -260,7 +260,7 @@ std::array<uint8_t, state_size> encrypt(
 		state = add_round_key(state, w, round);
 
 		// add another variance of debug msg?
-		DEBUG_MSG("[aes256::encrypt] State after round " + std::to_string(round) + ":" + bytes_array_to_string(state));
+		// DEBUG_MSG("[aes256::encrypt] State after round " + std::to_string(round) + ":" + bytes_array_to_string(state));
 	}
 
 	state = sub_bytes(state);
@@ -307,7 +307,7 @@ std::array<uint8_t, state_size> decrypt(
 		state = add_round_key(state, w, round);
 		state = inv_mix_columns(state);
 
-		DEBUG_MSG("[aes256::decrypt] State after round " + std::to_string(round) + ":" + bytes_array_to_string(state));
+		// DEBUG_MSG("[aes256::decrypt] State after round " + std::to_string(round) + ":" + bytes_array_to_string(state));
 	}
 
 	state = inv_shift_rows(state);
