@@ -12,6 +12,11 @@ public:
     
     using ElGamal::generate_random;
     using ElGamal::modular_pow;
+    using ElGamal::is_prime;
+    using ElGamal::validate_parameters;
+    using ElGamal::generate_safe_prime;
+    using ElGamal::find_generator;
+    using ElGamal::miller_rabin_test;
 };
 
 class ElGamalTest : public ::testing::Test {
@@ -30,7 +35,9 @@ protected:
             "E39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF695581718"
             "3995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF"
         );
-        g = common::crypto::TestElGamal::cpp_int(2);
+        g = common::crypto::TestElGamal::cpp_int(11); // 11 is safe, if you want to change 'p', use find_valid_generator to find new sage 'g'  
+        // g = common::crypto::find_valid_generator(p);
+        // std::cout << "Using generator: " << g << std::endl;
     }
 };
 
@@ -171,7 +178,7 @@ TEST_F(ElGamalTest, encrypted_message_formatting) {
 
 TEST_F(ElGamalTest, demonstrate_prime_size_effects) {
     cpp_int small_p = 23;
-    cpp_int g = 2;
+    cpp_int g = 11;
     
     common::crypto::TestElGamal small_prime_system(small_p, g);
     common::crypto::TestElGamal large_prime_system(p, g);
@@ -187,6 +194,116 @@ TEST_F(ElGamalTest, demonstrate_prime_size_effects) {
         large_prime_system.get_keys().public_key);
     auto decrypted_large = large_prime_system.decrypt(encrypted_large);
     EXPECT_EQ(message, decrypted_large);
+}
+
+TEST_F(ElGamalTest, prime_validation) {
+    TestElGamal el_gamal(p, g);
+    
+    EXPECT_TRUE(el_gamal.is_prime(251064135199));
+    EXPECT_TRUE(el_gamal.is_prime(759869695727));
+    EXPECT_TRUE(el_gamal.is_prime(167208199969));
+    EXPECT_TRUE(el_gamal.is_prime(701906980781));
+    
+    EXPECT_FALSE(el_gamal.is_prime(4));
+    EXPECT_FALSE(el_gamal.is_prime(100));
+    EXPECT_FALSE(el_gamal.is_prime(999));
+    
+    EXPECT_FALSE(el_gamal.is_prime(0));
+    EXPECT_FALSE(el_gamal.is_prime(1));
+    EXPECT_TRUE(el_gamal.is_prime(2));
+}
+
+TEST_F(ElGamalTest, miller_rabin_test_correctness) {
+    TestElGamal el_gamal(p, g);
+    
+    cpp_int carmichael = 561;
+    bool is_probably_prime = true;
+    
+    for (int i = 0; i < 20; i++) {
+        cpp_int a = el_gamal.generate_random(2, carmichael - 2);
+        if (!el_gamal.miller_rabin_test(carmichael, a)) {
+            is_probably_prime = false;
+            break;
+        }
+    }
+    
+    EXPECT_FALSE(is_probably_prime);
+}
+
+TEST_F(ElGamalTest, parameter_validation) {
+    TestElGamal el_gamal(p, g);
+    
+    EXPECT_NO_THROW(el_gamal.validate_parameters(p, g));
+    
+    cpp_int non_prime = p * 2;
+    EXPECT_THROW(el_gamal.validate_parameters(non_prime, g), std::invalid_argument);
+    
+    EXPECT_THROW(el_gamal.validate_parameters(p, p), std::invalid_argument);
+    
+    EXPECT_THROW(el_gamal.validate_parameters(p, cpp_int(1)), std::invalid_argument);
+}
+
+TEST_F(ElGamalTest, generator_finding) {
+    TestElGamal el_gamal(p, g);
+    
+    cpp_int small_p = 23; // p = 23, (p-1)/2 = 11 are both prime
+    cpp_int found_g = el_gamal.find_generator(small_p);
+    
+    EXPECT_GT(found_g, cpp_int(1));
+    EXPECT_LT(found_g, small_p);
+    
+    std::set<cpp_int> elements;
+    cpp_int element = 1;
+    
+    for (cpp_int i = 0; i < small_p - 1; ++i) {
+        element = (element * found_g) % small_p;
+        elements.insert(element);
+    }
+    
+    EXPECT_EQ(elements.size(), static_cast<size_t>(small_p - 1));
+}
+
+// TEST_F(ElGamalTest, key_generation_with_different_primes) {
+//     std::vector<size_t> bit_sizes = {512, 768, 1024};
+    
+//     for (size_t bits : bit_sizes) {
+//         TestElGamal el_gamal(p, g);
+//         cpp_int test_p = el_gamal.generate_safe_prime(bits);
+//         cpp_int test_g = el_gamal.find_generator(test_p);
+        
+//         TestElGamal test_system(test_p, test_g);
+//         const auto& keys = test_system.get_keys();
+        
+//         EXPECT_GT(keys.private_key, cpp_int(1));
+//         EXPECT_LT(keys.private_key, test_p - 1);
+//         EXPECT_GT(keys.public_key, cpp_int(1));
+//         EXPECT_LT(keys.public_key, test_p);
+//     }
+// }
+
+// TEST_F(ElGamalTest, encryption_with_different_prime_sizes) {
+//     std::vector<size_t> bit_sizes = {512, 768, 1024};
+//     cpp_int message(42);
+    
+//     for (size_t bits : bit_sizes) {
+//         TestElGamal el_gamal(p, g);
+//         cpp_int test_p = el_gamal.generate_safe_prime(bits);
+//         cpp_int test_g = el_gamal.find_generator(test_p);
+        
+//         TestElGamal alice(test_p, test_g);
+//         TestElGamal bob(test_p, test_g);
+        
+//         auto encrypted = alice.encrypt(message, bob.get_keys().public_key);
+//         auto decrypted = bob.decrypt(encrypted);
+        
+//         EXPECT_EQ(message, decrypted);
+//     }
+// }
+
+TEST_F(ElGamalTest, invalid_parameter_construction) {
+    EXPECT_THROW(TestElGamal(cpp_int(4), cpp_int(2)), std::invalid_argument);
+    EXPECT_THROW(TestElGamal(p, p), std::invalid_argument);
+    EXPECT_THROW(TestElGamal(p, cpp_int(1)), std::invalid_argument);
 }
 
 } // namespace common::crypto
