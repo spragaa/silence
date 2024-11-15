@@ -21,9 +21,14 @@ protected:
     
     void SetUp() override {
         p = common::crypto::hex_to_cpp_int(
-            "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
-            "29024E088A67CC74020BBEA63B139B22514A08798E3404D"
-            "DEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C2"
+            "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74"
+            "020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F1437"
+            "4FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED"
+            "EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF05"
+            "98DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB"
+            "9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3B"
+            "E39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF695581718"
+            "3995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF"
         );
         g = common::crypto::TestElGamal::cpp_int(2);
     }
@@ -162,6 +167,26 @@ TEST_F(ElGamalTest, encrypted_message_formatting) {
     EXPECT_FALSE(formatted.empty());
     EXPECT_NE(formatted.find("C1:"), std::string::npos);
     EXPECT_NE(formatted.find("C2:"), std::string::npos);
+}
+
+TEST_F(ElGamalTest, demonstrate_prime_size_effects) {
+    cpp_int small_p = 23;
+    cpp_int g = 2;
+    
+    common::crypto::TestElGamal small_prime_system(small_p, g);
+    common::crypto::TestElGamal large_prime_system(p, g);
+    
+    cpp_int message(1000);
+    
+    auto encrypted_small = small_prime_system.encrypt(message, 
+        small_prime_system.get_keys().public_key);
+    auto decrypted_small = small_prime_system.decrypt(encrypted_small);
+    EXPECT_NE(message, decrypted_small);
+    
+    auto encrypted_large = large_prime_system.encrypt(message, 
+        large_prime_system.get_keys().public_key);
+    auto decrypted_large = large_prime_system.decrypt(encrypted_large);
+    EXPECT_EQ(message, decrypted_large);
 }
 
 } // namespace common::crypto
