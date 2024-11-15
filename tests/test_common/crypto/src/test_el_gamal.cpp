@@ -9,15 +9,15 @@ class TestElGamal : public ElGamal {
 public:
 
     TestElGamal(const cpp_int& p, const cpp_int& g) : ElGamal(p, g) {}
-    
-    using ElGamal::generate_random;
-    using ElGamal::modular_pow;
-    using ElGamal::is_prime;
-    using ElGamal::validate_parameters;
-    using ElGamal::generate_safe_prime;
-    using ElGamal::find_generator;
-    using ElGamal::miller_rabin_test;
 };
+
+// bool is_prime(const cpp_int& n, int iterations = 50);
+// bool validate_parameters(const cpp_int& p, const cpp_int& g);
+// cpp_int find_generator(const cpp_int& p);	
+// cpp_int generate_random(const cpp_int& min, const cpp_int& max);
+// bool miller_rabin_test(const cpp_int& n, const cpp_int& a);
+// cpp_int modular_pow(const cpp_int& base, const cpp_int& exponent, const cpp_int& modulus);
+
 
 class ElGamalTest : public ::testing::Test {
 protected:
@@ -117,7 +117,7 @@ TEST_F(ElGamalTest, modular_pow_correctness) {
     common::crypto::TestElGamal::cpp_int exp(13);
     common::crypto::TestElGamal::cpp_int mod(497);
     
-    auto result = el_gamal.modular_pow(base, exp, mod);
+    auto result = modular_pow(base, exp, mod);
     EXPECT_EQ(result, common::crypto::ElGamal::cpp_int(445));
 }
 
@@ -199,18 +199,18 @@ TEST_F(ElGamalTest, demonstrate_prime_size_effects) {
 TEST_F(ElGamalTest, prime_validation) {
     TestElGamal el_gamal(p, g);
     
-    EXPECT_TRUE(el_gamal.is_prime(251064135199));
-    EXPECT_TRUE(el_gamal.is_prime(759869695727));
-    EXPECT_TRUE(el_gamal.is_prime(167208199969));
-    EXPECT_TRUE(el_gamal.is_prime(701906980781));
+    EXPECT_TRUE(is_prime(251064135199));
+    EXPECT_TRUE(is_prime(759869695727));
+    EXPECT_TRUE(is_prime(167208199969));
+    EXPECT_TRUE(is_prime(701906980781));
     
-    EXPECT_FALSE(el_gamal.is_prime(4));
-    EXPECT_FALSE(el_gamal.is_prime(100));
-    EXPECT_FALSE(el_gamal.is_prime(999));
+    EXPECT_FALSE(is_prime(4));
+    EXPECT_FALSE(is_prime(100));
+    EXPECT_FALSE(is_prime(999));
     
-    EXPECT_FALSE(el_gamal.is_prime(0));
-    EXPECT_FALSE(el_gamal.is_prime(1));
-    EXPECT_TRUE(el_gamal.is_prime(2));
+    EXPECT_FALSE(is_prime(0));
+    EXPECT_FALSE(is_prime(1));
+    EXPECT_TRUE(is_prime(2));
 }
 
 TEST_F(ElGamalTest, miller_rabin_test_correctness) {
@@ -220,8 +220,8 @@ TEST_F(ElGamalTest, miller_rabin_test_correctness) {
     bool is_probably_prime = true;
     
     for (int i = 0; i < 20; i++) {
-        cpp_int a = el_gamal.generate_random(2, carmichael - 2);
-        if (!el_gamal.miller_rabin_test(carmichael, a)) {
+        cpp_int a = generate_random(2, carmichael - 2);
+        if (!miller_rabin_test(carmichael, a)) {
             is_probably_prime = false;
             break;
         }
@@ -233,21 +233,21 @@ TEST_F(ElGamalTest, miller_rabin_test_correctness) {
 TEST_F(ElGamalTest, parameter_validation) {
     TestElGamal el_gamal(p, g);
     
-    EXPECT_NO_THROW(el_gamal.validate_parameters(p, g));
+    EXPECT_NO_THROW(validate_parameters(p, g));
     
     cpp_int non_prime = p * 2;
-    EXPECT_THROW(el_gamal.validate_parameters(non_prime, g), std::invalid_argument);
+    EXPECT_THROW(validate_parameters(non_prime, g), std::invalid_argument);
     
-    EXPECT_THROW(el_gamal.validate_parameters(p, p), std::invalid_argument);
+    EXPECT_THROW(validate_parameters(p, p), std::invalid_argument);
     
-    EXPECT_THROW(el_gamal.validate_parameters(p, cpp_int(1)), std::invalid_argument);
+    EXPECT_THROW(validate_parameters(p, cpp_int(1)), std::invalid_argument);
 }
 
 TEST_F(ElGamalTest, generator_finding) {
     TestElGamal el_gamal(p, g);
     
     cpp_int small_p = 23; // p = 23, (p-1)/2 = 11 are both prime
-    cpp_int found_g = el_gamal.find_generator(small_p);
+    cpp_int found_g = find_generator(small_p);
     
     EXPECT_GT(found_g, cpp_int(1));
     EXPECT_LT(found_g, small_p);
@@ -269,7 +269,7 @@ TEST_F(ElGamalTest, generator_finding) {
 //     for (size_t bits : bit_sizes) {
 //         TestElGamal el_gamal(p, g);
 //         cpp_int test_p = el_gamal.generate_safe_prime(bits);
-//         cpp_int test_g = el_gamal.find_generator(test_p);
+//         cpp_int test_g = find_generator(test_p);
         
 //         TestElGamal test_system(test_p, test_g);
 //         const auto& keys = test_system.get_keys();
@@ -288,7 +288,7 @@ TEST_F(ElGamalTest, generator_finding) {
 //     for (size_t bits : bit_sizes) {
 //         TestElGamal el_gamal(p, g);
 //         cpp_int test_p = el_gamal.generate_safe_prime(bits);
-//         cpp_int test_g = el_gamal.find_generator(test_p);
+//         cpp_int test_g = find_generator(test_p);
         
 //         TestElGamal alice(test_p, test_g);
 //         TestElGamal bob(test_p, test_g);
