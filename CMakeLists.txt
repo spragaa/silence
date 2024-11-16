@@ -4,7 +4,10 @@ project(silence)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "/usr/include/rapidjson")
+
+cmake_policy(SET CMP0048 NEW) 
+cmake_policy(SET CMP0069 NEW) 
+cmake_policy(SET CMP0077 NEW) 
 
 set(CMAKE_POLICY_DEFAULT_CMP0048 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
@@ -14,9 +17,6 @@ set(CMAKE_POLICY_DEFAULT_CMP0169 OLD)
 set(CMAKE_POLICY_DEFAULT_CMP0175 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0002 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0148 NEW)
-if(POLICY CMP0167)
-  cmake_policy(SET CMP0167 NEW)
-endif()
 
 include(CheckIPOSupported)
 check_ipo_supported(RESULT supported OUTPUT error)
@@ -40,6 +40,14 @@ add_definitions(-DSOURCE_DIR="${CMAKE_SOURCE_DIR}")
 # this works fine, but I'd like to directly fetch boost library, I think there is a way to fetch only needed boost libs
 find_package(Boost 1.74 REQUIRED COMPONENTS system thread)
 include(FetchContent)
+
+# message("Fetching RapidJSON")
+# FetchContent_Declare(
+#     RapidJSON
+#     GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
+#     GIT_TAG v1.1.0
+# )
+# FetchContent_MakeAvailable(RapidJSON)
 
 message("Fetching https://github.com/nlohmann/json.git, tag v3.11.2")
 FetchContent_Declare(
@@ -76,14 +84,9 @@ FetchContent_Declare(
 set(REDIS_PLUS_PLUS_CXX_STANDARD 20)
 set(REDIS_PLUS_PLUS_BUILD_TEST OFF)
 set(REDIS_PLUS_PLUS_USE_TLS OFF)
-set(HIREDIS_HEADER "${hiredis_SOURCE_DIR}")
-set(HIREDIS_LIB "${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/hiredis-build/libhiredis${CMAKE_SHARED_LIBRARY_SUFFIX}")
-include_directories(${hiredis_SOURCE_DIR})
-include_directories(${hiredis_BINARY_DIR})
+set(HIREDIS_HEADER ${hiredis_SOURCE_DIR})
+set(HIREDIS_LIB $<TARGET_FILE:hiredis>)
 FetchContent_MakeAvailable(redis_plus_plus)
-
-target_include_directories(redis++ PRIVATE ${hiredis_SOURCE_DIR})
-target_include_directories(redis++_static PRIVATE ${hiredis_SOURCE_DIR})
 
 message("Fetching https://github.com/pistacheio/pistache.git, tag 0.0.5")
 FetchContent_Declare(
@@ -94,6 +97,7 @@ FetchContent_Declare(
 set(PISTACHE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(PISTACHE_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(PISTACHE_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(PISTACHE_USE_RAPIDJSON OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(pistache)
 
 add_subdirectory(common)
