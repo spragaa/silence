@@ -1,0 +1,53 @@
+name: Run Google Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y libboost1.74-all-dev build-essential cmake
+
+    - name: Cache build directories
+      uses: actions/cache@v3
+      with:
+        path: |
+          build/
+          ~/.cache/
+        key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-build-
+
+    - name: Build project
+      run: |
+        cd scripts
+        chmod +x *.sh
+        ./build.sh --debug
+      shell: bash
+
+    - name: Run tests
+      run: |
+        cd scripts
+        ./run_tests.sh
+      shell: bash
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: |
+          build/Testing/
+          build/test_results/
