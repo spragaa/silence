@@ -84,6 +84,18 @@ set(HIREDIS_HEADER ${hiredis_SOURCE_DIR})
 set(HIREDIS_LIB $<TARGET_FILE:hiredis>)
 FetchContent_MakeAvailable(redis_plus_plus)
 
+message("Fetching RapidJSON")
+FetchContent_Declare(
+    RapidJSON
+    GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
+    GIT_TAG v1.1.0
+)
+set(RAPIDJSON_BUILD_DOC OFF CACHE BOOL "" FORCE)
+set(RAPIDJSON_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(RAPIDJSON_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(RAPIDJSON_BUILD_THIRDPARTY_GTEST OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(RapidJSON)
+
 message("Fetching https://github.com/pistacheio/pistache.git, tag 0.0.5")
 FetchContent_Declare(
     pistache
@@ -93,7 +105,6 @@ FetchContent_Declare(
 set(PISTACHE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(PISTACHE_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(PISTACHE_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(PISTACHE_USE_RAPIDJSON OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(pistache)
 
 add_subdirectory(common)
