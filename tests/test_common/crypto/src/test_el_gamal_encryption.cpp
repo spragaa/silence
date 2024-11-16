@@ -1,19 +1,19 @@
-#include "el_gamal.hpp"
+#include "el_gamal_encryption.hpp"
 #include "crypto_utils.hpp"
 
 #include <gtest/gtest.h>
 
 namespace common::crypto {
 
-class TestElGamal : public ElGamal {
+class TestElGamalEncryption : public ElGamalEncryption {
 public:
-	TestElGamal(const cpp_int& p, const cpp_int& g) : ElGamal(p, g) {
+	TestElGamalEncryption(const cpp_int& p, const cpp_int& g) : ElGamalEncryption(p, g) {
 	}
 
-	using ElGamal::get_keys;
+	using ElGamalEncryption::get_keys;
 };
 
-class ElGamalTests : public ::testing::Test {
+class ElGamalEncryptionTests : public ::testing::Test {
 protected:
 
 	static void SetUpTestSuite() {
@@ -27,12 +27,12 @@ protected:
 			"E39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF695581718"
 			"3995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF"
 			);
-		g = TestElGamal::cpp_int(11); // 11 is safe, if you want to change 'p', use find_valid_generator to find new sage 'g'
+		g = TestElGamalEncryption::cpp_int(11); // 11 is safe, if you want to change 'p', use find_valid_generator to find new safe 'g'
 		// g = find_valid_generator(p);
 		// std::cout << "Using generator: " << g << std::endl;
 
-		alice = std::make_unique<TestElGamal>(p, g);
-		bob = std::make_unique<TestElGamal>(p, g);
+		alice = std::make_unique<TestElGamalEncryption>(p, g);
+		bob = std::make_unique<TestElGamalEncryption>(p, g);
 	}
 
 	static void TearDownTestSuite() {
@@ -40,19 +40,19 @@ protected:
 		bob.reset();
 	}
 
-	static TestElGamal::cpp_int p;
-	static TestElGamal::cpp_int g;
-	static std::unique_ptr<TestElGamal> alice;
-	static std::unique_ptr<TestElGamal> bob;
+	static TestElGamalEncryption::cpp_int p;
+	static TestElGamalEncryption::cpp_int g;
+	static std::unique_ptr<TestElGamalEncryption> alice;
+	static std::unique_ptr<TestElGamalEncryption> bob;
 };
 
-TestElGamal::cpp_int ElGamalTests::p;
-TestElGamal::cpp_int ElGamalTests::g;
-std::unique_ptr<TestElGamal> ElGamalTests::alice;
-std::unique_ptr<TestElGamal> ElGamalTests::bob;
+TestElGamalEncryption::cpp_int ElGamalEncryptionTests::p;
+TestElGamalEncryption::cpp_int ElGamalEncryptionTests::g;
+std::unique_ptr<TestElGamalEncryption> ElGamalEncryptionTests::alice;
+std::unique_ptr<TestElGamalEncryption> ElGamalEncryptionTests::bob;
 
 
-TEST_F(ElGamalTests, key_generation) {
+TEST_F(ElGamalEncryptionTests, key_generation) {
 	const auto& keys = alice->get_keys();
 
 	EXPECT_GT(keys.private_key, 1);
@@ -61,8 +61,8 @@ TEST_F(ElGamalTests, key_generation) {
 	EXPECT_LT(keys.public_key, p);
 }
 
-TEST_F(ElGamalTests, encrypt_decrypt_small_message) {
-	common::crypto::TestElGamal::cpp_int message(42);
+TEST_F(ElGamalEncryptionTests, encrypt_decrypt_small_message) {
+	common::crypto::TestElGamalEncryption::cpp_int message(42);
 
 	auto encrypted = alice->encrypt(message, bob->get_keys().public_key);
 	auto decrypted = bob->decrypt(encrypted);
@@ -70,7 +70,7 @@ TEST_F(ElGamalTests, encrypt_decrypt_small_message) {
 	EXPECT_EQ(message, decrypted);
 }
 
-TEST_F(ElGamalTests, encrypt_decrypt_large_message) {
+TEST_F(ElGamalEncryptionTests, encrypt_decrypt_large_message) {
 	auto message = common::crypto::hex_to_cpp_int(
 		"0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"
 		);
@@ -81,23 +81,23 @@ TEST_F(ElGamalTests, encrypt_decrypt_large_message) {
 	EXPECT_EQ(message, decrypted);
 }
 
-TEST_F(ElGamalTests, bidirectional_communication) {
-	common::crypto::TestElGamal::cpp_int message1(123);
+TEST_F(ElGamalEncryptionTests, bidirectional_communication) {
+	common::crypto::TestElGamalEncryption::cpp_int message1(123);
 	auto encrypted1 = alice->encrypt(message1, bob->get_keys().public_key);
 	auto decrypted1 = bob->decrypt(encrypted1);
 	EXPECT_EQ(message1, decrypted1);
 
-	common::crypto::TestElGamal::cpp_int message2(456);
+	common::crypto::TestElGamalEncryption::cpp_int message2(456);
 	auto encrypted2 = bob->encrypt(message2, alice->get_keys().public_key);
 	auto decrypted2 = alice->decrypt(encrypted2);
 	EXPECT_EQ(message2, decrypted2);
 }
 
-TEST_F(ElGamalTests, multiple_messages_encryption) {
-	std::vector<common::crypto::ElGamal::cpp_int> messages = {
-		common::crypto::TestElGamal::cpp_int(1),
-		common::crypto::TestElGamal::cpp_int(100),
-		common::crypto::TestElGamal::cpp_int(65535),
+TEST_F(ElGamalEncryptionTests, multiple_messages_encryption) {
+	std::vector<common::crypto::ElGamalEncryption::cpp_int> messages = {
+		common::crypto::TestElGamalEncryption::cpp_int(1),
+		common::crypto::TestElGamalEncryption::cpp_int(100),
+		common::crypto::TestElGamalEncryption::cpp_int(65535),
 		common::crypto::hex_to_cpp_int("DEADBEEF")
 	};
 
@@ -108,20 +108,20 @@ TEST_F(ElGamalTests, multiple_messages_encryption) {
 	}
 }
 
-TEST_F(ElGamalTests, edge_cases) {
-	common::crypto::TestElGamal::cpp_int message1(1);
+TEST_F(ElGamalEncryptionTests, edge_cases) {
+	common::crypto::TestElGamalEncryption::cpp_int message1(1);
 	auto encrypted1 = alice->encrypt(message1, bob->get_keys().public_key);
 	auto decrypted1 = bob->decrypt(encrypted1);
 	EXPECT_EQ(message1, decrypted1);
 
-	common::crypto::TestElGamal::cpp_int message2 = p - 1;
+	common::crypto::TestElGamalEncryption::cpp_int message2 = p - 1;
 	auto encrypted2 = alice->encrypt(message2, bob->get_keys().public_key);
 	auto decrypted2 = bob->decrypt(encrypted2);
 	EXPECT_EQ(message2, decrypted2);
 }
 
-TEST_F(ElGamalTests, randomness_in_encryption) {
-	common::crypto::ElGamal::cpp_int message(42);
+TEST_F(ElGamalEncryptionTests, randomness_in_encryption) {
+	common::crypto::ElGamalEncryption::cpp_int message(42);
 
 	auto encrypted1 = alice->encrypt(message, bob->get_keys().public_key);
 	auto encrypted2 = alice->encrypt(message, bob->get_keys().public_key);
@@ -132,12 +132,12 @@ TEST_F(ElGamalTests, randomness_in_encryption) {
 	EXPECT_EQ(bob->decrypt(encrypted1), bob->decrypt(encrypted2));
 }
 
-TEST_F(ElGamalTests, demonstrate_prime_size_effects) {
+TEST_F(ElGamalEncryptionTests, demonstrate_prime_size_effects) {
 	cpp_int small_p = 23;
 	cpp_int g = 11;
 
-	common::crypto::TestElGamal small_prime_system(small_p, g);
-	common::crypto::TestElGamal large_prime_system(p, g);
+	common::crypto::TestElGamalEncryption small_prime_system(small_p, g);
+	common::crypto::TestElGamalEncryption large_prime_system(p, g);
 
 	cpp_int message(1000);
 
@@ -152,7 +152,7 @@ TEST_F(ElGamalTests, demonstrate_prime_size_effects) {
 	EXPECT_EQ(message, decrypted_large);
 }
 
-TEST_F(ElGamalTests, parameter_validation) {
+TEST_F(ElGamalEncryptionTests, parameter_validation) {
 	EXPECT_NO_THROW(validate_parameters(p, g));
 
 	cpp_int non_prime = p * 2;
@@ -163,15 +163,15 @@ TEST_F(ElGamalTests, parameter_validation) {
 	EXPECT_THROW(validate_parameters(p, cpp_int(1)), std::invalid_argument);
 }
 
-// TEST_F(ElGamalTests, key_generation_with_different_primes) {
+// TEST_F(ElGamalEncryptionTests, key_generation_with_different_primes) {
 //     std::vector<size_t> bit_sizes = {512, 768, 1024};
 
 //     for (size_t bits : bit_sizes) {
-//         TestElGamal el_gamal(p, g);
-//         cpp_int test_p = el_gamal.generate_safe_prime(bits);
+//         TestElGamalEncryption el_gamal_encryption(p, g);
+//         cpp_int test_p = el_gamal_encryption.generate_safe_prime(bits);
 //         cpp_int test_g = find_generator(test_p);
 
-//         TestElGamal test_system(test_p, test_g);
+//         TestElGamalEncryption test_system(test_p, test_g);
 //         const auto& keys = test_system.get_keys();
 
 //         EXPECT_GT(keys.private_key, cpp_int(1));
@@ -181,17 +181,17 @@ TEST_F(ElGamalTests, parameter_validation) {
 //     }
 // }
 
-// TEST_F(ElGamalTests, encryption_with_different_prime_sizes) {
+// TEST_F(ElGamalEncryptionTests, encryption_with_different_prime_sizes) {
 //     std::vector<size_t> bit_sizes = {512, 768, 1024};
 //     cpp_int message(42);
 
 //     for (size_t bits : bit_sizes) {
-//         TestElGamal el_gamal(p, g);
-//         cpp_int test_p = el_gamal.generate_safe_prime(bits);
+//         TestElGamalEncryption el_gamal_encryption(p, g);
+//         cpp_int test_p = el_gamal_encryption.generate_safe_prime(bits);
 //         cpp_int test_g = find_generator(test_p);
 
-//         TestElGamal alice(test_p, test_g);
-//         TestElGamal bob(test_p, test_g);
+//         TestElGamalEncryption alice(test_p, test_g);
+//         TestElGamalEncryption bob(test_p, test_g);
 
 //         auto encrypted = alice.encrypt(message, bob.get_keys().public_key);
 //         auto decrypted = bob.decrypt(encrypted);
@@ -200,10 +200,10 @@ TEST_F(ElGamalTests, parameter_validation) {
 //     }
 // }
 
-TEST_F(ElGamalTests, invalid_parameter_construction) {
-	EXPECT_THROW(TestElGamal(cpp_int(4), cpp_int(2)), std::invalid_argument);
-	EXPECT_THROW(TestElGamal(p, p), std::invalid_argument);
-	EXPECT_THROW(TestElGamal(p, cpp_int(1)), std::invalid_argument);
+TEST_F(ElGamalEncryptionTests, invalid_parameter_construction) {
+	EXPECT_THROW(TestElGamalEncryption(cpp_int(4), cpp_int(2)), std::invalid_argument);
+	EXPECT_THROW(TestElGamalEncryption(p, p), std::invalid_argument);
+	EXPECT_THROW(TestElGamalEncryption(p, cpp_int(1)), std::invalid_argument);
 }
 
 } // namespace common::crypto
