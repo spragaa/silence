@@ -18,16 +18,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y \
-          libboost1.74-all-dev \
-          build-essential \
-          cmake \
-          libssl-dev \
-          libpq-dev \
-          pkg-config \
-          rapidjson-dev \
-          libyaml-cpp-dev \
-          libhiredis-dev
+        sudo apt install -y libboost1.74-all-dev build-essential cmake
 
     - name: Cache build directories
       uses: actions/cache@v3
@@ -35,7 +26,7 @@ jobs:
         path: |
           build/
           ~/.cache/
-        key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}-v1
+        key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}
         restore-keys: |
           ${{ runner.os }}-build-
 
@@ -43,7 +34,7 @@ jobs:
       run: |
         cd scripts
         chmod +x *.sh
-        ./build.sh --debug --clean
+        ./build.sh --debug
       shell: bash
 
     - name: Run tests
