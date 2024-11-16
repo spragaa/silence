@@ -1,7 +1,8 @@
 add_library(crypto_lib
     src/crypto_utils.cpp
     src/aes256.cpp
-    src/el_gamal.cpp
+    src/el_gamal_encryption.cpp
+    src/el_gamal_digital_signature.cpp
 )
 
 target_link_libraries(crypto_lib

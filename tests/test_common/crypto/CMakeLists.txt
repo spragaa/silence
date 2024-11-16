@@ -2,7 +2,7 @@ add_executable(test_crypto
     main.cpp
     src/test_crypto_utils.cpp
     src/test_aes256.cpp
-    src/test_el_gamal.cpp
+    src/test_el_gamal_encryption.cpp
 )
 
 target_link_libraries(test_crypto

@@ -65,7 +65,7 @@ TEST_F(CryptoUtilsTests, generator_finding) {
 	EXPECT_EQ(elements.size(), static_cast<size_t>(small_p - 1));
 }
 
-TEST_F(CryptoUtilsTests, el_gamal_key_pair_formatting) {
+TEST_F(CryptoUtilsTests, el_gamal_encryption_key_pair_formatting) {
 	const auto& keys = KeyPair {
 		hex_to_cpp_int("deadbeef"),
 		hex_to_cpp_int("beefdead")
@@ -77,7 +77,7 @@ TEST_F(CryptoUtilsTests, el_gamal_key_pair_formatting) {
 	EXPECT_NE(formatted.find("Public:"), std::string::npos);
 }
 
-TEST_F(CryptoUtilsTests, el_gamal_encrypted_message_formatting) {
+TEST_F(CryptoUtilsTests, el_gamal_encryption_encrypted_message_formatting) {
 	auto encrypted = EncryptedMessage {
 		hex_to_cpp_int("encrypted"),
 		hex_to_cpp_int("detpyrcne")
