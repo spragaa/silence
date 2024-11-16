@@ -2,10 +2,11 @@
 
 #include <gtest/gtest.h>
 
+namespace common::crypto {
+
 using cpp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>, boost::multiprecision::et_off>;
 
 class CryptoUtilsTests : public ::testing::Test {};
-
 
 TEST_F(CryptoUtilsTests, modular_pow_correctness) {
     cpp_int base(4);
@@ -63,3 +64,5 @@ TEST_F(CryptoUtilsTests, generator_finding) {
     
     EXPECT_EQ(elements.size(), static_cast<size_t>(small_p - 1));
 }
+
+} // namespace common::crypto
