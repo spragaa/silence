@@ -15,6 +15,8 @@ set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0167 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0169 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0175 NEW)
+set(CMAKE_POLICY_DEFAULT_CMP0002 NEW)
+set(CMAKE_POLICY_DEFAULT_CMP0148 NEW)
 
 include(CheckIPOSupported)
 check_ipo_supported(RESULT supported OUTPUT error)
@@ -39,13 +41,13 @@ add_definitions(-DSOURCE_DIR="${CMAKE_SOURCE_DIR}")
 find_package(Boost 1.74 REQUIRED COMPONENTS system thread)
 include(FetchContent)
 
-message("Fetching RapidJSON")
-FetchContent_Declare(
-    RapidJSON
-    GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
-    GIT_TAG v1.1.0
-)
-FetchContent_MakeAvailable(RapidJSON)
+# message("Fetching RapidJSON")
+# FetchContent_Declare(
+#     RapidJSON
+#     GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
+#     GIT_TAG v1.1.0
+# )
+# FetchContent_MakeAvailable(RapidJSON)
 
 message("Fetching https://github.com/nlohmann/json.git, tag v3.11.2")
 FetchContent_Declare(
@@ -95,6 +97,7 @@ FetchContent_Declare(
 set(PISTACHE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(PISTACHE_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(PISTACHE_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(PISTACHE_USE_RAPIDJSON OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(pistache)
 
 add_subdirectory(common)
