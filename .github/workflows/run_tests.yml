@@ -17,12 +17,16 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt update
         sudo apt install -y \
           libboost1.74-all-dev \
           build-essential \
           cmake \
-          pkg-config
+          libssl-dev \
+          libpq-dev \
+          pkg-config \
+          rapidjson-dev \
+          libyaml-cpp-dev \
+          libhiredis-dev
 
     - name: Cache build directories
       uses: actions/cache@v3
