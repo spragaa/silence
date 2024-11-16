@@ -3,6 +3,7 @@ add_executable(test_crypto
     src/test_crypto_utils.cpp
     src/test_aes256.cpp
     src/test_el_gamal_encryption.cpp
+    src/test_dsa.cpp
 )
 
 target_link_libraries(test_crypto

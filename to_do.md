@@ -48,6 +48,9 @@
 - https://coveralls.io
 - --debug option for script is counter intuitive -> always print debug messages in scripts or remove them complitely
 
+#### crypto:
+- use precomputed safe primes
+
 ### refactoring
 - unify the way to compare Timestamps, parse them from/to string, int, json and pqxx::response
 - go through all comments in source code
