@@ -1,5 +1,5 @@
 #pragma once
-
+#include "debug.hpp"
 #include "crypto_utils.hpp"
 
 #include <boost/multiprecision/cpp_int.hpp>
