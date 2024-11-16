@@ -153,21 +153,5 @@ cpp_int modular_pow(const cpp_int& base, const cpp_int& exponent, const cpp_int&
 	return result;
 }
 
-std::string format_key_info(const std::string& label, const common::crypto::KeyPair& keys) {
-	std::stringstream ss;
-	ss << label << " Keys:\n";
-	ss << "  Private: " << common::crypto::cpp_int_to_hex(keys.private_key) << "\n";
-	ss << "  Public:  " << common::crypto::cpp_int_to_hex(keys.public_key) << "\n";
-	return ss.str();
-}
-
-std::string format_encrypted_message(const std::string& label, const common::crypto::EncryptedMessage& msg) {
-	std::stringstream ss;
-	ss << label << ":\n";
-	ss << "  C1: " << common::crypto::cpp_int_to_hex(msg.c1) << "\n";
-	ss << "  C2: " << common::crypto::cpp_int_to_hex(msg.c2) << "\n";
-	return ss.str();
-}
-
 } // namespace common
 } // namespace crypto
