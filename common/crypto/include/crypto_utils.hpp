@@ -19,15 +19,21 @@ struct EncryptedMessage {
 	cpp_int c2;
 };
 
+struct DSASignature {
+	cpp_int r;
+	cpp_int signature;
+};
+
 cpp_int hex_to_cpp_int(const std::string& hex);
 std::string cpp_int_to_hex(const cpp_int& num);
 cpp_int find_valid_generator(const cpp_int& p);
 bool is_prime(const cpp_int& n, int iterations = 50);
-bool validate_parameters(const cpp_int& p, const cpp_int& g);
+bool validate_el_gamal_parameters(const cpp_int& p, const cpp_int& g);
 cpp_int find_generator(const cpp_int& p);
 cpp_int generate_random(const cpp_int& min, const cpp_int& max);
 bool miller_rabin_test(const cpp_int& n, const cpp_int& a);
 cpp_int modular_pow(const cpp_int& base, const cpp_int& exponent, const cpp_int& modulus);
+bool validate_dsa_parameters(const cpp_int& p, const cpp_int& q, const cpp_int& g);
 
 } // namespace common
 } // namespace crypto

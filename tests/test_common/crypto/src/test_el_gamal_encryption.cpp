@@ -153,14 +153,14 @@ TEST_F(ElGamalEncryptionTests, demonstrate_prime_size_effects) {
 }
 
 TEST_F(ElGamalEncryptionTests, parameter_validation) {
-	EXPECT_NO_THROW(validate_parameters(p, g));
+	EXPECT_NO_THROW(validate_el_gamal_parameters(p, g));
 
 	cpp_int non_prime = p * 2;
-	EXPECT_THROW(validate_parameters(non_prime, g), std::invalid_argument);
+	EXPECT_THROW(validate_el_gamal_parameters(non_prime, g), std::invalid_argument);
 
-	EXPECT_THROW(validate_parameters(p, p), std::invalid_argument);
+	EXPECT_THROW(validate_el_gamal_parameters(p, p), std::invalid_argument);
 
-	EXPECT_THROW(validate_parameters(p, cpp_int(1)), std::invalid_argument);
+	EXPECT_THROW(validate_el_gamal_parameters(p, cpp_int(1)), std::invalid_argument);
 }
 
 // TEST_F(ElGamalEncryptionTests, key_generation_with_different_primes) {
