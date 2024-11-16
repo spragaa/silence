@@ -66,7 +66,7 @@ bool is_prime(const cpp_int& n, int iterations) {
 	return true;
 }
 
-bool validate_parameters(const cpp_int& p, const cpp_int& g) {
+bool validate_el_gamal_parameters(const cpp_int& p, const cpp_int& g) {
 	if (!is_prime(p)) {
 		throw std::invalid_argument("The modulus p must be prime");
 	}
@@ -151,6 +151,26 @@ cpp_int modular_pow(const cpp_int& base, const cpp_int& exponent, const cpp_int&
 	}
 
 	return result;
+}
+
+bool validate_dsa_parameters(const cpp_int& p, const cpp_int& q, const cpp_int& g) {
+	if (!is_prime(p) || !is_prime(q)) {
+		return false;
+	}
+
+	if ((p - 1) % q != 0) {
+		return false;
+	}
+
+	if (g < 2 || g >= p) {
+		return false;
+	}
+
+	if (modular_pow(g, q, p) != 1) {
+		return false;
+	}
+
+	return true;
 }
 
 } // namespace common
