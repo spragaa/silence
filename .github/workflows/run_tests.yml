@@ -25,6 +25,7 @@ jobs:
           libssl-dev \
           libpq-dev \
           pkg-config \
+          rapidjson-dev \
           libyaml-cpp-dev
 
     - name: Cache build directories
