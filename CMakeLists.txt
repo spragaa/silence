@@ -116,7 +116,7 @@ if(BUILD_TESTS)
     set(BUILD_GMOCK ON CACHE BOOL "" FORCE)
     set(BUILD_GTEST ON CACHE BOOL "" FORCE)
     set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+    
     FetchContent_MakeAvailable(googletest)
-
     add_subdirectory(tests)
 endif()
