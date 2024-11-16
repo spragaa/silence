@@ -13,6 +13,9 @@ set(CMAKE_POLICY_DEFAULT_CMP0169 OLD)
 set(CMAKE_POLICY_DEFAULT_CMP0175 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0002 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0148 NEW)
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
 
 include(CheckIPOSupported)
 check_ipo_supported(RESULT supported OUTPUT error)
@@ -36,14 +39,6 @@ add_definitions(-DSOURCE_DIR="${CMAKE_SOURCE_DIR}")
 # this works fine, but I'd like to directly fetch boost library, I think there is a way to fetch only needed boost libs
 find_package(Boost 1.74 REQUIRED COMPONENTS system thread)
 include(FetchContent)
-
-# message("Fetching RapidJSON")
-# FetchContent_Declare(
-#     RapidJSON
-#     GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
-#     GIT_TAG v1.1.0
-# )
-# FetchContent_MakeAvailable(RapidJSON)
 
 message("Fetching https://github.com/nlohmann/json.git, tag v3.11.2")
 FetchContent_Declare(
@@ -83,18 +78,6 @@ set(REDIS_PLUS_PLUS_USE_TLS OFF)
 set(HIREDIS_HEADER ${hiredis_SOURCE_DIR})
 set(HIREDIS_LIB $<TARGET_FILE:hiredis>)
 FetchContent_MakeAvailable(redis_plus_plus)
-
-message("Fetching RapidJSON")
-FetchContent_Declare(
-    RapidJSON
-    GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
-    GIT_TAG v1.1.0
-)
-set(RAPIDJSON_BUILD_DOC OFF CACHE BOOL "" FORCE)
-set(RAPIDJSON_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(RAPIDJSON_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(RAPIDJSON_BUILD_THIRDPARTY_GTEST OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(RapidJSON)
 
 message("Fetching https://github.com/pistacheio/pistache.git, tag 0.0.5")
 FetchContent_Declare(
