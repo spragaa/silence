@@ -7,11 +7,16 @@ ElGamalEncryption::ElGamalEncryption(const cpp_int& prime_modulus, const cpp_int
 	: p(prime_modulus), g(generator) {
 
 	if (!validate_parameters(p, g)) {
-		throw std::invalid_argument("Invalid parameters");
+	   	FATAL_MSG("[ElGamalEncryption::ElGamalEncryption] Invalid arguments!");
+	    throw std::invalid_argument("Invalid parameters");
 	}
 
 	keys.private_key = generate_random(2, p - 2);
 	keys.public_key = modular_pow(g, keys.private_key, p);
+	
+	DEBUG_MSG("[ElGamalEncryption::ElGamalEncryption] Initialized successfully. \npublic key: " + cpp_int_to_hex(keys.public_key) + 
+    	"\nprivate key: " + cpp_int_to_hex(keys.private_key)
+	);
 }
 
 cpp_int ElGamalEncryption::get_public_key() const {
@@ -29,6 +34,11 @@ EncryptedMessage ElGamalEncryption::encrypt(const cpp_int& message, const cpp_in
 	encrypted.c1 = modular_pow(g, k, p);
 	encrypted.c2 = (message * modular_pow(recipient_public_key, k, p)) % p;
 
+	DEBUG_MSG("[ElGamalEncryption::encrypt] Ecnryption successful. \nc1: " 
+    	+ cpp_int_to_hex(encrypted.c1) 
+    	+ "\nc2: " + cpp_int_to_hex(encrypted.c2)
+	);
+	
 	return encrypted;
 }
 
@@ -36,7 +46,11 @@ ElGamalEncryption::cpp_int ElGamalEncryption::decrypt(const EncryptedMessage& en
 	cpp_int s = modular_pow(encrypted_message.c1, keys.private_key, p);
 	cpp_int s_inverse = modular_pow(s, p - 2, p);
 
-	return (encrypted_message.c2 * s_inverse) % p;
+	auto decrypted = (encrypted_message.c2 * s_inverse) % p; 
+	
+	DEBUG_MSG("[ElGamalEncryption::decrypt] Decryption successful. Message: " + cpp_int_to_hex(decrypted));
+		
+	return decrypted;
 }
 
 } // namespace common
