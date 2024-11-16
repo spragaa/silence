@@ -2,9 +2,9 @@
 
 int main() {
 	file_server::FileServerClient client(
-	    "localhost", 
-		"55555" 
-	);
-	
+		"localhost",
+		"55555"
+		);
+
 	return 0;
 }

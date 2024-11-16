@@ -14,19 +14,21 @@
 
 namespace file_server {
 
+// make them inline?
+// move to cpp ?
 constexpr size_t CHUNK_SIZE_BYTES = 512;
 constexpr uint8_t FILENAME_LEN = 16;
-    
+
 constexpr std::array<char, 62> ALPHABET = {
-'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',
-'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
-'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
-'y', 'z'
-};    
-    
+	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+	'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+	'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',
+	'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+	'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
+	'y', 'z'
+};
+
 class FileServer {
 public:
 	FileServer(
@@ -36,9 +38,9 @@ public:
 		size_t max_file_size = 1024 * 1024 * 10
 		);
 	FileServer(const FileServer&) = delete;
-    FileServer& operator=(const FileServer&) = delete;
+	FileServer& operator=(const FileServer&) = delete;
 	~FileServer();
-	
+
 	void start();
 	void stop();
 	bool is_valid_filename(const std::string& filename) const;
@@ -58,13 +60,13 @@ private:
 	std::filesystem::path get_filepath_by_name(const std::string& filename) const;
 
 private:
-    std::shared_ptr<Pistache::Http::Endpoint> _http_endpoint;
-    std::shared_ptr<Pistache::Rest::Router> _router; 
+	std::shared_ptr<Pistache::Http::Endpoint> _http_endpoint;
+	std::shared_ptr<Pistache::Rest::Router> _router;
 	std::shared_mutex _file_system_mutex;
-	std::unordered_map<std::string, std::unique_ptr<std::shared_mutex>> _file_mutexes;
+	std::unordered_map<std::string, std::unique_ptr<std::shared_mutex> > _file_mutexes;
 	std::mutex _file_mutexes_map_mutex;
-    bool _running = false;
-    std::mutex _init_mutex;
+	bool _running = false;
+	std::mutex _init_mutex;
 	unsigned int _thread_count;
 	unsigned short _server_port;
 	std::string _storage_dir;
