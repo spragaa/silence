@@ -28,8 +28,6 @@ cpp_int find_generator(const cpp_int& p);
 cpp_int generate_random(const cpp_int& min, const cpp_int& max);
 bool miller_rabin_test(const cpp_int& n, const cpp_int& a);
 cpp_int modular_pow(const cpp_int& base, const cpp_int& exponent, const cpp_int& modulus);
-std::string format_key_info(const std::string& label, const common::crypto::KeyPair& keys);
-std::string format_encrypted_message(const std::string& label, const common::crypto::EncryptedMessage& msg);
 
 } // namespace common
 } // namespace crypto
