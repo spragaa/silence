@@ -21,6 +21,15 @@ else()
   message(WARNING "IPO is not supported: ${error}")
 endif()
 
+option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
+option(ENABLE_SERVER_COVERAGE "Enable coverage for server" OFF)
+option(ENABLE_CLIENT_COVERAGE "Enable coverage for client" OFF)
+
+if(ENABLE_COVERAGE)
+  add_compile_options(--coverage -O0 -g)
+  add_link_options(--coverage)
+endif()
+
 option(BUILD_TESTS "Build the test suite" OFF)
 option(DEBUG "Build with debug logs" OFF)
 
@@ -101,4 +110,18 @@ if(BUILD_TESTS)
     FetchContent_MakeAvailable(googletest)
     
     add_subdirectory(tests)
+endif()
+
+if(ENABLE_COVERAGE)
+  add_custom_target(coverage_clean
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target clean
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}
+    COMMAND find ${CMAKE_BINARY_DIR} -name "*.gcda" -delete
+    COMMAND ${CMAKE_CTEST_COMMAND}
+    COMMAND lcov --capture --directory . --output-file coverage.info
+    COMMAND lcov --remove coverage.info '/usr/*' '*/googletest/*' '*/libpqxx/*' --output-file coverage_filtered.info
+    COMMAND genhtml coverage_filtered.info --output-directory coverage_report
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Generating clean coverage report"
+  )
 endif()

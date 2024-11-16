@@ -6,6 +6,7 @@ add_executable(test_server
 )
 
 target_link_libraries(test_server
+    PRIVATE
     server_lib 
     common_lib
     gtest
@@ -15,6 +16,10 @@ target_link_libraries(test_server
     redis++
     hiredis
 )
+
+if(ENABLE_COVERAGE)
+    target_link_libraries(test_server PRIVATE gcov)
+endif()
 
 target_include_directories(test_server
     PUBLIC ${CMAKE_SOURCE_DIR}/tests/test_server/include
@@ -27,4 +32,4 @@ target_include_directories(test_server
 )
 
 include(GoogleTest)
-gtest_discover_tests(test_server)  
+gtest_discover_tests(test_server)
