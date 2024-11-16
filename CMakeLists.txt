@@ -4,6 +4,7 @@ project(silence)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "/usr/include/rapidjson")
 
 set(CMAKE_POLICY_DEFAULT_CMP0048 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
@@ -75,9 +76,14 @@ FetchContent_Declare(
 set(REDIS_PLUS_PLUS_CXX_STANDARD 20)
 set(REDIS_PLUS_PLUS_BUILD_TEST OFF)
 set(REDIS_PLUS_PLUS_USE_TLS OFF)
-set(HIREDIS_HEADER ${hiredis_SOURCE_DIR})
-set(HIREDIS_LIB $<TARGET_FILE:hiredis>)
+set(HIREDIS_HEADER "${hiredis_SOURCE_DIR}")
+set(HIREDIS_LIB "${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/hiredis-build/libhiredis${CMAKE_SHARED_LIBRARY_SUFFIX}")
+include_directories(${hiredis_SOURCE_DIR})
+include_directories(${hiredis_BINARY_DIR})
 FetchContent_MakeAvailable(redis_plus_plus)
+
+target_include_directories(redis++ PRIVATE ${hiredis_SOURCE_DIR})
+target_include_directories(redis++_static PRIVATE ${hiredis_SOURCE_DIR})
 
 message("Fetching https://github.com/pistacheio/pistache.git, tag 0.0.5")
 FetchContent_Declare(
