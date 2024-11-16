@@ -3,15 +3,19 @@
 namespace common {
 namespace crypto {
 
-ElGamal::ElGamal(const cpp_int& prime_modulus, const cpp_int& generator) 
-    : p(prime_modulus), g(generator) {
-        
-    if (!validate_parameters(p, g)) {
-        throw std::invalid_argument("Invalid parameters");
-    }
-        
-    keys.private_key = generate_random(2, p - 2);
-    keys.public_key = modular_pow(g, keys.private_key, p);
+ElGamal::ElGamal(const cpp_int& prime_modulus, const cpp_int& generator)
+	: p(prime_modulus), g(generator) {
+
+	if (!validate_parameters(p, g)) {
+		throw std::invalid_argument("Invalid parameters");
+	}
+
+	keys.private_key = generate_random(2, p - 2);
+	keys.public_key = modular_pow(g, keys.private_key, p);
+}
+
+cpp_int ElGamal::get_public_key() const {
+	return keys.public_key;
 }
 
 const KeyPair& ElGamal::get_keys() const {
@@ -33,22 +37,6 @@ ElGamal::cpp_int ElGamal::decrypt(const EncryptedMessage& encrypted_message) {
 	cpp_int s_inverse = modular_pow(s, p - 2, p);
 
 	return (encrypted_message.c2 * s_inverse) % p;
-}
-
-std::string format_key_info(const std::string& label, const common::crypto::KeyPair& keys) {
-	std::stringstream ss;
-	ss << label << " Keys:\n";
-	ss << "  Private: " << common::crypto::cpp_int_to_hex(keys.private_key) << "\n";
-	ss << "  Public:  " << common::crypto::cpp_int_to_hex(keys.public_key) << "\n";
-	return ss.str();
-}
-
-std::string format_encrypted_message(const std::string& label, const common::crypto::EncryptedMessage& msg) {
-	std::stringstream ss;
-	ss << label << ":\n";
-	ss << "  C1: " << common::crypto::cpp_int_to_hex(msg.c1) << "\n";
-	ss << "  C2: " << common::crypto::cpp_int_to_hex(msg.c2) << "\n";
-	return ss.str();
 }
 
 } // namespace common
