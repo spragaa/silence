@@ -12,6 +12,9 @@ cmake_policy(SET CMP0077 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0048 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+set(CMAKE_POLICY_DEFAULT_CMP0167 NEW)
+set(CMAKE_POLICY_DEFAULT_CMP0169 NEW)
+set(CMAKE_POLICY_DEFAULT_CMP0175 NEW)
 
 include(CheckIPOSupported)
 check_ipo_supported(RESULT supported OUTPUT error)
@@ -71,6 +74,8 @@ FetchContent_Declare(
 set(REDIS_PLUS_PLUS_CXX_STANDARD 20)
 set(REDIS_PLUS_PLUS_BUILD_TEST OFF)
 set(REDIS_PLUS_PLUS_USE_TLS OFF)
+set(HIREDIS_HEADER ${hiredis_SOURCE_DIR})
+set(HIREDIS_LIB $<TARGET_FILE:hiredis>)
 FetchContent_MakeAvailable(redis_plus_plus)
 
 message("Fetching https://github.com/pistacheio/pistache.git, tag 0.0.5")
