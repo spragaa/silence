@@ -39,6 +39,14 @@ add_definitions(-DSOURCE_DIR="${CMAKE_SOURCE_DIR}")
 find_package(Boost 1.74 REQUIRED COMPONENTS system thread)
 include(FetchContent)
 
+message("Fetching RapidJSON")
+FetchContent_Declare(
+    RapidJSON
+    GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
+    GIT_TAG v1.1.0
+)
+FetchContent_MakeAvailable(RapidJSON)
+
 message("Fetching https://github.com/nlohmann/json.git, tag v3.11.2")
 FetchContent_Declare(
     nlohmann_json
