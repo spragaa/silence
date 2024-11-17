@@ -21,9 +21,9 @@ protected:
     const KeyPair& get_keys() const;
 
 private:
-    cpp_int p; // prime modulus
-    cpp_int q; // prime divisor of p-1
-    cpp_int g; // generator
+    cpp_int p;    // prime modulus
+    cpp_int q;    // prime divisor of p-1
+    cpp_int g;    // generator
     KeyPair keys;
 };
 
