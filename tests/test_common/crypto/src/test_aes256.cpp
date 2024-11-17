@@ -288,11 +288,11 @@ TEST_F(AESTests, pkcs7_padding_correctness_test) {
 
 TEST_F(AESTests, different_keys_produce_different_results_test) {
 	std::string input = "primeagen42069";
-	auto key1 = aes.generate_key<256>();
+	auto key1 = generate_aes_key<256>();
 	aes.set_key(key1);
 	std::string encrypted1 = aes.aes256_encrypt(input);
 
-	auto key2 = aes.generate_key<256>();
+	auto key2 = generate_aes_key<256>();
 	aes.set_key(key2);
 	std::string encrypted2 = aes.aes256_encrypt(input);
 
@@ -334,8 +334,8 @@ TEST_F(AESTests, unicode_characters_handling_test) {
 }
 
 TEST_F(AESTests, key_generation_test) {
-	auto key1 = aes.generate_key<256>();
-	auto key2 = aes.generate_key<256>();
+	auto key1 = generate_aes_key<256>();
+	auto key2 = generate_aes_key<256>();
 	EXPECT_NE(key1, key2);
 	EXPECT_EQ(key1.size(), 32);
 	EXPECT_EQ(key2.size(), 32);
