@@ -3,7 +3,34 @@
 namespace common {
 namespace crypto {
 
-uint8_t gmul(uint8_t a, uint8_t b) {
+constexpr size_t AES256::Nk;
+constexpr size_t AES256::Nb;
+constexpr size_t AES256::Nr;
+constexpr size_t AES256::key_length;
+constexpr size_t AES256::block_size;
+constexpr size_t AES256::state_size;
+    
+constexpr uint8_t AES256::sbox[256];
+    
+constexpr uint8_t AES256::inv_sbox[256];
+    
+constexpr uint32_t AES256::round_const[10];
+    
+AES256::AES256() {
+    _key = generate_key<256>();
+    // log
+}    
+
+AES256::AES256(const std::array<uint8_t, AES256::key_length/8>& key) : _key(key) {
+    // log
+}
+ 
+void AES256::set_key(const std::array<uint8_t, key_length/8> key) {
+    _key = key;
+    // log?
+}
+
+uint8_t AES256::gmul(uint8_t a, uint8_t b) {
 	uint8_t p = 0;
 	uint8_t hi_bit_set;
 
@@ -21,10 +48,11 @@ uint8_t gmul(uint8_t a, uint8_t b) {
 
 		b >>= 1;
 	}
+	
 	return p;
 }
 
-std::array<uint8_t, 4> rot_word(const std::array<uint8_t, 4>& word) {
+std::array<uint8_t, 4> AES256::rot_word(const std::array<uint8_t, 4>& word) {
 	std::array<uint8_t, 4> output;
 
 	output[0] = word[1];
@@ -35,70 +63,71 @@ std::array<uint8_t, 4> rot_word(const std::array<uint8_t, 4>& word) {
 	return output;
 }
 
-std::array<uint8_t, 4> sub_word(const std::array<uint8_t, 4>& word) {
+std::array<uint8_t, 4> AES256::sub_word(const std::array<uint8_t, 4>& word) {
 	std::array<uint8_t, 4> output;
 
-	output[0] = sbox[word[0]];
-	output[1] = sbox[word[1]];
-	output[2] = sbox[word[2]];
-	output[3] = sbox[word[3]];
+	output[0] = AES256::sbox[word[0]];
+	output[1] = AES256::sbox[word[1]];
+	output[2] = AES256::sbox[word[2]];
+	output[3] = AES256::sbox[word[3]];
 
 	return output;
 }
 
-std::array<uint8_t, 4 * Nb * (Nr + 1)> key_expansion(const std::array<uint8_t, 4 * Nk>& key) {
-	std::array<uint8_t, 4 * Nb * (Nr + 1)> w{};
+// std::array<uint8_t, 4 * AES256::Nb * (AES256::Nr + 1)> AES256::key_expansion(const std::array<uint8_t, 4 * AES256::Nk>& _key) {
+std::array<uint8_t, 4 * AES256::Nb * (AES256::Nr + 1)> AES256::key_expansion() {
+	std::array<uint8_t, 4 * AES256::Nb * (AES256::Nr + 1)> w{};
 	std::array<uint8_t, 4> temp;
 
-	for(size_t i = 0; i < 4 * Nk; i++) {
-		w[i] = key[i];
+	for(size_t i = 0; i < 4 * AES256::Nk; i++) {
+		w[i] = _key[i];
 	}
 
-	for(size_t i = Nk; i < Nb * (Nr + 1); i++) {
+	for(size_t i = AES256::Nk; i < AES256::Nb * (AES256::Nr + 1); i++) {
 		for(size_t j = 0; j < 4; j++) {
 			temp[j] = w[4 * (i - 1) + j];
 		}
 
-		if(i % Nk == 0) {
+		if(i % AES256::Nk == 0) {
 			temp = sub_word(rot_word(temp));
-			temp[0] ^= (round_const[i / Nk - 1] >> 24) & 0xFF;
+			temp[0] ^= (AES256::round_const[i / AES256::Nk - 1] >> 24) & 0xFF;
 		}
-		else if(Nk > 6 && i % Nk == 4) {
+		else if(AES256::Nk > 6 && i % AES256::Nk == 4) {
 			temp = sub_word(temp);
 		}
 
 		for(size_t j = 0; j < 4; j++) {
-			w[4 * i + j] = w[4*(i-Nk) + j] ^ temp[j];
+			w[4 * i + j] = w[4*(i-AES256::Nk) + j] ^ temp[j];
 		}
 	}
 
-	DEBUG_MSG("[aes256::key_expansion] Expanded key: " + bytes_array_to_string(w));
+	DEBUG_MSG("[aes256::key_expansion] Expanded _key: " + bytes_array_to_string(w));
 
 	return w;
 }
 
-std::array<uint8_t, state_size> sub_bytes(const std::array<uint8_t, state_size>& state) {
-	std::array<uint8_t, state_size> output;
+std::array<uint8_t, AES256::state_size> AES256::sub_bytes(const std::array<uint8_t, AES256::state_size>& state) {
+	std::array<uint8_t, AES256::state_size> output;
 
-	for (size_t i = 0; i < state_size; i++) {
-		output[i] = sbox[state[i]];
+	for (size_t i = 0; i < AES256::state_size; i++) {
+		output[i] = AES256::sbox[state[i]];
 	}
 
 	return output;
 }
 
-std::array<uint8_t, state_size> inv_sub_bytes(const std::array<uint8_t, state_size>& state) {
-	std::array<uint8_t, state_size> output;
+std::array<uint8_t, AES256::state_size> AES256::inv_sub_bytes(const std::array<uint8_t, AES256::state_size>& state) {
+	std::array<uint8_t, AES256::state_size> output;
 
-	for (size_t i = 0; i < state_size; i++) {
-		output[i] = inv_sbox[state[i]];
+	for (size_t i = 0; i < AES256::state_size; i++) {
+		output[i] = AES256::inv_sbox[state[i]];
 	}
 
 	return output;
 }
 
-std::array<uint8_t, state_size> shift_rows(const std::array<uint8_t, state_size>& state) {
-	std::array<uint8_t, state_size> output;
+std::array<uint8_t, AES256::state_size> AES256::shift_rows(const std::array<uint8_t, AES256::state_size>& state) {
+	std::array<uint8_t, AES256::state_size> output;
 
 	// for row i shift it by i pos to the left
 
@@ -125,8 +154,8 @@ std::array<uint8_t, state_size> shift_rows(const std::array<uint8_t, state_size>
 	return output;
 }
 
-std::array<uint8_t, state_size> inv_shift_rows(const std::array<uint8_t, state_size>& state) {
-	std::array<uint8_t, state_size> output;
+std::array<uint8_t, AES256::state_size> AES256::inv_shift_rows(const std::array<uint8_t, AES256::state_size>& state) {
+	std::array<uint8_t, AES256::state_size> output;
 
 	// for row i shift right by i
 
@@ -153,8 +182,8 @@ std::array<uint8_t, state_size> inv_shift_rows(const std::array<uint8_t, state_s
 	return output;
 }
 
-std::array<uint8_t, state_size> mix_columns(const std::array<uint8_t, state_size>& state) {
-	std::array<uint8_t, state_size> output;
+std::array<uint8_t, AES256::state_size> AES256::mix_columns(const std::array<uint8_t, AES256::state_size>& state) {
+	std::array<uint8_t, AES256::state_size> output;
 
 	for (int c = 0; c < 4; c++) {
 		uint8_t s0 = state[4 * c];
@@ -171,8 +200,8 @@ std::array<uint8_t, state_size> mix_columns(const std::array<uint8_t, state_size
 	return output;
 }
 
-std::array<uint8_t, state_size> inv_mix_columns(const std::array<uint8_t, state_size>& state) {
-	std::array<uint8_t, state_size> output;
+std::array<uint8_t, AES256::state_size> AES256::inv_mix_columns(const std::array<uint8_t, AES256::state_size>& state) {
+	std::array<uint8_t, AES256::state_size> output;
 
 	for (int c = 0; c < 4; c++) {
 		uint8_t s0 = state[4 * c];
@@ -189,12 +218,12 @@ std::array<uint8_t, state_size> inv_mix_columns(const std::array<uint8_t, state_
 	return output;
 }
 
-std::array<uint8_t, state_size> add_round_key(
-	const std::array<uint8_t, state_size>& state,
-	const std::array<uint8_t, 4 * Nb * (Nr + 1)>& w,
+std::array<uint8_t, AES256::state_size> AES256::add_round_key(
+	const std::array<uint8_t, AES256::state_size>& state,
+	const std::array<uint8_t, 4 * AES256::Nb * (AES256::Nr + 1)>& w,
 	int round) {
 
-	std::array<uint8_t, state_size> output;
+	std::array<uint8_t, AES256::state_size> output;
 
 	for (int c = 0; c < 4; c++) {
 		for (int r = 0; r < 4; r++) {
@@ -205,10 +234,10 @@ std::array<uint8_t, state_size> add_round_key(
 	return output;
 }
 
-std::vector<uint8_t> pkcs7_pad(const std::string& input, size_t block_size) {
-	size_t padding_len = block_size - (input.length() % block_size);
+std::vector<uint8_t> AES256::pkcs7_pad(const std::string& input) {
+	size_t padding_len = AES256::block_size - (input.length() % AES256::block_size);
 	if (padding_len == 0) {
-		padding_len = block_size;
+		padding_len = AES256::block_size;
 	}
 
 	std::vector<uint8_t> padded(input.begin(), input.end());
@@ -219,7 +248,7 @@ std::vector<uint8_t> pkcs7_pad(const std::string& input, size_t block_size) {
 	return padded;
 }
 
-std::string pkcs7_unpad(const std::vector<uint8_t>& input) {
+std::string AES256::pkcs7_unpad(const std::vector<uint8_t>& input) {
 	if (input.empty()) {
 		FATAL_MSG("[aes256::pkcs7_unpad] Input cannot be empty");
 		throw std::invalid_argument("Input cannot be empty");
@@ -243,17 +272,15 @@ std::string pkcs7_unpad(const std::vector<uint8_t>& input) {
 	return unpadded;
 }
 
-std::array<uint8_t, state_size> encrypt(
-	const std::array<uint8_t, state_size>& input,
-	const std::array<uint8_t, 32>& key) {
+std::array<uint8_t, AES256::state_size> AES256::encrypt(const std::array<uint8_t, AES256::state_size>& input) {
 
-	std::array<uint8_t, state_size> state = input;
+	std::array<uint8_t, AES256::state_size> state = input;
 
-	auto w = key_expansion(key);
+	auto w = key_expansion();
 
 	state = add_round_key(state, w, 0);
 
-	for (int round = 1; round < Nr; round++) {
+	for (int round = 1; round < AES256::Nr; round++) {
 		state = sub_bytes(state);
 		state = shift_rows(state);
 		state = mix_columns(state);
@@ -265,43 +292,40 @@ std::array<uint8_t, state_size> encrypt(
 
 	state = sub_bytes(state);
 	state = shift_rows(state);
-	state = add_round_key(state, w, Nr);
+	state = add_round_key(state, w, AES256::Nr);
 	DEBUG_MSG("[aes256::encrypt] State after final round: " + bytes_array_to_string(state));
 
 	return state;
 }
 
-std::string aes256_encrypt(const std::string& input, const std::array<uint8_t, 32>& key) {
+std::string AES256::aes256_encrypt(const std::string& input) {
 	if (input.empty()) {
 		FATAL_MSG("[aes256::aes256_encrypt] Input cannot be empty");
 		throw std::invalid_argument("Input cannot be empty");
 	}
 
-	auto padded = pkcs7_pad(input, state_size);
+	auto padded = pkcs7_pad(input);
 
 	std::string output;
-	for (size_t i = 0; i < padded.size(); i += state_size) {
-		std::array<uint8_t, state_size> block{};
-		std::copy(padded.begin() + i, padded.begin() + i + state_size, block.begin());
+	for (size_t i = 0; i < padded.size(); i += AES256::state_size) {
+		std::array<uint8_t, AES256::state_size> block{};
+		std::copy(padded.begin() + i, padded.begin() + i + AES256::state_size, block.begin());
 
-		auto encrypted_block = encrypt(block, key);
+		auto encrypted_block = encrypt(block);
 		output.append(encrypted_block.begin(), encrypted_block.end());
 	}
 
 	return output;
 }
+std::array<uint8_t, AES256::state_size> AES256::decrypt(const std::array<uint8_t, AES256::state_size>& input) {
 
-std::array<uint8_t, state_size> decrypt(
-	const std::array<uint8_t, state_size>& input,
-	const std::array<uint8_t, 32>& key) {
+	std::array<uint8_t, AES256::state_size> state = input;
 
-	std::array<uint8_t, state_size> state = input;
+	auto w = key_expansion();
 
-	auto w = key_expansion(key);
+	state = add_round_key(state, w, AES256::Nr);
 
-	state = add_round_key(state, w, Nr);
-
-	for (int round = Nr - 1; round >= 1; round--) {
+	for (int round = AES256::Nr - 1; round >= 1; round--) {
 		state = inv_shift_rows(state);
 		state = inv_sub_bytes(state);
 		state = add_round_key(state, w, round);
@@ -320,18 +344,18 @@ std::array<uint8_t, state_size> decrypt(
 	return state;
 }
 
-std::string aes256_decrypt(const std::string& input, const std::array<uint8_t, 32>& key) {
-	if (input.empty() || input.length() % state_size != 0) {
+std::string AES256::aes256_decrypt(const std::string& input) {
+	if (input.empty() || input.length() % AES256::state_size != 0) {
 		FATAL_MSG("[aes256::aes256_decrypt] Input length must be multiple of block size");
 		throw std::invalid_argument("Input length must be multiple of block size");
 	}
 
 	std::vector<uint8_t> decrypted;
-	for (size_t i = 0; i < input.length(); i += state_size) {
-		std::array<uint8_t, state_size> block;
-		std::copy(input.begin() + i, input.begin() + i + state_size, block.begin());
+	for (size_t i = 0; i < input.length(); i += AES256::state_size) {
+		std::array<uint8_t, AES256::state_size> block;
+		std::copy(input.begin() + i, input.begin() + i + AES256::state_size, block.begin());
 
-		auto decrypted_block = decrypt(block, key);
+		auto decrypted_block = decrypt(block);
 		decrypted.insert(decrypted.end(), decrypted_block.begin(), decrypted_block.end());
 	}
 
@@ -345,8 +369,8 @@ std::string aes256_decrypt(const std::string& input, const std::array<uint8_t, 3
 //     std::string input = "DiSinGenu0uSness";
 //     std::string short_input = "DiSinGenu0";
 
-//     auto key256 = common::crypto::generate_key<common::crypto::key_length>();
-//     std::cout << "generatesd key: " << std::endl;
+//     auto key256 = common::crypto::generate_key<common::crypto::AES256::key_length>();
+//     std::cout << "generatesd _key: " << std::endl;
 //     common::crypto::print_key_hex(key256);
 
 //     std::string encrypted = common::crypto::aes256_encrypt(input, key256);

@@ -3,6 +3,7 @@ add_library(crypto_lib
     src/aes256.cpp
     src/el_gamal_encryption.cpp
     src/dsa.cpp
+    src/hybrid_crypto_system.cpp
 )
 
 target_link_libraries(crypto_lib
