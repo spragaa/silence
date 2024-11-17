@@ -17,7 +17,7 @@ constexpr uint8_t AES256::inv_sbox[256];
 constexpr uint32_t AES256::round_const[10];
     
 AES256::AES256() {
-    _key = generate_key<256>();
+    _key = generate_aes_key<256>();
     // log
 }    
 

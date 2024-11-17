@@ -56,6 +56,7 @@
 - go through all comments in source code
 - implement request structure
 - refactor client
+- refactor aes class into aes256 and aes256_state and maybe extract padding into another class too
 
 ## questions?
 - is it possib le to simplify setup_db scripts?

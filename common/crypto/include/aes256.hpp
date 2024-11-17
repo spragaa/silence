@@ -1,6 +1,7 @@
 #pragma once
 
 #include "debug.hpp"
+#include "crypto_utils.hpp"
 
 #include <string>
 #include <array>
@@ -79,36 +80,6 @@ public:
     std::string aes256_decrypt(const std::string& input);
     // ???
     void set_key(const std::array<uint8_t, key_length/8> key);
-// temp public intead of private
-public:
-    template<size_t n>
-    std::string bytes_array_to_string(const std::array<uint8_t, n>& arr) {
-    	std::stringstream ss;
-    	ss << std::hex << std::setfill('0');
-    
-    	for (const auto& byte : arr) {
-    		ss << std::setw(2) << static_cast<int>(byte);
-    	}
-    
-    	return ss.str();
-    }
-    
-    template<size_t n>
-    std::array<uint8_t, n / 8> generate_key() {
-    	static_assert(n == 128 || n == 192 || n == 256, "Key size must be 128, 192, or 256 bits");
-    	DEBUG_MSG("[aes256::generate_key] Key size must be 128, 192, or 256 bits");
-    
-    	std::array<uint8_t, n / 8> key;
-    	std::random_device rd;
-    
-    	for(size_t i = 0; i < key.size(); ++i) {
-    		key[i] = static_cast<uint8_t>(rd());
-    	}
-    
-    	DEBUG_MSG("[aes256::generate_key] Generated key: " + bytes_array_to_string(key));
-    
-    	return key;
-    }
     
 private:
     std::array<uint8_t, 32> _key;
