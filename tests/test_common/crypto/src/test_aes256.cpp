@@ -286,16 +286,18 @@ TEST_F(AESTests, pkcs7_padding_correctness_test) {
 	EXPECT_EQ(input, decrypted);
 }
 
-// TEST_F(AESTests, different_keys_produce_different_results_test) {
-// 	std::string input = "primeagen42069";
-// 	auto key1 = aes.generate_key<256>();
-// 	auto key2 = aes.generate_key<256>();
+TEST_F(AESTests, different_keys_produce_different_results_test) {
+	std::string input = "primeagen42069";
+	auto key1 = aes.generate_key<256>();
+	aes.set_key(key1);
+	std::string encrypted1 = aes.aes256_encrypt(input);
 
-// 	std::string encrypted1 = aes.aes256_encrypt(input, key1);
-// 	std::string encrypted2 = aes.aes256_encrypt(input, key2);
+	auto key2 = aes.generate_key<256>();
+	aes.set_key(key2);
+	std::string encrypted2 = aes.aes256_encrypt(input);
 
-// 	EXPECT_NE(encrypted1, encrypted2);
-// }
+	EXPECT_NE(encrypted1, encrypted2);
+}
 
 TEST_F(AESTests, large_input_handling_test) {
 	std::string large_input = generate_random_string(1000);
