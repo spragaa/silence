@@ -23,9 +23,9 @@ protected:
 	const KeyPair& get_keys() const;
 
 private:
-	cpp_int p;
-	cpp_int g;
-	KeyPair keys;
+	cpp_int _p;
+	cpp_int _g;
+	KeyPair _keys;
 };
 
 } // namespace common
