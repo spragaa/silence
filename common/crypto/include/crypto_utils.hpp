@@ -12,18 +12,18 @@ namespace crypto {
 using cpp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>, boost::multiprecision::et_off>;
 
 struct KeyPair {
-	cpp_int private_key;
-	cpp_int public_key;
+	cpp_int _private_key;
+	cpp_int _public_key;
 };
 
 struct EncryptedMessage {
-	cpp_int c1;
-	cpp_int c2;
+	cpp_int _c1;
+	cpp_int _c2;
 };
 
 struct DSASignature {
-	cpp_int r;
-	cpp_int signature;
+	cpp_int _r;
+	cpp_int _signature;
 };
 
 cpp_int hex_to_cpp_int(const std::string& hex);

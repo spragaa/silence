@@ -11,47 +11,47 @@ DSA::DSA(const cpp_int& prime_modulus, const cpp_int& prime_divisor, const cpp_i
 		throw std::invalid_argument("Invalid DSA parameters");
 	}
 
-	keys.private_key = generate_random(1, q - 1);
-	keys.public_key = modular_pow(g, keys.private_key, p);
+	keys._private_key = generate_random(1, q - 1);
+	keys._public_key = modular_pow(g, keys._private_key, p);
 
-	DEBUG_MSG("[DSA::DSA] Initialized successfully. \npublic key: " + cpp_int_to_hex(keys.public_key) +
-	          "\nprivate key: " + cpp_int_to_hex(keys.private_key));
+	DEBUG_MSG("[DSA::DSA] Initialized successfully. \npublic key: " + cpp_int_to_hex(keys._public_key) +
+	          "\nprivate key: " + cpp_int_to_hex(keys._private_key));
 }
 
 DSASignature DSA::sign(const cpp_int& message_hash) {
 	DSASignature signature;
 	cpp_int k;
 
-	while (signature.signature == 0) {
+	while (signature._signature == 0) {
 		k = generate_random(1, q - 1);
-		signature.r = modular_pow(g, k, p) % q;
+		signature._r = modular_pow(g, k, p) % q;
 
-		if (signature.r == 0) {
+		if (signature._r == 0) {
 			continue;
 		}
 
 		cpp_int k_inv = modular_pow(k, q - 2, q);
-		signature.signature = (k_inv * (message_hash + keys.private_key * signature.r)) % q;
+		signature._signature = (k_inv * (message_hash + keys._private_key * signature._r)) % q;
 	}
 
-	DEBUG_MSG("[DSA::sign] Signature generated successfully. \nr: " + cpp_int_to_hex(signature.r) +
-	          "\ns: " + cpp_int_to_hex(signature.signature));
+	DEBUG_MSG("[DSA::sign] Signature generated successfully. \nr: " + cpp_int_to_hex(signature._r) +
+	          "\ns: " + cpp_int_to_hex(signature._signature));
 
 	return signature;
 }
 
 bool DSA::verify(const cpp_int& message_hash, const DSASignature& signature, const cpp_int& signer_public_key) {
-	if (signature.r <= 0 || signature.r >= q || signature.signature <= 0 || signature.signature >= q) {
+	if (signature._r <= 0 || signature._r >= q || signature._signature <= 0 || signature._signature >= q) {
 		DEBUG_MSG("[DSA::verify] Invalid signature values");
 		return false;
 	}
 
-	cpp_int w = modular_pow(signature.signature, q - 2, q);
+	cpp_int w = modular_pow(signature._signature, q - 2, q);
 	cpp_int u1 = (message_hash * w) % q;
-	cpp_int u2 = (signature.r * w) % q;
+	cpp_int u2 = (signature._r * w) % q;
 	cpp_int v = (modular_pow(g, u1, p) * modular_pow(signer_public_key, u2, p)) % p % q;
 
-	bool is_valid = (v == signature.r);
+	bool is_valid = (v == signature._r);
 
 	DEBUG_MSG("[DSA::verify] Signature verification " + std::string(is_valid ? "successful" : "failed"));
 
@@ -59,7 +59,7 @@ bool DSA::verify(const cpp_int& message_hash, const DSASignature& signature, con
 }
 
 cpp_int DSA::get_public_key() const {
-	return keys.public_key;
+	return keys._public_key;
 }
 
 const KeyPair& DSA::get_keys() const {
