@@ -55,16 +55,16 @@ std::unique_ptr<TestElGamalEncryption> ElGamalEncryptionTests::bob;
 TEST_F(ElGamalEncryptionTests, key_generation) {
 	const auto& keys = alice->get_keys();
 
-	EXPECT_GT(keys.private_key, 1);
-	EXPECT_LT(keys.private_key, p - 1);
-	EXPECT_GT(keys.public_key, 1);
-	EXPECT_LT(keys.public_key, p);
+	EXPECT_GT(keys._private_key, 1);
+	EXPECT_LT(keys._private_key, p - 1);
+	EXPECT_GT(keys._public_key, 1);
+	EXPECT_LT(keys._public_key, p);
 }
 
 TEST_F(ElGamalEncryptionTests, encrypt_decrypt_small_message) {
 	common::crypto::TestElGamalEncryption::cpp_int message(42);
 
-	auto encrypted = alice->encrypt(message, bob->get_keys().public_key);
+	auto encrypted = alice->encrypt(message, bob->get_keys()._public_key);
 	auto decrypted = bob->decrypt(encrypted);
 
 	EXPECT_EQ(message, decrypted);
@@ -75,7 +75,7 @@ TEST_F(ElGamalEncryptionTests, encrypt_decrypt_large_message) {
 		"0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"
 		);
 
-	auto encrypted = alice->encrypt(message, bob->get_keys().public_key);
+	auto encrypted = alice->encrypt(message, bob->get_keys()._public_key);
 	auto decrypted = bob->decrypt(encrypted);
 
 	EXPECT_EQ(message, decrypted);
@@ -83,12 +83,12 @@ TEST_F(ElGamalEncryptionTests, encrypt_decrypt_large_message) {
 
 TEST_F(ElGamalEncryptionTests, bidirectional_communication) {
 	common::crypto::TestElGamalEncryption::cpp_int message1(123);
-	auto encrypted1 = alice->encrypt(message1, bob->get_keys().public_key);
+	auto encrypted1 = alice->encrypt(message1, bob->get_keys()._public_key);
 	auto decrypted1 = bob->decrypt(encrypted1);
 	EXPECT_EQ(message1, decrypted1);
 
 	common::crypto::TestElGamalEncryption::cpp_int message2(456);
-	auto encrypted2 = bob->encrypt(message2, alice->get_keys().public_key);
+	auto encrypted2 = bob->encrypt(message2, alice->get_keys()._public_key);
 	auto decrypted2 = alice->decrypt(encrypted2);
 	EXPECT_EQ(message2, decrypted2);
 }
@@ -102,7 +102,7 @@ TEST_F(ElGamalEncryptionTests, multiple_messages_encryption) {
 	};
 
 	for (const auto& message : messages) {
-		auto encrypted = alice->encrypt(message, bob->get_keys().public_key);
+		auto encrypted = alice->encrypt(message, bob->get_keys()._public_key);
 		auto decrypted = bob->decrypt(encrypted);
 		EXPECT_EQ(message, decrypted);
 	}
@@ -110,12 +110,12 @@ TEST_F(ElGamalEncryptionTests, multiple_messages_encryption) {
 
 TEST_F(ElGamalEncryptionTests, edge_cases) {
 	common::crypto::TestElGamalEncryption::cpp_int message1(1);
-	auto encrypted1 = alice->encrypt(message1, bob->get_keys().public_key);
+	auto encrypted1 = alice->encrypt(message1, bob->get_keys()._public_key);
 	auto decrypted1 = bob->decrypt(encrypted1);
 	EXPECT_EQ(message1, decrypted1);
 
 	common::crypto::TestElGamalEncryption::cpp_int message2 = p - 1;
-	auto encrypted2 = alice->encrypt(message2, bob->get_keys().public_key);
+	auto encrypted2 = alice->encrypt(message2, bob->get_keys()._public_key);
 	auto decrypted2 = bob->decrypt(encrypted2);
 	EXPECT_EQ(message2, decrypted2);
 }
@@ -123,11 +123,11 @@ TEST_F(ElGamalEncryptionTests, edge_cases) {
 TEST_F(ElGamalEncryptionTests, randomness_in_encryption) {
 	common::crypto::ElGamalEncryption::cpp_int message(42);
 
-	auto encrypted1 = alice->encrypt(message, bob->get_keys().public_key);
-	auto encrypted2 = alice->encrypt(message, bob->get_keys().public_key);
+	auto encrypted1 = alice->encrypt(message, bob->get_keys()._public_key);
+	auto encrypted2 = alice->encrypt(message, bob->get_keys()._public_key);
 
-	EXPECT_NE(encrypted1.c1, encrypted2.c1);
-	EXPECT_NE(encrypted1.c2, encrypted2.c2);
+	EXPECT_NE(encrypted1._c1, encrypted2._c1);
+	EXPECT_NE(encrypted1._c2, encrypted2._c2);
 
 	EXPECT_EQ(bob->decrypt(encrypted1), bob->decrypt(encrypted2));
 }
@@ -142,12 +142,12 @@ TEST_F(ElGamalEncryptionTests, demonstrate_prime_size_effects) {
 	cpp_int message(1000);
 
 	auto encrypted_small = small_prime_system.encrypt(message,
-	                                                  small_prime_system.get_keys().public_key);
+	                                                  small_prime_system.get_keys()._public_key);
 	auto decrypted_small = small_prime_system.decrypt(encrypted_small);
 	EXPECT_NE(message, decrypted_small);
 
 	auto encrypted_large = large_prime_system.encrypt(message,
-	                                                  large_prime_system.get_keys().public_key);
+	                                                  large_prime_system.get_keys()._public_key);
 	auto decrypted_large = large_prime_system.decrypt(encrypted_large);
 	EXPECT_EQ(message, decrypted_large);
 }
@@ -174,10 +174,10 @@ TEST_F(ElGamalEncryptionTests, parameter_validation) {
 //         TestElGamalEncryption test_system(test_p, test_g);
 //         const auto& keys = test_system.get_keys();
 
-//         EXPECT_GT(keys.private_key, cpp_int(1));
-//         EXPECT_LT(keys.private_key, test_p - 1);
-//         EXPECT_GT(keys.public_key, cpp_int(1));
-//         EXPECT_LT(keys.public_key, test_p);
+//         EXPECT_GT(keys._private_key, cpp_int(1));
+//         EXPECT_LT(keys._private_key, test_p - 1);
+//         EXPECT_GT(keys._public_key, cpp_int(1));
+//         EXPECT_LT(keys._public_key, test_p);
 //     }
 // }
 
@@ -193,7 +193,7 @@ TEST_F(ElGamalEncryptionTests, parameter_validation) {
 //         TestElGamalEncryption alice(test_p, test_g);
 //         TestElGamalEncryption bob(test_p, test_g);
 
-//         auto encrypted = alice.encrypt(message, bob.get_keys().public_key);
+//         auto encrypted = alice.encrypt(message, bob.get_keys()._public_key);
 //         auto decrypted = bob.decrypt(encrypted);
 
 //         EXPECT_EQ(message, decrypted);

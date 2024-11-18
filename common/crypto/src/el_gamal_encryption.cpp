@@ -11,16 +11,16 @@ ElGamalEncryption::ElGamalEncryption(const cpp_int& prime_modulus, const cpp_int
 		throw std::invalid_argument("Invalid parameters");
 	}
 
-	keys.private_key = generate_random(2, p - 2);
-	keys.public_key = modular_pow(g, keys.private_key, p);
+	keys._private_key = generate_random(2, p - 2);
+	keys._public_key = modular_pow(g, keys._private_key, p);
 
-	DEBUG_MSG("[ElGamalEncryption::ElGamalEncryption] Initialized successfully. \npublic key: " + cpp_int_to_hex(keys.public_key) +
-	          "\nprivate key: " + cpp_int_to_hex(keys.private_key)
+	DEBUG_MSG("[ElGamalEncryption::ElGamalEncryption] Initialized successfully. \npublic key: " + cpp_int_to_hex(keys._public_key) +
+	          "\nprivate key: " + cpp_int_to_hex(keys._private_key)
 	          );
 }
 
 cpp_int ElGamalEncryption::get_public_key() const {
-	return keys.public_key;
+	return keys._public_key;
 }
 
 const KeyPair& ElGamalEncryption::get_keys() const {
@@ -31,22 +31,22 @@ EncryptedMessage ElGamalEncryption::encrypt(const cpp_int& message, const cpp_in
 	cpp_int k = generate_random(2, p - 2);
 
 	EncryptedMessage encrypted;
-	encrypted.c1 = modular_pow(g, k, p);
-	encrypted.c2 = (message * modular_pow(recipient_public_key, k, p)) % p;
+	encrypted._c1 = modular_pow(g, k, p);
+	encrypted._c2 = (message * modular_pow(recipient_public_key, k, p)) % p;
 
 	DEBUG_MSG("[ElGamalEncryption::encrypt] Ecnryption successful. \nc1: "
-	          + cpp_int_to_hex(encrypted.c1)
-	          + "\nc2: " + cpp_int_to_hex(encrypted.c2)
+	          + cpp_int_to_hex(encrypted._c1)
+	          + "\nc2: " + cpp_int_to_hex(encrypted._c2)
 	          );
 
 	return encrypted;
 }
 
 ElGamalEncryption::cpp_int ElGamalEncryption::decrypt(const EncryptedMessage& encrypted_message) {
-	cpp_int s = modular_pow(encrypted_message.c1, keys.private_key, p);
+	cpp_int s = modular_pow(encrypted_message._c1, keys._private_key, p);
 	cpp_int s_inverse = modular_pow(s, p - 2, p);
 
-	auto decrypted = (encrypted_message.c2 * s_inverse) % p;
+	auto decrypted = (encrypted_message._c2 * s_inverse) % p;
 
 	DEBUG_MSG("[ElGamalEncryption::decrypt] Decryption successful. Message: " + cpp_int_to_hex(decrypted));
 
@@ -88,7 +88,7 @@ ElGamalEncryption::cpp_int ElGamalEncryption::decrypt(const EncryptedMessage& en
 // 	common::crypto::ElGamalEncryption::cpp_int small_message("42");
 // 	std::cout << "Original message: " << small_message << "\n";
 
-// 	auto encrypted_small = alice.encrypt(small_message, bob.get_keys().public_key);
+// 	auto encrypted_small = alice.encrypt(small_message, bob.get_keys()._public_key);
 // 	std::cout << format_encrypted_message("Encrypted message", encrypted_small) << "\n";
 
 // 	auto decrypted_small = bob.decrypt(encrypted_small);
@@ -99,7 +99,7 @@ ElGamalEncryption::cpp_int ElGamalEncryption::decrypt(const EncryptedMessage& en
 // 	common::crypto::ElGamalEncryption::cpp_int aes_key = common::crypto::hex_to_cpp_int("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF");
 // 	std::cout << "Original AES key: " << common::crypto::cpp_int_to_hex(aes_key) << "\n";
 
-// 	auto encrypted_aes = alice.encrypt(aes_key, bob.get_keys().public_key);
+// 	auto encrypted_aes = alice.encrypt(aes_key, bob.get_keys()._public_key);
 // 	std::cout << format_encrypted_message("Encrypted AES key", encrypted_aes) << "\n";
 
 // 	auto decrypted_aes = bob.decrypt(encrypted_aes);
@@ -110,7 +110,7 @@ ElGamalEncryption::cpp_int ElGamalEncryption::decrypt(const EncryptedMessage& en
 // 	common::crypto::ElGamalEncryption::cpp_int bob_message = common::crypto::hex_to_cpp_int("DEADBEEF");
 // 	std::cout << "Bob's original message: " << common::crypto::cpp_int_to_hex(bob_message) << "\n";
 
-// 	auto encrypted_bob = bob.encrypt(bob_message, alice.get_keys().public_key);
+// 	auto encrypted_bob = bob.encrypt(bob_message, alice.get_keys()._public_key);
 // 	std::cout << format_encrypted_message("Encrypted message", encrypted_bob) << "\n";
 
 // 	auto decrypted_bob = alice.decrypt(encrypted_bob);
