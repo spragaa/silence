@@ -9,13 +9,64 @@ namespace crypto {
 class HybridCryptoSystem {
 public:
     using cpp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>, boost::multiprecision::et_off>;
+    HybridCryptoSystem();
     
+/*
+    workflow:
+    0. generate dsa and el gamal key pairs
+    
+    sender:
+        1. when first message is initialized between two users, they first should exchange their public keys
+        2. generate aes key for particular receiver
+        3. encrypt aes key using el gamal public key of receiver
+        4. create hash of encrypted message
+        5. sign hash using dsa
+        
+        -> (first) SecureMessage (el gamal encypted aes key, aes encypted message, dsa signature)
+        
+        then in case of new messages:
+            6. ecnrypt aes using existing aes key
+            7. hash the message and sign it 
+            -> SecureMessage (aes encypted message, dsa signature) 
+    
+    
+    receiver:
+        1. decrypt aes key using private key
+        2. decrypt message itself using aes
+        3. verify signature
+        
+        then in case of new messages:
+            4. decypt message using existing aes
+            5. verify signature
+    
+            
+    
+    
+    considerations:
+    - define key lifetime and key rotation policies
+    - ?? cache validated public keys
+    - session based keys? -> how to handle receiving messages while offline?
+    
+
+
+    void initialize();            // generates all keys, primes, etc., should run on first client run, because it takes a while
+    std::string get_public_key(); // note: return string to use with nlohman json 
+    verify_signature();           // runs dsa signature verification
+    add_user(id, public_key)      
+    encrypt()
+    decrypt()    
+*/
+
 private:
 
 protected:
 
 private:
-    A
+    AES256 aes;
+    ElGamalEncryption el_gamal;
+    DSA dsa;
+    // list of public keys of other users. should it be here or somewhere in the client itself?
+    // actually, this might be the tuple (receiver_id, dsa_public_key, el_gamal_public_key, aes_key) -> new struct smth like ...
 };
     
     
