@@ -51,10 +51,10 @@ std::unique_ptr<TestDSA> DSATests::bob;
 TEST_F(DSATests, key_generation) {
     const auto& keys = alice->get_keys();
 
-    EXPECT_GT(keys.private_key, 1);
-    EXPECT_LT(keys.private_key, q);
-    EXPECT_GT(keys.public_key, 1);
-    EXPECT_LT(keys.public_key, p);
+    EXPECT_GT(keys._private_key, 1);
+    EXPECT_LT(keys._private_key, q);
+    EXPECT_GT(keys._public_key, 1);
+    EXPECT_LT(keys._public_key, p);
 }
 
 TEST_F(DSATests, signature_verification) {
@@ -82,8 +82,8 @@ TEST_F(DSATests, signature_randomness) {
     auto signature1 = alice->sign(message_hash);
     auto signature2 = alice->sign(message_hash);
     
-    EXPECT_NE(signature1.r, signature2.r);
-    EXPECT_NE(signature1.signature, signature2.signature);
+    EXPECT_NE(signature1._r, signature2._r);
+    EXPECT_NE(signature1._signature, signature2._signature);
     
     EXPECT_TRUE(bob->verify(message_hash, signature1, alice->get_public_key()));
     EXPECT_TRUE(bob->verify(message_hash, signature2, alice->get_public_key()));
@@ -116,13 +116,13 @@ TEST_F(DSATests, invalid_signature_components) {
     cpp_int message_hash = hex_to_cpp_int("0123456789abcdef0123456789abcdef01234567");
     auto signature = alice->sign(message_hash);
     
-    DSASignature invalid_sig1 = {cpp_int(0), signature.signature};
+    DSASignature invalid_sig1 = {cpp_int(0), signature._signature};
     EXPECT_FALSE(bob->verify(message_hash, invalid_sig1, alice->get_public_key()));
     
-    DSASignature invalid_sig2 = {signature.r, cpp_int(0)};
+    DSASignature invalid_sig2 = {signature._r, cpp_int(0)};
     EXPECT_FALSE(bob->verify(message_hash, invalid_sig2, alice->get_public_key()));
     
-    DSASignature invalid_sig3 = {q, signature.signature};
+    DSASignature invalid_sig3 = {q, signature._signature};
     EXPECT_FALSE(bob->verify(message_hash, invalid_sig3, alice->get_public_key()));
 }
 
