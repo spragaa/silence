@@ -11,7 +11,7 @@ namespace common {
 std::string get_current_timestamp();
 std::string get_socket_info(boost::asio::ip::tcp::socket& socket);
 
-}
+} //namespace common
 
 #define RED     "\x1b[31m"
 #define ORANGE  "\x1b[38;5;208m"

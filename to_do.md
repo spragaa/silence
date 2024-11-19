@@ -11,7 +11,7 @@
 - docs (mb auto docs)
 - good test coverage
 - not sure about UI tho, I'd like to implement all of the ui in terminal, but I think that default app is better?
-- addd lb support?
+- add lb support?
 - consistent hashring/hashing
 - hash passwords and mb more/all info
 - mb my own json wrapper
