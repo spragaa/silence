@@ -1,4 +1,7 @@
-// well, I'll need to refactor the client and server requests to use this enum
+#pragma once
+
+namespace common {
+
 enum RequstType {
 	REGISTER,
 	AUTHORIZE,
@@ -7,3 +10,5 @@ enum RequstType {
 	GET_MESSAGE,
 	GET_MESSAGES_OFFLINE // rename
 };
+
+} //namespace common
