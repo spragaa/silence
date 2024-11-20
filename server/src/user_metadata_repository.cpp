@@ -203,6 +203,46 @@ int UserMetadataRepository::get_id(const std::string& nickname) {
 	}
 }
 
+bool UserMetadataRepository::set_public_keys(const int user_id, const std::string& el_gamal_public_key, const std::string& dsa_public_key) {
+    try {
+		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
+   
+		auto format_timestamp = [](const common::Timestamp& ts) {
+									auto time_t = std::chrono::system_clock::to_time_t(ts);
+									std::stringstream ss;
+									ss << std::put_time(std::gmtime(&time_t), "%Y-%m-%d %H:%M:%S");
+									return ss.str();
+								};
+   
+		pqxx::result r = txn.exec_params(
+			"INSERT INTO crypto_keys (user_id, el_gamal_public_key, dsa_public_key, created_timestamp) "
+			"VALUES ($1, $2, $3, $4) RETURNING id",
+			user_id,
+			el_gamal_public_key,
+			dsa_public_key,
+			format_timestamp(std::chrono::system_clock::now())
+		);
+   
+		DEBUG_MSG("Executing INSERT INTO crypto_keys (user_id, el_gamal_public_key, dsa_public_key, created_timestamp)  "
+		          "VALUES ($1, $2, $3, $4) RETURNING id\n"
+		          "for user id: " + std::to_string(user_id));
+   
+		if (r.empty()) {
+			WARN_MSG("[UserMetadataRepository::set_public_keys] Failed to insert ctypro_keys for user " + std::to_string(user_id));
+			return false;
+		}
+   
+		int inserted_id = r[0][0].as<int>();
+		INFO_MSG("[UserMetadataRepository::set_public_keys] User's public keys set successfully with id: " + std::to_string(inserted_id));
+   
+		txn.commit();
+		return inserted_id;
+	} catch (const std::exception& e) {
+		ERROR_MSG("[UserMetadataRepository::set_public_keys] Exception caught: " + std::string(e.what()));
+		return 0;
+	}
+}
+
 common::User UserMetadataRepository::construct_user(const nlohmann::json& user_json) {
 	common::User user;
 	return user.from_json(user_json);

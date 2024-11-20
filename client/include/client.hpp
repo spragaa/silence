@@ -3,6 +3,8 @@
 #include "debug.hpp"
 #include "user.hpp"
 #include "message.hpp"
+#include "crypto_utils.hpp"
+#include "hybrid_crypto_system.hpp"
 
 #include <iostream>
 #include <string>
@@ -87,6 +89,7 @@ private:
 	bool _is_authorized;
 	std::string _user_files_dir = std::string(SOURCE_DIR) + "/client/user_files";
 	std::map<std::string, std::ofstream> _incoming_files;
+	common::crypto::HybridCryptoSystem _hybrid_crypto_system;
 };
 
 }

@@ -50,6 +50,7 @@
 
 #### crypto:
 - use precomputed safe primes
+- add new table [user_id, el_gamal_public_key, dsa_public_key]
 
 ### refactoring
 - unify the way to compare Timestamps, parse them from/to string, int, json and pqxx::response
