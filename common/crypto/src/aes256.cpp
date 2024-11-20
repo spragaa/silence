@@ -30,6 +30,10 @@ void AES256::set_key(const std::array<uint8_t, key_length/8> key) {
     DEBUG_MSG("[AES256::set_key] AES key set successfully: " + std::string(_key.begin(), _key.end()));
 }
 
+std::string AES256::get_key() const {
+    return std::string(_key.begin(), _key.end());
+}
+
 uint8_t AES256::gmul(uint8_t a, uint8_t b) {
 	uint8_t p = 0;
 	uint8_t hi_bit_set;

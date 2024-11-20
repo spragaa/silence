@@ -80,7 +80,7 @@ public:
     std::string aes256_decrypt(const std::string& input);
     // ???
     void set_key(const std::array<uint8_t, key_length/8> key);
-    
+    std::string get_key() const; 
 private:
     std::array<uint8_t, 32> _key;
 
