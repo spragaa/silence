@@ -234,7 +234,9 @@ void Client::register_user() {
 	request["type"] = "register";
 	request["nickname"] = nickname;
 	request["password"] = password;
-
+	request["el_gamal_public_key"] = common::crypto::cpp_int_to_hex(_hybrid_crypto_system.get_el_gamal_public_key());
+	request["dsa_public_key"] = common::crypto::cpp_int_to_hex(_hybrid_crypto_system.get_dsa_public_key());
+	
 	boost::asio::write(_socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
 	DEBUG_MSG("[Client::register_user] Sending request: " + request.dump());
 	nlohmann::json response = nlohmann::json::parse(receive_response());
@@ -271,9 +273,10 @@ void Client::authorize_user() {
 
 	nlohmann::json request;
 	request["type"] = "authorize";
-	request["password"] = password;
-	request["nickname"] = _user.get_nickname();
 	request["user_id"] = _user.get_id();
+	request["nickname"] = _user.get_nickname();
+	request["password"] = password;
+
 	DEBUG_MSG("[Client::authorize_user()] Sending request:" + request.dump());
 
 	try {

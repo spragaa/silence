@@ -21,6 +21,7 @@ public:
 	~RepositoryManager() = default;
 
 	int create_user(const common::User& user);
+	bool set_public_keys(const int user_id, const std::string& el_gamal_public_key, const std::string& dsa_public_key);
 	bool authorize_user(int user_id, const std::string& nickname, const std::string& password);
 	int get_user_id(const std::string& nickname);
 

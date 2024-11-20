@@ -1,19 +1,19 @@
+#pragma once
+
+#include "debug.hpp"
 #include "crypto_utils.hpp"
 #include "aes256.hpp"
 #include "el_gamal_encryption.hpp"
 #include "dsa.hpp"
 
+#include <memory>
+
 namespace common {
 namespace crypto {
-
-class HybridCryptoSystem {
-public:
-    using cpp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>, boost::multiprecision::et_off>;
-    HybridCryptoSystem();
     
 /*
     workflow:
-    0. generate dsa and el gamal key pairs
+    + 0. generate dsa and el gamal key pairs
     
     sender:
         1. when first message is initialized between two users, they first should exchange their public keys
@@ -49,22 +49,29 @@ public:
     
 
 
-    void initialize();            // generates all keys, primes, etc., should run on first client run, because it takes a while
     std::string get_public_key(); // note: return string to use with nlohman json 
     verify_signature();           // runs dsa signature verification
     add_user(id, public_key)      
     encrypt()
     decrypt()    
 */
+    
+class HybridCryptoSystem {
+public:
+    using cpp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>, boost::multiprecision::et_off>;
+    HybridCryptoSystem();
+    
+    cpp_int get_el_gamal_public_key() const;
+    cpp_int get_dsa_public_key() const;
 
 private:
 
 protected:
 
 private:
-    AES256 aes;
-    ElGamalEncryption el_gamal;
-    DSA dsa;
+    std::unique_ptr<AES256> _aes;
+    std::unique_ptr<ElGamalEncryption> _el_gamal;
+    std::unique_ptr<DSA> _dsa;
     // list of public keys of other users. should it be here or somewhere in the client itself?
     // actually, this might be the tuple (receiver_id, dsa_public_key, el_gamal_public_key, aes_key) -> new struct smth like ...
 };

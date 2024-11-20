@@ -18,16 +18,16 @@ constexpr uint32_t AES256::round_const[10];
     
 AES256::AES256() {
     _key = generate_aes_key<256>();
-    // log
+    DEBUG_MSG("[AES256::AES256] AES key generated: " + std::string(_key.begin(), _key.end()));
 }    
 
 AES256::AES256(const std::array<uint8_t, AES256::key_length/8>& key) : _key(key) {
-    // log
+    DEBUG_MSG("[AES256::AES256] AES key assigned successfully: " + std::string(_key.begin(), _key.end()));
 }
  
 void AES256::set_key(const std::array<uint8_t, key_length/8> key) {
     _key = key;
-    // log?
+    DEBUG_MSG("[AES256::set_key] AES key set successfully: " + std::string(_key.begin(), _key.end()));
 }
 
 uint8_t AES256::gmul(uint8_t a, uint8_t b) {
@@ -74,7 +74,6 @@ std::array<uint8_t, 4> AES256::sub_word(const std::array<uint8_t, 4>& word) {
 	return output;
 }
 
-// std::array<uint8_t, 4 * AES256::Nb * (AES256::Nr + 1)> AES256::key_expansion(const std::array<uint8_t, 4 * AES256::Nk>& _key) {
 std::array<uint8_t, 4 * AES256::Nb * (AES256::Nr + 1)> AES256::key_expansion() {
 	std::array<uint8_t, 4 * AES256::Nb * (AES256::Nr + 1)> w{};
 	std::array<uint8_t, 4> temp;
