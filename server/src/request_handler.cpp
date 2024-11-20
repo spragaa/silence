@@ -46,7 +46,11 @@ void RequestHandler::handle_request(boost::shared_ptr<tcp::socket> socket) {
 					handle_send_message(socket, request);
 				} else if (request["type"] == "file_chunk") {
 					handle_file_chunk(socket, request);
-				}
+				} /* else if (request["type"] == "receive_private_keys") {
+                    handle_receive_public_keys(socket, request);
+				} else if (request["type"] == "send_private_keys") {
+				    handle_send_public_keys(socket, request);
+				} */
 				else {
 					nlohmann::json response = {
 						{"status", "error"},
@@ -81,9 +85,17 @@ void RequestHandler::handle_register(boost::shared_ptr<tcp::socket> socket, cons
 	DEBUG_MSG("[Server::handle_register] Received request: " + request.dump());
 	std::string nickname = request["nickname"];
 	std::string password = request["password"];
+	std::string el_gamal_public_key = request["el_gamal_public_key"];
+	std::string dsa_public_key = request["dsa_public_key"];
 
 	common::User new_user(nickname, password);
 	int user_id = _repo_manager.create_user(new_user);
+	
+	if (!_repo_manager.set_public_keys(user_id, el_gamal_public_key, dsa_public_key) ) {
+	    ERROR_MSG("[RequestHandler::handle_register] Set public keys failed for user " + std::to_string(user_id));
+		// add retry logic
+	}
+	
 	nlohmann::json response;
 
 	if (user_id != 0) {
@@ -311,6 +323,16 @@ void RequestHandler::handle_file_chunk(boost::shared_ptr<tcp::socket> socket, co
 		          + std::string(e.what()));
 	}
 }
+
+// I thought we will need this now, but actually it is better to handle this on register step
+// then when keys cycle is over we will use these methods;
+// void RequestHandler::handle_receive_public_keys(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
+// }
+
+// I thought we will need this now, but actually it is better to handle this on register step
+// then when keys cycle is over we will use these methods;
+// void RequestHandler::handle_send_public_keys(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
+// }	
 
 void RequestHandler::send_file_to_client(boost::shared_ptr<tcp::socket> client_socket, const std::string& filename) {
 	std::vector<std::string> chunks = _repo_manager.download_file_chunks(filename);

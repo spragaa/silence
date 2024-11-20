@@ -14,7 +14,6 @@ public:
     
     DSASignature sign(const cpp_int& message_hash);
     bool verify(const cpp_int& message_hash, const DSASignature& signature, const cpp_int& signer_public_key);
-    
     cpp_int get_public_key() const;
     
 protected:

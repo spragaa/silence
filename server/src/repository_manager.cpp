@@ -17,6 +17,10 @@ int RepositoryManager::create_user(const common::User& user) {
 	return _user_metadata_repo->create(user);
 }
 
+bool RepositoryManager::set_public_keys(const int user_id, const std::string& el_gamal_public_key, const std::string& dsa_public_key) {
+    return _user_metadata_repo->set_public_keys(user_id, el_gamal_public_key, dsa_public_key);
+}
+
 bool RepositoryManager::authorize_user(int user_id, const std::string& nickname, const std::string& password) {
 	return _user_metadata_repo->authorize(user_id, nickname, password);
 }
