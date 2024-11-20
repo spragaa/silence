@@ -3,6 +3,7 @@
 #include "debug.hpp"
 #include "user.hpp"
 #include "message.hpp"
+#include "chat.hpp"
 #include "crypto_utils.hpp"
 #include "hybrid_crypto_system.hpp"
 
@@ -48,6 +49,8 @@ private:
 	bool is_connected();
 	void register_user();
 	void authorize_user();
+	bool send_aes_key(const std::string& receiver_nickname);
+	void get_receiver_public_keys();
 	void handle_user_interaction();
 	std::string generate_random_string(const int& len);
 
@@ -57,7 +60,7 @@ private:
 	void handle_async_write(const boost::system::error_code& error);
 	void do_write();
 	void process_server_message(const std::string& message);
-
+	
 private:
 	struct FileTransferState {
 		std::ifstream file;
@@ -85,11 +88,11 @@ private:
 	std::string _server_address;
 	unsigned short _server_port;
 	common::User _user;
-	std::vector<common::Message> _messages;
 	bool _is_authorized;
 	std::string _user_files_dir = std::string(SOURCE_DIR) + "/client/user_files";
 	std::map<std::string, std::ofstream> _incoming_files;
 	common::crypto::HybridCryptoSystem _hybrid_crypto_system;
+	// store all of the keys in users json
 };
 
 }
