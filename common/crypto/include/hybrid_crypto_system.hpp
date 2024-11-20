@@ -63,6 +63,7 @@ public:
     
     cpp_int get_el_gamal_public_key() const;
     cpp_int get_dsa_public_key() const;
+    EncryptedMessage encrypt_aes_key(const std::string& recipients_public_key) const;
 
 private:
 

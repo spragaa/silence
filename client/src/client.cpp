@@ -147,13 +147,22 @@ void Client::handle_user_interaction() {
 					std::cout << "Enter your message: ";
 					std::string message_text;
 					std::getline(std::cin, message_text);
-
-					// how send multiple files?
+					
+					// how to send multiple files?
 					std::string file_name;
 					std::cout << "If there is a file to send, please enter the file name (it should be located in "
 					          << _user_files_dir << " or type no, otherwise: ";
 					std::getline(std::cin, file_name);
 
+					// aes key exchange should only be called on first message in a chat
+					// but currently we don't have the chat logic, soooo.....
+					if (!send_aes_key(recipient)) {
+					    FATAL_MSG("[Client::handle_user_interaction] Failed to exchange aes keys for safe message exchange with " + recipient);
+						// add retry logic?
+						return;
+					}
+					
+					// sending the actual message
 					nlohmann::json message;
 					message["type"] = "send_message";
 					message["sender_id"] = _user.get_id();
@@ -313,6 +322,24 @@ void Client::authorize_user() {
 	}
 
 	INFO_MSG("[Client::authorize_user()] Authorization process completed");
+}
+
+bool Client::send_aes_key(const std::string& receiver_nickname) {
+/*
+   1. get receiver aes and dsa public keys
+   2. encrypt aes key using recipient's el gamal public key
+   3. sign the hash of encrypted aes key
+*/
+    
+
+    nlohmann::json request;
+	request["type"] = "send_aes_key";
+	request["receiver_nickname"] = receiver_nickname;
+	
+}
+
+void get_receiver_public_keys() {
+    
 }
 
 void Client::send_message(const std::string& message) {

@@ -58,6 +58,7 @@
 - implement request structure
 - refactor client
 - refactor aes class into aes256 and aes256_state and maybe extract padding into another class too
+- base class for request, and derived classes for each possible request type
 
 ## questions?
 - is it possib le to simplify setup_db scripts?
