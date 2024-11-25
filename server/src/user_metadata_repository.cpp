@@ -243,6 +243,10 @@ bool UserMetadataRepository::set_public_keys(const int user_id, const std::strin
 	}
 }
 
+common::crypto::UserCryptoKeys UserMetadataRepository::get_public_keys(const int user_id) {
+    ////
+}
+
 common::User UserMetadataRepository::construct_user(const nlohmann::json& user_json) {
 	common::User user;
 	return user.from_json(user_json);

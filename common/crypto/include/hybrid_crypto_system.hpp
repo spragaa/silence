@@ -73,6 +73,7 @@ private:
     std::unique_ptr<AES256> _aes;
     std::unique_ptr<ElGamalEncryption> _el_gamal;
     std::unique_ptr<DSA> _dsa;
+    
     // list of public keys of other users. should it be here or somewhere in the client itself?
     // actually, this might be the tuple (receiver_id, dsa_public_key, el_gamal_public_key, aes_key) -> new struct smth like ...
 };

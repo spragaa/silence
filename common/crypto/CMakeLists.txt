@@ -4,6 +4,7 @@ add_library(crypto_lib
     src/el_gamal_encryption.cpp
     src/dsa.cpp
     src/hybrid_crypto_system.cpp
+    src/user_crypto_keys.cpp
 )
 
 target_link_libraries(crypto_lib
