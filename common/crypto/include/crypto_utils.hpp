@@ -5,6 +5,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <string>
 #include <random>
+#include <map>
 
 namespace common {
 namespace crypto {

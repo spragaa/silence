@@ -42,7 +42,7 @@ private:
 	void handle_send_message(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	void handle_file_chunk(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	// check_comments in .cpp
-	void handle_receive_public_keys(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
+	void handle_get_user_keys(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	void handle_send_public_keys(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	void send_file_to_client(boost::shared_ptr<tcp::socket> client_socket, const std::string& filename);
 

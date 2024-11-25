@@ -46,9 +46,9 @@ void RequestHandler::handle_request(boost::shared_ptr<tcp::socket> socket) {
 					handle_send_message(socket, request);
 				} else if (request["type"] == "file_chunk") {
 					handle_file_chunk(socket, request);
-				} /* else if (request["type"] == "receive_private_keys") {
-                    handle_receive_public_keys(socket, request);
-				} else if (request["type"] == "send_private_keys") {
+				} else if (request["type"] == "get_user_keys") {
+                    handle_get_user_keys(socket, request);
+				} /* else if (request["type"] == "send_private_keys") {
 				    handle_send_public_keys(socket, request);
 				} */
 				else {
@@ -322,6 +322,30 @@ void RequestHandler::handle_file_chunk(boost::shared_ptr<tcp::socket> socket, co
 		ERROR_MSG("[Server::handle_file_chunk] Failed to send acknowledgment: "
 		          + std::string(e.what()));
 	}
+}
+
+void RequestHandler::handle_get_user_keys(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
+    DEBUG_MSG("[Server::handle_get_user_keys] Received request: " + request.dump());
+	std::string nickname = request["nickname"];
+   
+	if (!_repo_manager.set_public_keys(user_id, el_gamal_public_key, dsa_public_key) ) {
+	    ERROR_MSG("[RequestHandler::handle_register] Set public keys failed for user " + std::to_string(user_id));
+		// add retry logic
+	}
+	
+	nlohmann::json response;
+   
+	if (user_id != 0) {
+		response["status"] = "success";
+		response["response"] =  "User registered successfully";
+		response["user_id"] = user_id;
+	} else {
+		response["status"] = "error";
+		response["response"] =  "Failed to register user";
+	}
+   
+	DEBUG_MSG("[Server::handle_register] Sending response: " + response.dump());
+	boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
 }
 
 // I thought we will need this now, but actually it is better to handle this on register step
