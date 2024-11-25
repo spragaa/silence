@@ -21,6 +21,10 @@ bool RepositoryManager::set_public_keys(const int user_id, const std::string& el
     return _user_metadata_repo->set_public_keys(user_id, el_gamal_public_key, dsa_public_key);
 }
 
+common::crypto::UserCryptoKeys RepositoryManager::get_public_keys(const int user_id) {
+    return _user_metadata_repo->get_public_keys(user_id);
+}
+
 bool RepositoryManager::authorize_user(int user_id, const std::string& nickname, const std::string& password) {
 	return _user_metadata_repo->authorize(user_id, nickname, password);
 }

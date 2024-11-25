@@ -6,6 +6,7 @@
 #include "chat.hpp"
 #include "crypto_utils.hpp"
 #include "hybrid_crypto_system.hpp"
+#include "user_crypto_keys.hpp"
 
 #include <iostream>
 #include <string>
@@ -44,13 +45,14 @@ private:
 	void handle_chunk_acknowledgment(const nlohmann::json& response);
 	void handle_incoming_file(const nlohmann::json& notification);
 	void handle_incoming_file_chunk(const nlohmann::json& chunk_message);
+	void handle_receive_user_keys(const nlohmann::json& response);
 
 	bool is_registered() const noexcept;
 	bool is_connected();
 	void register_user();
 	void authorize_user();
 	bool send_aes_key(const std::string& receiver_nickname);
-	void get_receiver_public_keys();
+	void get_receiver_public_keys(const std::string& reciver_nickname);
 	void handle_user_interaction();
 	std::string generate_random_string(const int& len);
 
@@ -92,7 +94,8 @@ private:
 	std::string _user_files_dir = std::string(SOURCE_DIR) + "/client/user_files";
 	std::map<std::string, std::ofstream> _incoming_files;
 	common::crypto::HybridCryptoSystem _hybrid_crypto_system;
-	// store all of the keys in users json
+	common::crypto::UserCryptoKeySet _user_crypto_key_set;
+	// store all of the keys in users json, look for a proper way of storing this data
 };
 
 }
