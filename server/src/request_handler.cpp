@@ -47,10 +47,10 @@ void RequestHandler::handle_request(boost::shared_ptr<tcp::socket> socket) {
 				} else if (request["type"] == "file_chunk") {
 					handle_file_chunk(socket, request);
 				} else if (request["type"] == "get_user_keys") {
-                    handle_get_user_keys(socket, request);
+					handle_get_user_keys(socket, request);
 				} /* else if (request["type"] == "send_private_keys") {
-				    handle_send_public_keys(socket, request);
-				} */
+					 handle_send_public_keys(socket, request);
+					 } */
 				else {
 					nlohmann::json response = {
 						{"status", "error"},
@@ -90,12 +90,12 @@ void RequestHandler::handle_register(boost::shared_ptr<tcp::socket> socket, cons
 
 	common::User new_user(nickname, password);
 	int user_id = _repo_manager.create_user(new_user);
-	
+
 	if (!_repo_manager.set_public_keys(user_id, el_gamal_public_key, dsa_public_key) ) {
-	    ERROR_MSG("[RequestHandler::handle_register] Set public keys failed for user " + std::to_string(user_id));
+		ERROR_MSG("[RequestHandler::handle_register] Set public keys failed for user " + std::to_string(user_id));
 		// add retry logic
 	}
-	
+
 	nlohmann::json response;
 
 	if (user_id != 0) {
@@ -325,26 +325,37 @@ void RequestHandler::handle_file_chunk(boost::shared_ptr<tcp::socket> socket, co
 }
 
 void RequestHandler::handle_get_user_keys(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
-    DEBUG_MSG("[Server::handle_get_user_keys] Received request: " + request.dump());
+	DEBUG_MSG("[Server::handle_get_user_keys] Received request: " + request.dump());
 	std::string nickname = request["nickname"];
-   
-	if (!_repo_manager.set_public_keys(user_id, el_gamal_public_key, dsa_public_key) ) {
-	    ERROR_MSG("[RequestHandler::handle_register] Set public keys failed for user " + std::to_string(user_id));
-		// add retry logic
-	}
-	
+
 	nlohmann::json response;
-   
-	if (user_id != 0) {
-		response["status"] = "success";
-		response["response"] =  "User registered successfully";
-		response["user_id"] = user_id;
-	} else {
+
+	int receiver_id = _repo_manager.get_user_id(nickname);
+	if (receiver_id == 0) {
 		response["status"] = "error";
-		response["response"] =  "Failed to register user";
+		response["response"] = "Receiver not found";
+		boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+		return;
 	}
-   
-	DEBUG_MSG("[Server::handle_register] Sending response: " + response.dump());
+
+	std::optional<common::crypto::UserCryptoKeys> receiver_crypto_keys = _repo_manager.get_public_keys(receiver_id);
+
+	if (!receiver_crypto_keys.has_value()) {
+		ERROR_MSG("[RequestHandler::handle_get_user_keys] Failed to retrieve keys for user: " + std::to_string(receiver_id));
+		response["status"] = "error";
+		response["response"] = "Failed to retrieve keys";
+		boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
+
+		return;
+		// add retry logic ???
+	} else {
+		response["status"] = "success";
+		response["user_id"] = receiver_id;
+		response["dsa_public_key"] = common::crypto::cpp_int_to_hex(receiver_crypto_keys->get_dsa_public_key());
+		response["el_gamal_public_key"] = common::crypto::cpp_int_to_hex(receiver_crypto_keys->get_el_gamal_public_key());
+	}
+
+	DEBUG_MSG("[Server::handle_get_user_keys] Sending response: " + response.dump());
 	boost::asio::write(*socket, boost::asio::buffer(response.dump() + "\r\n\r\n"));
 }
 
@@ -356,7 +367,7 @@ void RequestHandler::handle_get_user_keys(boost::shared_ptr<tcp::socket> socket,
 // I thought we will need this now, but actually it is better to handle this on register step
 // then when keys cycle is over we will use these methods;
 // void RequestHandler::handle_send_public_keys(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
-// }	
+// }
 
 void RequestHandler::send_file_to_client(boost::shared_ptr<tcp::socket> client_socket, const std::string& filename) {
 	std::vector<std::string> chunks = _repo_manager.download_file_chunks(filename);

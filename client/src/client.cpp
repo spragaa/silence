@@ -102,7 +102,7 @@ void Client::run() {
 void inline Client::show_actions() {
 	std::cout << _user.get_nickname() << ", please select the number of the action you would like to perform now from the list below:" << std::endl;
 	std::cout << "0. Send message" << std::endl;
-	std::cout << "1. Get list of chats" << std::endl;
+	std::cout << "1. Get user public keys" << std::endl;
 	std::cout << "2. Share file with chat application" << std::endl;
 	std::cout << "5. Exit" << std::endl;
 
@@ -147,7 +147,7 @@ void Client::handle_user_interaction() {
 					std::cout << "Enter your message: ";
 					std::string message_text;
 					std::getline(std::cin, message_text);
-					
+
 					// how to send multiple files?
 					std::string file_name;
 					std::cout << "If there is a file to send, please enter the file name (it should be located in "
@@ -157,11 +157,11 @@ void Client::handle_user_interaction() {
 					// aes key exchange should only be called on first message in a chat
 					// but currently we don't have the chat logic, so we will do it on each message
 					if (!send_aes_key(recipient)) {
-					    FATAL_MSG("[Client::handle_user_interaction] Failed to exchange aes keys for safe message exchange with " + recipient);
+						FATAL_MSG("[Client::handle_user_interaction] Failed to exchange aes keys for safe message exchange with " + recipient);
 						// add retry logic?
 						return;
 					}
-					
+
 					// sending the actual message
 					nlohmann::json message;
 					message["type"] = "send_message";
@@ -184,9 +184,16 @@ void Client::handle_user_interaction() {
 					send_file_chunks(filepath);
 					break;
 				}
-				case 1:
-					DEBUG_MSG("CASE 1");
+				case 1: { // will remove in future, added for testing purposes
+					DEBUG_MSG("Getting users crypto keys...");
+					std::cout << "Enter user nickname: ";
+					std::string u1;
+					std::getline(std::cin, u1);
+
+					get_receiver_public_keys(u1);
+
 					break;
+				}
 				case 2: {
 					std::cout << "Enter file path: ";
 					std::string input;
@@ -245,7 +252,7 @@ void Client::register_user() {
 	request["password"] = password;
 	request["el_gamal_public_key"] = common::crypto::cpp_int_to_hex(_hybrid_crypto_system.get_el_gamal_public_key());
 	request["dsa_public_key"] = common::crypto::cpp_int_to_hex(_hybrid_crypto_system.get_dsa_public_key());
-	
+
 	boost::asio::write(_socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
 	DEBUG_MSG("[Client::register_user] Sending request: " + request.dump());
 	nlohmann::json response = nlohmann::json::parse(receive_response());
@@ -330,23 +337,23 @@ bool Client::send_aes_key(const std::string& receiver_nickname) {
    1. get receiver aes and dsa public keys
    2. encrypt aes key using recipient's el gamal public key
    3. sign the hash of encrypted aes key
-*/
+ */
 
-    nlohmann::json request;
+	nlohmann::json request;
 	request["type"] = "send_aes_key";
 	request["receiver_nickname"] = receiver_nickname;
-	
+
 }
 
 void Client::get_receiver_public_keys(const std::string& receiver_nickname) {
-    nlohmann::json request;
+	nlohmann::json request;
 	request["type"] = "get_user_keys";
 	request["nickname"] = receiver_nickname;
-	
+
 	DEBUG_MSG("[Client::get_receiver_public_keys()] Sending request: " + request.dump());
-	
+
 	try {
-	    boost::asio::write(_socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
+		boost::asio::write(_socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
 	} catch (const std::exception& e) {
 		ERROR_MSG("[Client::get_receiver_public_keys()] Exception caught: " + std::string(e.what()));
 	}
@@ -413,9 +420,9 @@ void Client::send_file_chunks(const std::string& filepath) {
 	}
 
 	INFO_MSG("[Client::send_file_chunks] File transfer completed: " +
-	        filepath + " (" +
-	        std::to_string(total_bytes_sent) + " bytes in " +
-	        std::to_string(chunk_number - 1) + " chunks)");
+	         filepath + " (" +
+	         std::to_string(total_bytes_sent) + " bytes in " +
+	         std::to_string(chunk_number - 1) + " chunks)");
 }
 
 void Client::send_next_chunk(std::shared_ptr<FileTransferState> state) {
@@ -563,7 +570,7 @@ void Client::process_server_message(const std::string& message) {
 		else if (json_message["type"] == "file_chunk") {
 			handle_incoming_file_chunk(json_message);
 		} else if (json_message["type"] == "receive_user_keys") {
-		    handle_receive_user_keys(json_message);
+			handle_receive_user_keys(json_message);
 		}
 	} catch (const nlohmann::json::parse_error& e) {
 		ERROR_MSG("[Client::process_server_message] Failed to parse message: " + std::string(e.what()));
@@ -622,20 +629,20 @@ void Client::handle_incoming_file_chunk(const nlohmann::json& chunk_message) {
 }
 
 void Client::handle_receive_user_keys(const nlohmann::json& response) {
-    if (response["type"] == "success") {
-        int user_id = response["sender_id"];
-        common::crypto::UserCryptoKeys user_crypto_keys(
-            common::crypto::hex_to_cpp_int(response["dsa_public_key"]),
-            common::crypto::hex_to_cpp_int(response["el_gamal_public_key"]),
-            common::crypto::cpp_int(-1)
-        );
-        _user_crypto_key_set.add_user_keys(user_id, user_crypto_keys);
-        
-        DEBUG_MSG("[Client::handle_receive_user_keys] Keys received successfully for user: " + std::to_string(user_id)); 
-    } else {
-        ERROR_MSG("[Client::handle_receive_user_keys] Failed to receive keys for user");
-        DEBUG_MSG("[Client::handle_receive_user_keys] Response: " + response.dump());
-    }
+	if (response["type"] == "success") {
+		int user_id = response["sender_id"];
+		common::crypto::UserCryptoKeys user_crypto_keys(
+			common::crypto::hex_to_cpp_int(response["dsa_public_key"]),
+			common::crypto::hex_to_cpp_int(response["el_gamal_public_key"]),
+			common::crypto::cpp_int(-1)
+			);
+		_user_crypto_key_set.add_user_keys(user_id, user_crypto_keys);
+
+		DEBUG_MSG("[Client::handle_receive_user_keys] Keys received successfully for user: " + std::to_string(user_id));
+	} else {
+		ERROR_MSG("[Client::handle_receive_user_keys] Failed to receive keys for user");
+		DEBUG_MSG("[Client::handle_receive_user_keys] Response: " + response.dump());
+	}
 }
 
 common::User Client::get_user() {
