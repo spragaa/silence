@@ -62,7 +62,7 @@ private:
 	void handle_async_write(const boost::system::error_code& error);
 	void do_write();
 	void process_server_message(const std::string& message);
-	
+
 private:
 	struct FileTransferState {
 		std::ifstream file;

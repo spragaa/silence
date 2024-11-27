@@ -11,6 +11,7 @@ add_library(server_lib
 
 target_link_libraries(server_lib
     file_server_client_lib
+    crypto_lib
     Boost::boost
     Boost::system
     Boost::thread
@@ -30,6 +31,7 @@ target_include_directories(server_lib
     ${redis_plus_plus_SOURCE_DIR}/src/sw/redis++/
     ${hiredis_SOURCE_DIR}
 )
+
 add_executable(server
     main.cpp
 )

@@ -10,9 +10,11 @@ add_library(crypto_lib
 target_link_libraries(crypto_lib
     common_lib
     Boost::boost
+    nlohmann_json::nlohmann_json
 )
 
 target_include_directories(crypto_lib
     PUBLIC ${CMAKE_SOURCE_DIR}/common/include
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+    PRIVATE ${nlohmann_json_SOURCE_DIR}/include
 )

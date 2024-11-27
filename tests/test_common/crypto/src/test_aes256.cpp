@@ -23,7 +23,7 @@ protected:
 		std::fill(test_key.begin(), test_key.end(), 0x42);
 		test_state.fill(0x42);
 		test_word = {0x42, 0x43, 0x44, 0x45};
-		
+
 		aes.set_key(test_key);
 	}
 
@@ -42,11 +42,11 @@ protected:
 	};
 
 protected:
-    AES256 aes;
+	AES256 aes;
 	std::array<uint8_t, 16> test_state;
 	std::array<uint8_t, 32> test_key;
 	std::array<uint8_t, 4> test_word;
-	
+
 };
 
 TEST_F(AESTests, galois_multiplication_test) {
@@ -160,7 +160,7 @@ TEST_F(AESTests, pkcs7_padding_test) {
 	std::string input = "padding";
 	auto padded = aes.pkcs7_pad(input);
 	int len = AES256::block_size;
-	   
+
 	EXPECT_EQ(padded.size(), len);
 
 	uint8_t padding_value = padded.back();

@@ -8,6 +8,7 @@ add_executable(test_server
 target_link_libraries(test_server
     server_lib 
     common_lib
+    crypto_lib
     gtest
     gtest_main
     nlohmann_json::nlohmann_json
@@ -19,6 +20,7 @@ target_link_libraries(test_server
 target_include_directories(test_server
     PUBLIC ${CMAKE_SOURCE_DIR}/tests/test_server/include
     PUBLIC ${CMAKE_SOURCE_DIR}/common/include
+    PUBLIC ${CMAKE_SOURCE_DIR}/common/crypto/include
     PUBLIC ${CMAKE_SOURCE_DIR}/server/include
     PRIVATE ${nlohmann_json_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/thirdparty/libpqxx

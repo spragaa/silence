@@ -9,29 +9,29 @@ constexpr size_t AES256::Nr;
 constexpr size_t AES256::key_length;
 constexpr size_t AES256::block_size;
 constexpr size_t AES256::state_size;
-    
+
 constexpr uint8_t AES256::sbox[256];
-    
+
 constexpr uint8_t AES256::inv_sbox[256];
-    
+
 constexpr uint32_t AES256::round_const[10];
-    
+
 AES256::AES256() {
-    _key = generate_aes_key<256>();
-    DEBUG_MSG("[AES256::AES256] AES key generated: " + std::string(_key.begin(), _key.end()));
-}    
+	_key = generate_aes_key<256>();
+	DEBUG_MSG("[AES256::AES256] AES key generated: " + std::string(_key.begin(), _key.end()));
+}
 
 AES256::AES256(const std::array<uint8_t, AES256::key_length/8>& key) : _key(key) {
-    DEBUG_MSG("[AES256::AES256] AES key assigned successfully: " + std::string(_key.begin(), _key.end()));
+	DEBUG_MSG("[AES256::AES256] AES key assigned successfully: " + std::string(_key.begin(), _key.end()));
 }
- 
+
 void AES256::set_key(const std::array<uint8_t, key_length/8> key) {
-    _key = key;
-    DEBUG_MSG("[AES256::set_key] AES key set successfully: " + std::string(_key.begin(), _key.end()));
+	_key = key;
+	DEBUG_MSG("[AES256::set_key] AES key set successfully: " + std::string(_key.begin(), _key.end()));
 }
 
 std::string AES256::get_key() const {
-    return std::string(_key.begin(), _key.end());
+	return std::string(_key.begin(), _key.end());
 }
 
 uint8_t AES256::gmul(uint8_t a, uint8_t b) {
@@ -52,7 +52,7 @@ uint8_t AES256::gmul(uint8_t a, uint8_t b) {
 
 		b >>= 1;
 	}
-	
+
 	return p;
 }
 

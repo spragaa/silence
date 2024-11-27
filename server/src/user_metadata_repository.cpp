@@ -61,7 +61,7 @@ std::optional<common::User> UserMetadataRepository::read(int id) {
 			return std::nullopt;
 		}
 
-		nlohmann::json json = pqxx_result_to_json(r);
+		nlohmann::json json = pqxx_users_result_to_json(r);
 		INFO_MSG("[UserMetadataRepository::read] response: " + json.dump());
 
 		try {
@@ -155,7 +155,7 @@ bool UserMetadataRepository::authorize(int user_id, const std::string& nickname,
 			return false;
 		}
 
-		nlohmann::json json = pqxx_result_to_json(r);
+		nlohmann::json json = pqxx_users_result_to_json(r);
 		DEBUG_MSG("[UserMetadataRepository::authorize] response: " + json.dump());
 
 		std::string stored_password = r[0][2].as<std::string>();
@@ -190,7 +190,7 @@ int UserMetadataRepository::get_id(const std::string& nickname) {
 			return 0;
 		}
 
-		nlohmann::json json = pqxx_result_to_json(r);
+		nlohmann::json json = pqxx_users_result_to_json(r);
 		DEBUG_MSG("[UserMetadataRepository::get_id] response: " + json.dump());
 
 		int user_id = r[0][0].as<int>();
@@ -204,16 +204,16 @@ int UserMetadataRepository::get_id(const std::string& nickname) {
 }
 
 bool UserMetadataRepository::set_public_keys(const int user_id, const std::string& el_gamal_public_key, const std::string& dsa_public_key) {
-    try {
+	try {
 		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
-   
+
 		auto format_timestamp = [](const common::Timestamp& ts) {
 									auto time_t = std::chrono::system_clock::to_time_t(ts);
 									std::stringstream ss;
 									ss << std::put_time(std::gmtime(&time_t), "%Y-%m-%d %H:%M:%S");
 									return ss.str();
 								};
-   
+
 		pqxx::result r = txn.exec_params(
 			"INSERT INTO crypto_keys (user_id, el_gamal_public_key, dsa_public_key, created_timestamp) "
 			"VALUES ($1, $2, $3, $4) RETURNING id",
@@ -221,20 +221,20 @@ bool UserMetadataRepository::set_public_keys(const int user_id, const std::strin
 			el_gamal_public_key,
 			dsa_public_key,
 			format_timestamp(std::chrono::system_clock::now())
-		);
-   
+			);
+
 		DEBUG_MSG("Executing INSERT INTO crypto_keys (user_id, el_gamal_public_key, dsa_public_key, created_timestamp)  "
 		          "VALUES ($1, $2, $3, $4) RETURNING id\n"
 		          "for user id: " + std::to_string(user_id));
-   
+
 		if (r.empty()) {
-			WARN_MSG("[UserMetadataRepository::set_public_keys] Failed to insert ctypro_keys for user " + std::to_string(user_id));
+			WARN_MSG("[UserMetadataRepository::set_public_keys] Failed to insert crypto_keys for user " + std::to_string(user_id));
 			return false;
 		}
-   
+
 		int inserted_id = r[0][0].as<int>();
 		INFO_MSG("[UserMetadataRepository::set_public_keys] User's public keys set successfully with id: " + std::to_string(inserted_id));
-   
+
 		txn.commit();
 		return inserted_id;
 	} catch (const std::exception& e) {
@@ -243,8 +243,35 @@ bool UserMetadataRepository::set_public_keys(const int user_id, const std::strin
 	}
 }
 
-common::crypto::UserCryptoKeys UserMetadataRepository::get_public_keys(const int user_id) {
-    ////
+std::optional<common::crypto::UserCryptoKeys> UserMetadataRepository::get_public_keys(const int user_id) {
+	try {
+		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
+		pqxx::result r = txn.exec_params(
+			"SELECT *  FROM CRYPTO_KEYS WHERE user_id = $1",
+			user_id
+			);
+
+		DEBUG_MSG("SELECT * FROM CRYPTO_KEYS WHERE user_id = $1 for user id: " + std::to_string(user_id));
+
+		if (r.empty()) {
+			WARN_MSG("[UserMetadataRepository::get_public_keys] No user found with id: " + std::to_string(user_id));
+			WARN_MSG("returning std::nullopt");
+			return std::nullopt;
+		}
+
+		nlohmann::json json = pqxx_crypto_keys_result_to_json(r);
+		INFO_MSG("[UserMetadataRepository::read] response: " + json.dump());
+
+		try {
+			return construct_user_crypto_keys(json);
+		} catch (const std::exception& e) {
+			ERROR_MSG("[UserMetadataRepository::get_public_keys] Error in construct_crypto_keys: " + std::string(e.what()));
+			return std::nullopt;
+		}
+	} catch (const std::exception& e) {
+		ERROR_MSG("[UserMetadataRepository::get_public_keys] Exception caught: " + std::string(e.what()));
+		return std::nullopt;
+	}
 }
 
 common::User UserMetadataRepository::construct_user(const nlohmann::json& user_json) {
@@ -252,7 +279,20 @@ common::User UserMetadataRepository::construct_user(const nlohmann::json& user_j
 	return user.from_json(user_json);
 }
 
-nlohmann::json UserMetadataRepository::pqxx_result_to_json(const pqxx::result& r) const {
+common::crypto::UserCryptoKeys UserMetadataRepository::construct_user_crypto_keys(const nlohmann::json& json) {
+	try {
+		return common::crypto::UserCryptoKeys(
+			common::crypto::hex_to_cpp_int(json["dsa_public_key"].get<std::string>()),
+			common::crypto::hex_to_cpp_int(json["el_gamal_public_key"].get<std::string>()),
+			common::crypto::cpp_int(-1)
+			);
+	} catch (const std::exception& e) {
+		ERROR_MSG("[UserCryptoKeys::construct_user_crypto_keys] Error parsing crypto keys: " + std::string(e.what()));
+		throw; // to aggrresive
+	}
+}
+
+nlohmann::json UserMetadataRepository::pqxx_users_result_to_json(const pqxx::result& r) const {
 	nlohmann::json j;
 
 	j["id"] = r[0][0].as<int>();
@@ -263,6 +303,18 @@ nlohmann::json UserMetadataRepository::pqxx_result_to_json(const pqxx::result& r
 
 	std::string is_online_str = r[0][5].as<std::string>();
 	j["online"] = (is_online_str == "t");
+
+	return j;
+}
+
+nlohmann::json UserMetadataRepository::pqxx_crypto_keys_result_to_json(const pqxx::result& r) const {
+	nlohmann::json j;
+
+	j["id"] = r[0][0].as<int>();
+	j["user_id"] = r[0][1].as<int>();
+	j["dsa_public_key"] = r[0][2].as<std::string>();
+	j["el_gamal_public_key"] = r[0][3].as<std::string>();
+	j["created_timestamp"] = r[0][4].as<std::string>();
 
 	return j;
 }

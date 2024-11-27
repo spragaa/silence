@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 // DRAFT
 
@@ -7,5 +7,5 @@ namespace commmon {
 class Chat {
 
 };
-    
-} // namespace common 
+
+} // namespace common
