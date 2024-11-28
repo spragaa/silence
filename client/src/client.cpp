@@ -156,11 +156,11 @@ void Client::handle_user_interaction() {
 
 					// aes key exchange should only be called on first message in a chat
 					// but currently we don't have the chat logic, so we will do it on each message
-					if (!send_aes_key(recipient)) {
-						FATAL_MSG("[Client::handle_user_interaction] Failed to exchange aes keys for safe message exchange with " + recipient);
-						// add retry logic?
-						return;
-					}
+					// if (!send_aes_key(recipient)) {
+					// 	FATAL_MSG("[Client::handle_user_interaction] Failed to exchange aes keys for safe message exchange with " + recipient);
+					// 	// add retry logic?
+					// 	return;
+					// }
 
 					// sending the actual message
 					nlohmann::json message;
@@ -331,19 +331,42 @@ void Client::authorize_user() {
 	INFO_MSG("[Client::authorize_user()] Authorization process completed");
 }
 
-
-bool Client::send_aes_key(const std::string& receiver_nickname) {
+// void?
+bool Client::send_aes_key(const std::string& receiver_nickname, const std::string& receiver_public_key) {
 /*
    1. get receiver aes and dsa public keys
    2. encrypt aes key using recipient's el gamal public key
    3. sign the hash of encrypted aes key
  */
 
+	common::crypto::EncryptedMessage encrypted_aes_key = _hybrid_crypto_system.encrypt_aes_key(receiver_public_key);
+	
+	std::string encrypted_aes_key_c1 = common::crypto::cpp_int_to_hex(encrypted_aes_key._c1);  
+	std::string encrypted_aes_key_c2 = common::crypto::cpp_int_to_hex(encrypted_aes_key._c2);  
+	
+	// hash c1 || c2
+	// sign
+	// send signed shit
+	
+	
+	
+
+
 	nlohmann::json request;
 	request["type"] = "send_aes_key";
 	request["receiver_nickname"] = receiver_nickname;
+	request["encrypted_aes_key_c1"] = encrypted_aes_key_c1;
+	request["encrypted_aes_key_c2"] = encrypted_aes_key_c2;  
+	
+	
+	DEBUG_MSG("[Client::send_aes_key] Sending request: " + request.dump());
 
-}
+	try {
+		boost::asio::write(_socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
+	} catch (const std::exception& e) {
+		ERROR_MSG("[Client::send_aes_key] Exception caught: " + std::string(e.what()));
+	}
+} 
 
 void Client::get_receiver_public_keys(const std::string& receiver_nickname) {
 	nlohmann::json request;
