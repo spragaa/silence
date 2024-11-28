@@ -23,7 +23,8 @@ void RequestHandler::handle_request(boost::shared_ptr<tcp::socket> socket) {
 			_connected_clients_manager.remove_client_by_socket(socket);
 
 			DEBUG_MSG("[Server::handle_authorize] Client removed from connected list: " + common::get_socket_info(*socket));
-			DEBUG_MSG("[Server::handle_authorize] Currently, there are " + std::to_string(_connected_clients_manager.get_connected_count()) + " users connected");
+			DEBUG_MSG("[Server::handle_authorize] Currently, there are " 
+			    + std::to_string(_connected_clients_manager.get_connected_count()) + " users connected");
 
 			break;
 		} else if (error) {

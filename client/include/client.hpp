@@ -51,7 +51,7 @@ private:
 	bool is_connected();
 	void register_user();
 	void authorize_user();
-	bool send_aes_key(const std::string& receiver_nickname);
+	bool send_aes_key(const std::string& receiver_nickname, const std::string& receiver_public_key);
 	void get_receiver_public_keys(const std::string& reciver_nickname);
 	void handle_user_interaction();
 	std::string generate_random_string(const int& len);
