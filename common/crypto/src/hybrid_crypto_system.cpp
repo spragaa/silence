@@ -51,5 +51,10 @@ EncryptedMessage HybridCryptoSystem::encrypt_aes_key(const std::string& recipien
 	return _el_gamal->encrypt(hex_to_cpp_int(_aes->get_key()), hex_to_cpp_int(recipients_public_key));
 }
 
+DSASignature HybridCryptoSystem::sign(const cpp_int& message_hash) {
+    return _dsa->sign(message_hash);
+}
+
+
 } // namespace crypto
 } // namespace common
