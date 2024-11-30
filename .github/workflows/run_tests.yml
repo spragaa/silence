@@ -15,41 +15,20 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Check available package versions
+    - name: Install dependencies
       run: |
         sudo apt update
-        echo "Available versions for each package:"
-        echo "libboost1.74-all-dev:"
-        apt-cache policy libboost1.74-all-dev
-        echo -e "\ncmake:"
-        apt-cache policy cmake
-        echo -e "\nlibssl-dev:"
-        apt-cache policy libssl-dev
-        echo -e "\nlibpq-dev:"
-        apt-cache policy libpq-dev
-        echo -e "\nrapidjson-dev:"
-        apt-cache policy rapidjson-dev
-        echo -e "\nlibyaml-cpp-dev:"
-        apt-cache policy libyaml-cpp-dev
-        echo -e "\nlibhiredis-dev:"
-        apt-cache policy libhiredis-dev
-
-    - name: Install dependencies and show versions
-      run: |
         sudo apt install -y \
-          libboost1.74-all-dev \
+          libboost1.74-all-dev=1.74.0-14ubuntu3 \
           build-essential \
-          cmake \
-          libssl-dev \
-          libpq-dev \
+          cmake=3.22.1-1ubuntu1.22.04.2 \
+          libssl-dev=3.0.2-0ubuntu1.18 \
+          libpq-dev=17.2-1.pgdg22.04+1 \
           pkg-config \
-          rapidjson-dev \
-          libyaml-cpp-dev \
-          libhiredis-dev
+          rapidjson-dev=1.1.0+dfsg2-7 \
+          libyaml-cpp-dev=0.7.0+dfsg-8build1 \
+          libhiredis-dev=0.14.1-2
 
-        echo "Installed versions:"
-        dpkg -l | grep -E "boost|cmake|ssl|pq|rapidjson|yaml|hiredis"
-        
     - name: Cache build directories
       uses: actions/cache@v3.3.1
       with:
