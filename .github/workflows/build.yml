@@ -14,13 +14,6 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Cache apt packages
-      id: apt-cache
-      uses: actions/cache@v3.3.1
-      with:
-        path: /var/cache/apt
-        key: ${{ runner.os }}-apt-${{ hashFiles('**/workflow-deps.txt') }}
-
     - name: Install dependencies
       run: |
         sudo apt update
