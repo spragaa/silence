@@ -7,6 +7,7 @@
 #include "crypto_utils.hpp"
 #include "hybrid_crypto_system.hpp"
 #include "user_crypto_keys.hpp"
+#include "sha256.hpp"
 
 #include <iostream>
 #include <string>
