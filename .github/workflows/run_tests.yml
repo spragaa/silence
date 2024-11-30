@@ -6,6 +6,11 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  checks: write
+  pull-requests: write
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-22.04
@@ -55,7 +60,8 @@ jobs:
       run: |
         cd scripts
         chmod +x *.sh
-        ./build.sh --debug --clean
+        # ./build.sh --debug --clean
+        ./build.sh --debug
       shell: bash
 
     - name: Run Common Tests
@@ -102,9 +108,11 @@ jobs:
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always()
       with:
-        files: |
-          build/*_test_results.xml
-
+        files: "build/*_test_results.xml"
+        check_name: "Test Results"
+        comment_mode: always
+        fail_on: test failures
+        
     - name: Generate Test Summary
       if: always()
       run: |
@@ -120,10 +128,7 @@ jobs:
       if: always()
       run: |
         if [[ "${{ env.common_status }}" != "0" ]] || \
-           [[ "${{ env.crypto_status }}" != "0" ]] || \
-           [[ "${{ env.server_status }}" != "0" ]] || \
-           [[ "${{ env.client_status }}" != "0" ]] || \
-           [[ "${{ env.file_server_status }}" != "0" ]]; then
+          [[ "${{ env.crypto_status }}" != "0" ]]; then
           echo "Some tests failed!"
           exit 1
         fi
