@@ -58,7 +58,72 @@ jobs:
         ./build.sh --debug --clean
       shell: bash
 
-    - name: Run tests
+    - name: Run Common Tests
+      id: common_tests
+      continue-on-error: true
       run: |
-        cd scripts
-        ./run_tests.sh
+        cd build
+        ./tests/test_common/test_common --gtest_output="xml:common_test_results.xml"
+        echo "common_status=$?" >> $GITHUB_ENV
+
+    - name: Run Crypto Tests
+      id: crypto_tests
+      continue-on-error: true
+      run: |
+        cd build
+        ./tests/test_crypto/test_crypto --gtest_output="xml:crypto_test_results.xml"
+        echo "crypto_status=$?" >> $GITHUB_ENV
+
+    - name: Run Server Tests
+      id: server_tests
+      continue-on-error: true
+      run: |
+        cd build
+        ./tests/test_server/test_server --gtest_output="xml:server_test_results.xml"
+        echo "server_status=$?" >> $GITHUB_ENV
+
+    - name: Run Client Tests
+      id: client_tests
+      continue-on-error: true
+      run: |
+        cd build
+        ./tests/test_client/test_client --gtest_output="xml:client_test_results.xml"
+        echo "client_status=$?" >> $GITHUB_ENV
+
+    - name: Run File Server Tests
+      id: file_server_tests
+      continue-on-error: true
+      run: |
+        cd build
+        ./tests/test_file_server/test_file_server --gtest_output="xml:file_server_test_results.xml"
+        echo "file_server_status=$?" >> $GITHUB_ENV
+
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: |
+          build/*_test_results.xml
+
+    - name: Generate Test Summary
+      if: always()
+      run: |
+        echo "Test Results Summary:" >> $GITHUB_STEP_SUMMARY
+        echo "-------------------" >> $GITHUB_STEP_SUMMARY
+        echo "Common Tests: ${{ env.common_status == '0' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "Crypto Tests: ${{ env.crypto_status == '0' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "Server Tests: ${{ env.server_status == '0' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "Client Tests: ${{ env.client_status == '0' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "File Server Tests: ${{ env.file_server_status == '0' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+
+    - name: Check Test Results
+      if: always()
+      run: |
+        if [[ "${{ env.common_status }}" != "0" ]] || \
+           [[ "${{ env.crypto_status }}" != "0" ]] || \
+           [[ "${{ env.server_status }}" != "0" ]] || \
+           [[ "${{ env.client_status }}" != "0" ]] || \
+           [[ "${{ env.file_server_status }}" != "0" ]]; then
+          echo "Some tests failed!"
+          exit 1
+        fi
