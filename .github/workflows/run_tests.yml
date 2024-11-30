@@ -34,6 +34,13 @@ jobs:
           libyaml-cpp-dev=0.7.0+dfsg-8build1 \
           libhiredis-dev=0.14.1-2
 
+    - name: Build project
+      run: |
+        cd scripts
+        chmod +x *.sh
+        ./build.sh --debug
+      shell: bash
+
     - name: Cache build directories
       uses: actions/cache@v3.3.1
       with:
@@ -56,52 +63,95 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-build-
 
-    - name: Build project
-      run: |
-        cd scripts
-        chmod +x *.sh
-        ./build.sh --debug
-      shell: bash
-
     - name: Run Common Tests
       id: common_tests
       continue-on-error: true
       run: |
         cd build
-        ./tests/test_common/test_common --gtest_also_run_disabled_tests --verbose --gtest_output="xml:common_test_results.xml"
+        echo "Running Common Tests..."
+        ./tests/test_common/test_common --gtest_also_run_disabled_tests --verbose --gtest_output="xml:common_test_results.xml" | tee common_test_output.txt
         echo "common_status=$?" >> $GITHUB_ENV
+
+        total=$(grep -o "RUN" common_test_output.txt | wc -l)
+        passed=$(grep -o "OK" common_test_output.txt | wc -l)
+        failed=$(grep -o "FAILED" common_test_output.txt | wc -l)
+        echo "common_total=$total" >> $GITHUB_ENV
+        echo "common_passed=$passed" >> $GITHUB_ENV
+        echo "common_failed=$failed" >> $GITHUB_ENV
+
+        grep -B 1 "FAILED" common_test_output.txt > common_failed_tests.txt || true
 
     - name: Run Crypto Tests
       id: crypto_tests
       continue-on-error: true
       run: |
         cd build
-        ./tests/test_crypto/test_crypto --gtest_also_run_disabled_tests --verbose --gtest_output="xml:crypto_test_results.xml"
+        echo "Running Crypto Tests..."
+        ./tests/test_crypto/test_crypto --gtest_also_run_disabled_tests --verbose --gtest_output="xml:crypto_test_results.xml" | tee crypto_test_output.txt
         echo "crypto_status=$?" >> $GITHUB_ENV
+
+        total=$(grep -o "RUN" crypto_test_output.txt | wc -l)
+        passed=$(grep -o "OK" crypto_test_output.txt | wc -l)
+        failed=$(grep -o "FAILED" crypto_test_output.txt | wc -l)
+        echo "crypto_total=$total" >> $GITHUB_ENV
+        echo "crypto_passed=$passed" >> $GITHUB_ENV
+        echo "crypto_failed=$failed" >> $GITHUB_ENV
+
+        grep -B 1 "FAILED" crypto_test_output.txt > crypto_failed_tests.txt || true
 
     - name: Run Server Tests
       id: server_tests
       continue-on-error: true
       run: |
         cd build
-        ./tests/test_server/test_server --gtest_also_run_disabled_tests --verbose --gtest_output="xml:server_test_results.xml"
+        echo "Running Server Tests..."
+        ./tests/test_server/test_server --gtest_also_run_disabled_tests --verbose --gtest_output="xml:server_test_results.xml" | tee server_test_output.txt
         echo "server_status=$?" >> $GITHUB_ENV
+
+        total=$(grep -o "RUN" server_test_output.txt | wc -l)
+        passed=$(grep -o "OK" server_test_output.txt | wc -l)
+        failed=$(grep -o "FAILED" server_test_output.txt | wc -l)
+        echo "server_total=$total" >> $GITHUB_ENV
+        echo "server_passed=$passed" >> $GITHUB_ENV
+        echo "server_failed=$failed" >> $GITHUB_ENV
+
+        grep -B 1 "FAILED" server_test_output.txt > server_failed_tests.txt || true
 
     - name: Run Client Tests
       id: client_tests
       continue-on-error: true
       run: |
         cd build
-        ./tests/test_client/test_client --gtest_also_run_disabled_tests --verbose --gtest_output="xml:client_test_results.xml"
+        echo "Running Client Tests..."
+        ./tests/test_client/test_client --gtest_also_run_disabled_tests --verbose --gtest_output="xml:client_test_results.xml" | tee client_test_output.txt
         echo "client_status=$?" >> $GITHUB_ENV
+
+        total=$(grep -o "RUN" client_test_output.txt | wc -l)
+        passed=$(grep -o "OK" client_test_output.txt | wc -l)
+        failed=$(grep -o "FAILED" client_test_output.txt | wc -l)
+        echo "client_total=$total" >> $GITHUB_ENV
+        echo "client_passed=$passed" >> $GITHUB_ENV
+        echo "client_failed=$failed" >> $GITHUB_ENV
+
+        grep -B 1 "FAILED" client_test_output.txt > client_failed_tests.txt || true
 
     - name: Run File Server Tests
       id: file_server_tests
       continue-on-error: true
       run: |
         cd build
-        ./tests/test_file_server/test_file_server --gtest_also_run_disabled_tests --verbose --gtest_output="xml:file_server_test_results.xml"
+        echo "Running File Server Tests..."
+        ./tests/test_file_server/test_file_server --gtest_also_run_disabled_tests --verbose --gtest_output="xml:file_server_test_results.xml" | tee file_server_test_output.txt
         echo "file_server_status=$?" >> $GITHUB_ENV
+
+        total=$(grep -o "RUN" file_server_test_output.txt | wc -l)
+        passed=$(grep -o "OK" file_server_test_output.txt | wc -l)
+        failed=$(grep -o "FAILED" file_server_test_output.txt | wc -l)
+        echo "file_server_total=$total" >> $GITHUB_ENV
+        echo "file_server_passed=$passed" >> $GITHUB_ENV
+        echo "file_server_failed=$failed" >> $GITHUB_ENV
+
+        grep -B 1 "FAILED" file_server_test_output.txt > file_server_failed_tests.txt || true
 
     - name: Check XML Files Exist
       if: always()
@@ -114,6 +164,66 @@ jobs:
             echo "$file exists and has content"
           fi
         done
+
+    - name: Generate Detailed Test Summary
+      if: always()
+      run: |
+        echo "# Detailed Test Results Summary" >> $GITHUB_STEP_SUMMARY
+
+        echo "## Common Tests" >> $GITHUB_STEP_SUMMARY
+        echo "Status: ${{ env.common_status == '0' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "Total: ${{ env.common_total }}" >> $GITHUB_STEP_SUMMARY
+        echo "Passed: ${{ env.common_passed }}" >> $GITHUB_STEP_SUMMARY
+        echo "Failed: ${{ env.common_failed }}" >> $GITHUB_STEP_SUMMARY
+        if [ -s "build/common_failed_tests.txt" ]; then
+          echo "### Failed Tests:" >> $GITHUB_STEP_SUMMARY
+          echo '' >> GITHUBSTEPSUMMARYcatbuild/commonfailedtests.txt>>GITHUBS​TEPS​UMMARYcatbuild/commonf​ailedt​ests.txt>>GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "## Crypto Tests" >> $GITHUB_STEP_SUMMARY
+        echo "Status: ${{ env.crypto_status == '0' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "Total: ${{ env.crypto_total }}" >> $GITHUB_STEP_SUMMARY
+        echo "Passed: ${{ env.crypto_passed }}" >> $GITHUB_STEP_SUMMARY
+        echo "Failed: ${{ env.crypto_failed }}" >> $GITHUB_STEP_SUMMARY
+        if [ -s "build/crypto_failed_tests.txt" ]; then
+          echo "### Failed Tests:" >> $GITHUB_STEP_SUMMARY
+          echo '' >> GITHUBSTEPSUMMARYcatbuild/cryptofailedtests.txt>>GITHUBS​TEPS​UMMARYcatbuild/cryptof​ailedt​ests.txt>>GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "## Server Tests" >> $GITHUB_STEP_SUMMARY
+        echo "Status: ${{ env.server_status == '0' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "Total: ${{ env.server_total }}" >> $GITHUB_STEP_SUMMARY
+        echo "Passed: ${{ env.server_passed }}" >> $GITHUB_STEP_SUMMARY
+        echo "Failed: ${{ env.server_failed }}" >> $GITHUB_STEP_SUMMARY
+        if [ -s "build/server_failed_tests.txt" ]; then
+          echo "### Failed Tests:" >> $GITHUB_STEP_SUMMARY
+          echo '' >> GITHUBSTEPSUMMARYcatbuild/serverfailedtests.txt>>GITHUBS​TEPS​UMMARYcatbuild/serverf​ailedt​ests.txt>>GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "## Client Tests" >> $GITHUB_STEP_SUMMARY
+        echo "Status: ${{ env.client_status == '0' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "Total: ${{ env.client_total }}" >> $GITHUB_STEP_SUMMARY
+        echo "Passed: ${{ env.client_passed }}" >> $GITHUB_STEP_SUMMARY
+        echo "Failed: ${{ env.client_failed }}" >> $GITHUB_STEP_SUMMARY
+        if [ -s "build/client_failed_tests.txt" ]; then
+          echo "### Failed Tests:" >> $GITHUB_STEP_SUMMARY
+          echo '' >> GITHUBSTEPSUMMARYcatbuild/clientfailedtests.txt>>GITHUBS​TEPS​UMMARYcatbuild/clientf​ailedt​ests.txt>>GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "## File Server Tests" >> $GITHUB_STEP_SUMMARY
+        echo "Status: ${{ env.file_server_status == '0' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "Total: ${{ env.file_server_total }}" >> $GITHUB_STEP_SUMMARY
+        echo "Passed: ${{ env.file_server_passed }}" >> $GITHUB_STEP_SUMMARY
+        echo "Failed: ${{ env.file_server_failed }}" >> $GITHUB_STEP_SUMMARY
+        if [ -s "build/file_server_failed_tests.txt" ]; then
+          echo "### Failed Tests:" >> $GITHUB_STEP_SUMMARY
+          echo '' >> GITHUBSTEPSUMMARYcatbuild/fileserverfailedtests.txt>>GITHUBS​TEPS​UMMARYcatbuild/files​erverf​ailedt​ests.txt>>GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+        fi
 
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
@@ -138,11 +248,14 @@ jobs:
     - name: Check Test Results
       if: always()
       run: |
-        if [[ "${{ env.common_status }}" != "0" ]] || \
-           [[ "${{ env.crypto_status }}" != "0" ]] || \
-           [[ "${{ env.server_status }}" != "0" ]] || \
-           [[ "${{ env.client_status }}" != "0" ]] || \
-           [[ "${{ env.file_server_status }}" != "0" ]]; then
-          echo "Some tests failed!"
+        total_failed=0
+        for status in "${{ env.common_failed }}" "${{ env.crypto_failed }}" "${{ env.server_failed }}" "${{ env.client_failed }}" "${{ env.file_server_failed }}"; do
+          total_failed=$((total_failed + status))
+        done
+
+        if [ $total_failed -gt 0 ]; then
+          echo "❌ Total Failed Tests: $total_failed"
           exit 1
+        else
+          echo "✅ All Tests Passed!"
         fi
