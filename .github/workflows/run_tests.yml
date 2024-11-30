@@ -60,7 +60,6 @@ jobs:
       run: |
         cd scripts
         chmod +x *.sh
-        # ./build.sh --debug --clean
         ./build.sh --debug
       shell: bash
 
@@ -69,7 +68,7 @@ jobs:
       continue-on-error: true
       run: |
         cd build
-        ./tests/test_common/test_common --gtest_output="xml:common_test_results.xml"
+        ./tests/test_common/test_common --gtest_also_run_disabled_tests --verbose --gtest_output="xml:common_test_results.xml"
         echo "common_status=$?" >> $GITHUB_ENV
 
     - name: Run Crypto Tests
@@ -77,7 +76,7 @@ jobs:
       continue-on-error: true
       run: |
         cd build
-        ./tests/test_crypto/test_crypto --gtest_output="xml:crypto_test_results.xml"
+        ./tests/test_crypto/test_crypto --gtest_also_run_disabled_tests --verbose --gtest_output="xml:crypto_test_results.xml"
         echo "crypto_status=$?" >> $GITHUB_ENV
 
     - name: Run Server Tests
@@ -85,7 +84,7 @@ jobs:
       continue-on-error: true
       run: |
         cd build
-        ./tests/test_server/test_server --gtest_output="xml:server_test_results.xml"
+        ./tests/test_server/test_server --gtest_also_run_disabled_tests --verbose --gtest_output="xml:server_test_results.xml"
         echo "server_status=$?" >> $GITHUB_ENV
 
     - name: Run Client Tests
@@ -93,7 +92,7 @@ jobs:
       continue-on-error: true
       run: |
         cd build
-        ./tests/test_client/test_client --gtest_output="xml:client_test_results.xml"
+        ./tests/test_client/test_client --gtest_also_run_disabled_tests --verbose --gtest_output="xml:client_test_results.xml"
         echo "client_status=$?" >> $GITHUB_ENV
 
     - name: Run File Server Tests
@@ -101,8 +100,20 @@ jobs:
       continue-on-error: true
       run: |
         cd build
-        ./tests/test_file_server/test_file_server --gtest_output="xml:file_server_test_results.xml"
+        ./tests/test_file_server/test_file_server --gtest_also_run_disabled_tests --verbose --gtest_output="xml:file_server_test_results.xml"
         echo "file_server_status=$?" >> $GITHUB_ENV
+
+    - name: Check XML Files Exist
+      if: always()
+      run: |
+        cd build
+        for file in *_test_results.xml; do
+          if [ ! -s "$file" ]; then
+            echo "Warning: $file is empty or doesn't exist"
+          else
+            echo "$file exists and has content"
+          fi
+        done
 
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
@@ -112,7 +123,7 @@ jobs:
         check_name: "Test Results"
         comment_mode: always
         fail_on: test failures
-        
+
     - name: Generate Test Summary
       if: always()
       run: |
@@ -128,7 +139,10 @@ jobs:
       if: always()
       run: |
         if [[ "${{ env.common_status }}" != "0" ]] || \
-          [[ "${{ env.crypto_status }}" != "0" ]]; then
+           [[ "${{ env.crypto_status }}" != "0" ]] || \
+           [[ "${{ env.server_status }}" != "0" ]] || \
+           [[ "${{ env.client_status }}" != "0" ]] || \
+           [[ "${{ env.file_server_status }}" != "0" ]]; then
           echo "Some tests failed!"
           exit 1
         fi
