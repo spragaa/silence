@@ -5,7 +5,7 @@
 #include <vector>
 #include <random>
 
-namespace common::crypto {
+namespace crypto {
 
 constexpr std::array<char, 62> alphabet = {
 	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -351,4 +351,4 @@ TEST_F(AESTests, tampering_detection_test) {
 	EXPECT_NE(decrypted, input);
 }
 
-} // namespace common::crypto
+} // namespace crypto

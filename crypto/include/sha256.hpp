@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <vector>
 
-namespace common {
 namespace crypto {
 
 class SHA256 {
@@ -72,4 +71,3 @@ private:
 };
 
 } // namespace crypto
-} // namespace common

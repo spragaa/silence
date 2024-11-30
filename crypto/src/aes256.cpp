@@ -1,6 +1,5 @@
 #include "aes256.hpp"
 
-namespace common {
 namespace crypto {
 
 constexpr size_t AES256::Nk;
@@ -366,4 +365,3 @@ std::string AES256::aes256_decrypt(const std::string& input) {
 }
 
 } // namespace crypto
-} // namespace common

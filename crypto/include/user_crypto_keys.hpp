@@ -7,7 +7,6 @@
 #include <nlohmann/json.hpp>
 #include <map>
 
-namespace common {
 namespace crypto {
 
 using cpp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>, boost::multiprecision::et_off>;
@@ -48,4 +47,3 @@ private:
 
 
 } // namespace crypto
-} // namespace common

@@ -94,8 +94,8 @@ private:
 	bool _is_authorized;
 	std::string _user_files_dir = std::string(SOURCE_DIR) + "/client/user_files";
 	std::map<std::string, std::ofstream> _incoming_files;
-	common::crypto::HybridCryptoSystem _hybrid_crypto_system;
-	common::crypto::UserCryptoKeySet _user_crypto_key_set;
+	crypto::HybridCryptoSystem _hybrid_crypto_system;
+	crypto::UserCryptoKeySet _user_crypto_key_set;
 	// store all of the keys in users json, look for a proper way of storing this data
 };
 

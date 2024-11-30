@@ -1,4 +1,5 @@
 add_subdirectory(test_common)
+add_subdirectory(test_crypto)
 add_subdirectory(test_server)
 add_subdirectory(test_client)
 # add_subdirectory(test_file_server)

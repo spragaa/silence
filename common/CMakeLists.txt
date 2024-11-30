@@ -18,5 +18,3 @@ target_include_directories(common_lib
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE ${nlohmann_json_SOURCE_DIR}/include
 )
-
-add_subdirectory(crypto)

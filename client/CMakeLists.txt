@@ -11,7 +11,7 @@ target_link_libraries(client_lib
 target_include_directories(client_lib
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
     PUBLIC ${CMAKE_SOURCE_DIR}/common/include
-    PUBLIC ${CMAKE_SOURCE_DIR}/common/crypto/include
+    PUBLIC ${CMAKE_SOURCE_DIR}/crypto/include
     PRIVATE ${nlohmann_json_SOURCE_DIR}/include
 )
 

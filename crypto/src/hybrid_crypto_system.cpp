@@ -1,6 +1,5 @@
 #include "hybrid_crypto_system.hpp"
 
-namespace common {
 namespace crypto {
 
 HybridCryptoSystem::HybridCryptoSystem() {
@@ -57,4 +56,3 @@ DSASignature HybridCryptoSystem::sign(const cpp_int& message_hash) {
 
 
 } // namespace crypto
-} // namespace common

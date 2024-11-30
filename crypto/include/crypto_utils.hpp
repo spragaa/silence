@@ -7,7 +7,6 @@
 #include <random>
 #include <map>
 
-namespace common {
 namespace crypto {
 
 using cpp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>, boost::multiprecision::et_off>;
@@ -68,4 +67,3 @@ std::array<uint8_t, n / 8> generate_aes_key() {
 }
 
 } // namespace common
-} // namespace crypto

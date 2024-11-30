@@ -1,6 +1,5 @@
 #include "user_crypto_keys.hpp"
 
-namespace common {
 namespace crypto {
 
 UserCryptoKeys::UserCryptoKeys()
@@ -95,4 +94,3 @@ UserCryptoKeys UserCryptoKeys::from_json(const nlohmann::json& json) {
 }
 
 } // namespace crypto
-} // namespace common

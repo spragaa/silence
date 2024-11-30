@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-namespace common::crypto {
+namespace crypto {
 
 class TestDSA : public DSA {
 public:
@@ -143,4 +143,4 @@ TEST_F(DSATests, wrong_public_key_verification) {
 	EXPECT_FALSE(bob->verify(message_hash, signature, bob->get_public_key()));
 }
 
-} // namespace common::crypto
+} // namespace crypto

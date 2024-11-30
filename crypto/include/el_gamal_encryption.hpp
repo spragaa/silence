@@ -7,7 +7,6 @@
 #include <array>
 #include <vector>
 
-namespace  common {
 namespace crypto {
 
 class ElGamalEncryption {
@@ -30,4 +29,3 @@ private:
 };
 
 } // namespace common
-} // namespace crypto
