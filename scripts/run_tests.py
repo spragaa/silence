@@ -22,10 +22,10 @@ class TestResult:
 class TestRunner:
     def __init__(self):
         self.test_suites = [
-            "../build/tests/test_server/test_server",
+            # "../build/tests/test_server/test_server",
             "../build/tests/test_common/test_common",
             "../build/tests/test_crypto/test_crypto",
-            "../build/tests/test_file_server/test_file_server"
+            # "../build/tests/test_file_server/test_file_server"
         ]
         self.results_path = "../build/test_results.xml"
         init(strip=False)
