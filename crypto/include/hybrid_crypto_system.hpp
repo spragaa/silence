@@ -8,7 +8,6 @@
 
 #include <memory>
 
-namespace common {
 namespace crypto {
 
 /*
@@ -81,4 +80,3 @@ private:
 
 
 } // namespace crypto
-} // namespace common

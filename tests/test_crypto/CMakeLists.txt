@@ -13,7 +13,7 @@ target_link_libraries(test_crypto
 )
 
 target_include_directories(test_crypto
-    PUBLIC ${CMAKE_SOURCE_DIR}/common/crypto/include
+    PUBLIC ${CMAKE_SOURCE_DIR}/crypto/include
 )
 
 target_compile_definitions(test_crypto

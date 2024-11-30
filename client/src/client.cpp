@@ -250,8 +250,8 @@ void Client::register_user() {
 	request["type"] = "register";
 	request["nickname"] = nickname;
 	request["password"] = password;
-	request["el_gamal_public_key"] = common::crypto::cpp_int_to_hex(_hybrid_crypto_system.get_el_gamal_public_key());
-	request["dsa_public_key"] = common::crypto::cpp_int_to_hex(_hybrid_crypto_system.get_dsa_public_key());
+	request["el_gamal_public_key"] = crypto::cpp_int_to_hex(_hybrid_crypto_system.get_el_gamal_public_key());
+	request["dsa_public_key"] = crypto::cpp_int_to_hex(_hybrid_crypto_system.get_dsa_public_key());
 
 	boost::asio::write(_socket, boost::asio::buffer(request.dump() + "\r\n\r\n"));
 	DEBUG_MSG("[Client::register_user] Sending request: " + request.dump());
@@ -333,14 +333,14 @@ void Client::authorize_user() {
 
 // void?
 bool Client::send_aes_key(const std::string& receiver_nickname, const std::string& receiver_public_key) {
-	common::crypto::EncryptedMessage encrypted_aes_key = _hybrid_crypto_system.encrypt_aes_key(receiver_public_key);
-	std::string encrypted_aes_key_c1 = common::crypto::cpp_int_to_hex(encrypted_aes_key._c1);  
-	std::string encrypted_aes_key_c2 = common::crypto::cpp_int_to_hex(encrypted_aes_key._c2);  
+	crypto::EncryptedMessage encrypted_aes_key = _hybrid_crypto_system.encrypt_aes_key(receiver_public_key);
+	std::string encrypted_aes_key_c1 = crypto::cpp_int_to_hex(encrypted_aes_key._c1);  
+	std::string encrypted_aes_key_c2 = crypto::cpp_int_to_hex(encrypted_aes_key._c2);  
 	
-	common::crypto::SHA256 sha256;
+	crypto::SHA256 sha256;
 	sha256.update(encrypted_aes_key_c1 + encrypted_aes_key_c2);
-	common::crypto::DSASignature dsa_signature = _hybrid_crypto_system.sign(
-	   common::crypto::hex_to_cpp_int(sha256.digest())
+	crypto::DSASignature dsa_signature = _hybrid_crypto_system.sign(
+	   crypto::hex_to_cpp_int(sha256.digest())
 	);
 
 	nlohmann::json request;
@@ -348,8 +348,8 @@ bool Client::send_aes_key(const std::string& receiver_nickname, const std::strin
 	request["receiver_nickname"] = receiver_nickname;
 	request["encrypted_aes_key_c1"] = encrypted_aes_key_c1;
 	request["encrypted_aes_key_c2"] = encrypted_aes_key_c2;  
-	request["dsa__r"] = common::crypto::cpp_int_to_hex(dsa_signature._r);  
-	request["dsa_signature"] = common::crypto::cpp_int_to_hex(dsa_signature._signature);  
+	request["dsa__r"] = crypto::cpp_int_to_hex(dsa_signature._r);  
+	request["dsa_signature"] = crypto::cpp_int_to_hex(dsa_signature._signature);  
 	
 	DEBUG_MSG("[Client::send_aes_key] Sending request: " + request.dump());
 
@@ -646,10 +646,10 @@ void Client::handle_incoming_file_chunk(const nlohmann::json& chunk_message) {
 void Client::handle_receive_user_keys(const nlohmann::json& response) {
 	if (response["type"] == "success") {
 		int user_id = response["sender_id"];
-		common::crypto::UserCryptoKeys user_crypto_keys(
-			common::crypto::hex_to_cpp_int(response["dsa_public_key"]),
-			common::crypto::hex_to_cpp_int(response["el_gamal_public_key"]),
-			common::crypto::cpp_int(-1)
+		crypto::UserCryptoKeys user_crypto_keys(
+			crypto::hex_to_cpp_int(response["dsa_public_key"]),
+			crypto::hex_to_cpp_int(response["el_gamal_public_key"]),
+			crypto::cpp_int(-1)
 			);
 		_user_crypto_key_set.add_user_keys(user_id, user_crypto_keys);
 

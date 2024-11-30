@@ -3,7 +3,6 @@
 #include <sstream>
 #include <iomanip>
 
-namespace common {
 namespace crypto {
 
 SHA256::SHA256() 
@@ -106,4 +105,3 @@ std::string SHA256::digest() {
 }
 
 } // namespace crypto
-} // namespace common

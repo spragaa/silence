@@ -3,7 +3,6 @@
 #include <sstream>
 #include <iomanip>
 
-namespace common {
 namespace crypto {
 
 cpp_int hex_to_cpp_int(const std::string& hex) {
@@ -173,5 +172,4 @@ bool validate_dsa_parameters(const cpp_int& p, const cpp_int& q, const cpp_int& 
 	return true;
 }
 
-} // namespace common
 } // namespace crypto
