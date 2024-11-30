@@ -243,7 +243,7 @@ bool UserMetadataRepository::set_public_keys(const int user_id, const std::strin
 	}
 }
 
-std::optional<common::crypto::UserCryptoKeys> UserMetadataRepository::get_public_keys(const int user_id) {
+std::optional<crypto::UserCryptoKeys> UserMetadataRepository::get_public_keys(const int user_id) {
 	try {
 		pqxx::work txn(_postgres_db_manager.get_connection(_connection_name));
 		pqxx::result r = txn.exec_params(
@@ -279,12 +279,12 @@ common::User UserMetadataRepository::construct_user(const nlohmann::json& user_j
 	return user.from_json(user_json);
 }
 
-common::crypto::UserCryptoKeys UserMetadataRepository::construct_user_crypto_keys(const nlohmann::json& json) {
+crypto::UserCryptoKeys UserMetadataRepository::construct_user_crypto_keys(const nlohmann::json& json) {
 	try {
-		return common::crypto::UserCryptoKeys(
-			common::crypto::hex_to_cpp_int(json["dsa_public_key"].get<std::string>()),
-			common::crypto::hex_to_cpp_int(json["el_gamal_public_key"].get<std::string>()),
-			common::crypto::cpp_int(-1)
+		return crypto::UserCryptoKeys(
+			crypto::hex_to_cpp_int(json["dsa_public_key"].get<std::string>()),
+			crypto::hex_to_cpp_int(json["el_gamal_public_key"].get<std::string>()),
+			crypto::cpp_int(-1)
 			);
 	} catch (const std::exception& e) {
 		ERROR_MSG("[UserCryptoKeys::construct_user_crypto_keys] Error parsing crypto keys: " + std::string(e.what()));

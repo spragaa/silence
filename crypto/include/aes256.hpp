@@ -15,7 +15,6 @@
 #include <stdexcept>
 #include <boost/multiprecision/cpp_int.hpp>
 
-namespace common {
 namespace crypto {
 
 class AES256 {
@@ -107,4 +106,3 @@ public:
 };
 
 } // namespace crypto
-} // namespace common

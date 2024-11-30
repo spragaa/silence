@@ -1,6 +1,5 @@
 #include "el_gamal_encryption.hpp"
 
-namespace common {
 namespace crypto {
 
 ElGamalEncryption::ElGamalEncryption(const cpp_int& prime_modulus, const cpp_int& generator)
@@ -54,4 +53,3 @@ ElGamalEncryption::cpp_int ElGamalEncryption::decrypt(const EncryptedMessage& en
 }
 
 } // namespace common
-} // namespace crypto

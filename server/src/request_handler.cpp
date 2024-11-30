@@ -339,7 +339,7 @@ void RequestHandler::handle_get_user_keys(boost::shared_ptr<tcp::socket> socket,
 		return;
 	}
 
-	std::optional<common::crypto::UserCryptoKeys> receiver_crypto_keys = _repo_manager.get_public_keys(receiver_id);
+	std::optional<crypto::UserCryptoKeys> receiver_crypto_keys = _repo_manager.get_public_keys(receiver_id);
 
 	if (!receiver_crypto_keys.has_value()) {
 		ERROR_MSG("[RequestHandler::handle_get_user_keys] Failed to retrieve keys for user: " + std::to_string(receiver_id));
@@ -352,8 +352,8 @@ void RequestHandler::handle_get_user_keys(boost::shared_ptr<tcp::socket> socket,
 	} else {
 		response["status"] = "success";
 		response["user_id"] = receiver_id;
-		response["dsa_public_key"] = common::crypto::cpp_int_to_hex(receiver_crypto_keys->get_dsa_public_key());
-		response["el_gamal_public_key"] = common::crypto::cpp_int_to_hex(receiver_crypto_keys->get_el_gamal_public_key());
+		response["dsa_public_key"] = crypto::cpp_int_to_hex(receiver_crypto_keys->get_dsa_public_key());
+		response["el_gamal_public_key"] = crypto::cpp_int_to_hex(receiver_crypto_keys->get_el_gamal_public_key());
 	}
 
 	DEBUG_MSG("[Server::handle_get_user_keys] Sending response: " + response.dump());

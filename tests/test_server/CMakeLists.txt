@@ -20,7 +20,7 @@ target_link_libraries(test_server
 target_include_directories(test_server
     PUBLIC ${CMAKE_SOURCE_DIR}/tests/test_server/include
     PUBLIC ${CMAKE_SOURCE_DIR}/common/include
-    PUBLIC ${CMAKE_SOURCE_DIR}/common/crypto/include
+    PUBLIC ${CMAKE_SOURCE_DIR}/crypto/include
     PUBLIC ${CMAKE_SOURCE_DIR}/server/include
     PRIVATE ${nlohmann_json_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/thirdparty/libpqxx

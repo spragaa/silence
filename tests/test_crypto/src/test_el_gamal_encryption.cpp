@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-namespace common::crypto {
+namespace crypto {
 
 class TestElGamalEncryption : public ElGamalEncryption {
 public:
@@ -62,7 +62,7 @@ TEST_F(ElGamalEncryptionTests, key_generation) {
 }
 
 TEST_F(ElGamalEncryptionTests, encrypt_decrypt_small_message) {
-	common::crypto::TestElGamalEncryption::cpp_int message(42);
+	crypto::TestElGamalEncryption::cpp_int message(42);
 
 	auto encrypted = alice->encrypt(message, bob->get_keys()._public_key);
 	auto decrypted = bob->decrypt(encrypted);
@@ -71,7 +71,7 @@ TEST_F(ElGamalEncryptionTests, encrypt_decrypt_small_message) {
 }
 
 TEST_F(ElGamalEncryptionTests, encrypt_decrypt_large_message) {
-	auto message = common::crypto::hex_to_cpp_int(
+	auto message = crypto::hex_to_cpp_int(
 		"0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"
 		);
 
@@ -82,23 +82,23 @@ TEST_F(ElGamalEncryptionTests, encrypt_decrypt_large_message) {
 }
 
 TEST_F(ElGamalEncryptionTests, bidirectional_communication) {
-	common::crypto::TestElGamalEncryption::cpp_int message1(123);
+	crypto::TestElGamalEncryption::cpp_int message1(123);
 	auto encrypted1 = alice->encrypt(message1, bob->get_keys()._public_key);
 	auto decrypted1 = bob->decrypt(encrypted1);
 	EXPECT_EQ(message1, decrypted1);
 
-	common::crypto::TestElGamalEncryption::cpp_int message2(456);
+	crypto::TestElGamalEncryption::cpp_int message2(456);
 	auto encrypted2 = bob->encrypt(message2, alice->get_keys()._public_key);
 	auto decrypted2 = alice->decrypt(encrypted2);
 	EXPECT_EQ(message2, decrypted2);
 }
 
 TEST_F(ElGamalEncryptionTests, multiple_messages_encryption) {
-	std::vector<common::crypto::ElGamalEncryption::cpp_int> messages = {
-		common::crypto::TestElGamalEncryption::cpp_int(1),
-		common::crypto::TestElGamalEncryption::cpp_int(100),
-		common::crypto::TestElGamalEncryption::cpp_int(65535),
-		common::crypto::hex_to_cpp_int("DEADBEEF")
+	std::vector<crypto::ElGamalEncryption::cpp_int> messages = {
+		crypto::TestElGamalEncryption::cpp_int(1),
+		crypto::TestElGamalEncryption::cpp_int(100),
+		crypto::TestElGamalEncryption::cpp_int(65535),
+		crypto::hex_to_cpp_int("DEADBEEF")
 	};
 
 	for (const auto& message : messages) {
@@ -109,19 +109,19 @@ TEST_F(ElGamalEncryptionTests, multiple_messages_encryption) {
 }
 
 TEST_F(ElGamalEncryptionTests, edge_cases) {
-	common::crypto::TestElGamalEncryption::cpp_int message1(1);
+	crypto::TestElGamalEncryption::cpp_int message1(1);
 	auto encrypted1 = alice->encrypt(message1, bob->get_keys()._public_key);
 	auto decrypted1 = bob->decrypt(encrypted1);
 	EXPECT_EQ(message1, decrypted1);
 
-	common::crypto::TestElGamalEncryption::cpp_int message2 = p - 1;
+	crypto::TestElGamalEncryption::cpp_int message2 = p - 1;
 	auto encrypted2 = alice->encrypt(message2, bob->get_keys()._public_key);
 	auto decrypted2 = bob->decrypt(encrypted2);
 	EXPECT_EQ(message2, decrypted2);
 }
 
 TEST_F(ElGamalEncryptionTests, randomness_in_encryption) {
-	common::crypto::ElGamalEncryption::cpp_int message(42);
+	crypto::ElGamalEncryption::cpp_int message(42);
 
 	auto encrypted1 = alice->encrypt(message, bob->get_keys()._public_key);
 	auto encrypted2 = alice->encrypt(message, bob->get_keys()._public_key);
@@ -136,8 +136,8 @@ TEST_F(ElGamalEncryptionTests, demonstrate_prime_size_effects) {
 	cpp_int small_p = 23;
 	cpp_int g = 11;
 
-	common::crypto::TestElGamalEncryption small_prime_system(small_p, g);
-	common::crypto::TestElGamalEncryption large_prime_system(p, g);
+	crypto::TestElGamalEncryption small_prime_system(small_p, g);
+	crypto::TestElGamalEncryption large_prime_system(p, g);
 
 	cpp_int message(1000);
 
@@ -206,4 +206,4 @@ TEST_F(ElGamalEncryptionTests, invalid_parameter_construction) {
 	EXPECT_THROW(TestElGamalEncryption(p, cpp_int(1)), std::invalid_argument);
 }
 
-} // namespace common::crypto
+} // namespace crypto

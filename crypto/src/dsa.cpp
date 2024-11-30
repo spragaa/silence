@@ -1,6 +1,5 @@
 #include "dsa.hpp"
 
-namespace common {
 namespace crypto {
 
 DSA::DSA(const cpp_int& prime_modulus, const cpp_int& prime_divisor, const cpp_int& generator)
@@ -67,4 +66,3 @@ const KeyPair& DSA::get_keys() const {
 }
 
 } // namespace common
-} // namespace crypto

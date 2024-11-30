@@ -97,6 +97,7 @@ set(PISTACHE_USE_RAPIDJSON OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(pistache)
 
 add_subdirectory(common)
+add_subdirectory(crypto)
 add_subdirectory(server)
 add_subdirectory(file_server)
 add_subdirectory(client)
