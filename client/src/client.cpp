@@ -333,31 +333,23 @@ void Client::authorize_user() {
 
 // void?
 bool Client::send_aes_key(const std::string& receiver_nickname, const std::string& receiver_public_key) {
-/*
-   1. get receiver aes and dsa public keys
-   2. encrypt aes key using recipient's el gamal public key
-   3. sign the hash of encrypted aes key
- */
-
 	common::crypto::EncryptedMessage encrypted_aes_key = _hybrid_crypto_system.encrypt_aes_key(receiver_public_key);
-	
 	std::string encrypted_aes_key_c1 = common::crypto::cpp_int_to_hex(encrypted_aes_key._c1);  
 	std::string encrypted_aes_key_c2 = common::crypto::cpp_int_to_hex(encrypted_aes_key._c2);  
 	
-	// hash c1 || c2
-	// sign
-	// send signed shit
-	
-	
-	
-
+	common::crypto::SHA256 sha256;
+	sha256.update(encrypted_aes_key_c1 + encrypted_aes_key_c2);
+	common::crypto::DSASignature dsa_signature = _hybrid_crypto_system.sign(
+	   common::crypto::hex_to_cpp_int(sha256.digest())
+	);
 
 	nlohmann::json request;
 	request["type"] = "send_aes_key";
 	request["receiver_nickname"] = receiver_nickname;
 	request["encrypted_aes_key_c1"] = encrypted_aes_key_c1;
 	request["encrypted_aes_key_c2"] = encrypted_aes_key_c2;  
-	
+	request["dsa__r"] = common::crypto::cpp_int_to_hex(dsa_signature._r);  
+	request["dsa_signature"] = common::crypto::cpp_int_to_hex(dsa_signature._signature);  
 	
 	DEBUG_MSG("[Client::send_aes_key] Sending request: " + request.dump());
 

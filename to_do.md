@@ -26,6 +26,7 @@
 - integrate file server client into server workflow
 
 ### tasks:
+- sha256 tests that will ensure randomness 
 - is int enough for id? -> probably not
 - message statuses (created, sent, undelivered, delivered, read, unread)
 - disable multiple users in one app
