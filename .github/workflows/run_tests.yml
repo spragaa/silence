@@ -15,44 +15,41 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Pin APT packages versions
+    - name: Check available package versions
       run: |
-        sudo apt-get update
-        sudo tee /etc/apt/preferences.d/pin-versions <<EOF
-        Package: libboost*
-        Pin: version 1.74*
-        Pin-Priority: 1001
+        sudo apt update
+        echo "Available versions for each package:"
+        echo "libboost1.74-all-dev:"
+        apt-cache policy libboost1.74-all-dev
+        echo -e "\ncmake:"
+        apt-cache policy cmake
+        echo -e "\nlibssl-dev:"
+        apt-cache policy libssl-dev
+        echo -e "\nlibpq-dev:"
+        apt-cache policy libpq-dev
+        echo -e "\nrapidjson-dev:"
+        apt-cache policy rapidjson-dev
+        echo -e "\nlibyaml-cpp-dev:"
+        apt-cache policy libyaml-cpp-dev
+        echo -e "\nlibhiredis-dev:"
+        apt-cache policy libhiredis-dev
 
-        Package: cmake
-        Pin: version 3.22*
-        Pin-Priority: 1001
-
-        Package: rapidjson-dev
-        Pin: version 1.1*
-        Pin-Priority: 1001
-
-        Package: libyaml-cpp-dev
-        Pin: version 0.7*
-        Pin-Priority: 1001
-
-        Package: libhiredis-dev
-        Pin: version 0.14*
-        Pin-Priority: 1001
-        EOF
-
-    - name: Install dependencies
+    - name: Install dependencies and show versions
       run: |
-        sudo apt-get install -y \
-          libboost1.74-all-dev=1.74.0-14ubuntu3 \
-          build-essential=12.9ubuntu3 \
-          cmake=3.22.1-1ubuntu1.22.04.1 \
-          libssl-dev=3.0.2-0ubuntu1.10 \
-          libpq-dev=14.9-0ubuntu0.22.04.1 \
-          pkg-config=0.29.2-1ubuntu3 \
-          rapidjson-dev=1.1.0+dfsg2-0ubuntu2 \
-          libyaml-cpp-dev=0.7.0-2 \
-          libhiredis-dev=0.14.0-6
+        sudo apt install -y \
+          libboost1.74-all-dev \
+          build-essential \
+          cmake \
+          libssl-dev \
+          libpq-dev \
+          pkg-config \
+          rapidjson-dev \
+          libyaml-cpp-dev \
+          libhiredis-dev
 
+        echo "Installed versions:"
+        dpkg -l | grep -E "boost|cmake|ssl|pq|rapidjson|yaml|hiredis"
+        
     - name: Cache build directories
       uses: actions/cache@v3.3.1
       with:
