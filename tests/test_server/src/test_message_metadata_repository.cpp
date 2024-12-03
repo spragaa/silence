@@ -14,7 +14,7 @@ protected:
 };
 
 TEST_F(MessageMetadataRepositoryTests, create_message) {
-	common::MessageMetadata message(100, 1, 2);
+	common::MessageMetadata message(100, 1, 2, 0); // chat id shouldn't be a 0 here 
 	int message_id = _repo->create(message);
 
 	ASSERT_EQ(message_id, 100);
@@ -24,6 +24,7 @@ TEST_F(MessageMetadataRepositoryTests, create_message) {
 
 	EXPECT_EQ(retrieved_message->get_sender_id(), 1);
 	EXPECT_EQ(retrieved_message->get_receiver_id(), 2);
+	// check chat id
 }
 
 TEST_F(MessageMetadataRepositoryTests, read_non_existing_message) {
@@ -50,7 +51,7 @@ TEST_F(MessageMetadataRepositoryTests, read_non_existing_message) {
 // }
 
 TEST_F(MessageMetadataRepositoryTests, remove_message) {
-	common::MessageMetadata message(666, 1, 2);
+	common::MessageMetadata message(666, 1, 2, 0); // chat id shouldn't be a zero here
 	int message_id = _repo->create(message);
 
 	ASSERT_EQ(message_id, 666);
@@ -63,4 +64,5 @@ TEST_F(MessageMetadataRepositoryTests, remove_message) {
 	EXPECT_EQ(deleted_message->get_sender_id(), 1);
 	EXPECT_EQ(deleted_message->get_receiver_id(), 2);
 	EXPECT_EQ(deleted_message->is_deleted(), true);
+	// check chat id
 }
