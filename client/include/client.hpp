@@ -22,6 +22,7 @@
 
 namespace client {
 
+// to do: refactor this shit 
 class Client {
 public:
 	Client(const std::string& server_address,
@@ -95,8 +96,7 @@ private:
 	std::string _user_files_dir = std::string(SOURCE_DIR) + "/client/user_files";
 	std::map<std::string, std::ofstream> _incoming_files;
 	crypto::HybridCryptoSystem _hybrid_crypto_system;
-	crypto::UserCryptoKeySet _user_crypto_key_set;
-	// store all of the keys in users json, look for a proper way of storing this data
+	crypto::UserCryptoKeySet _user_crypto_key_set; // store all of the keys in users json, look for a proper way of storing this data
 };
 
 }

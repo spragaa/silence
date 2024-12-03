@@ -5,10 +5,12 @@ namespace common {
 MessageMetadata::MessageMetadata(
 	const int& id,
 	const int& sender_id,
-	const int& receiver_id
-	) : _id(id),
+	const int& receiver_id,
+	const int& chat_id
+) : _id(id),
 	_sender_id(sender_id),
 	_receiver_id(receiver_id),
+	_chat_id(chat_id),
 	_deleted(false),
 	_created_timestamp(std::chrono::system_clock::now())
 {
@@ -24,6 +26,10 @@ int MessageMetadata::get_sender_id() const noexcept {
 
 int MessageMetadata::get_receiver_id() const noexcept {
 	return _receiver_id;
+}
+
+int MessageMetadata::get_chat_id() const noexcept {
+	return _chat_id;
 }
 
 bool MessageMetadata::is_deleted() const noexcept {
@@ -54,8 +60,12 @@ void MessageMetadata::set_id(const int& msg_id) noexcept {
 	_id = msg_id;
 }
 
-void MessageMetadata::set_sender(const int& s) noexcept {
+void MessageMetadata::set_sender_id(const int& s) noexcept {
 	_sender_id = s;
+}
+
+void MessageMetadata::set_chat_id(const int& chat_id) noexcept {
+	_chat_id = chat_id;
 }
 
 void MessageMetadata::set_created_timestamp(const Timestamp& timestamp) noexcept {
