@@ -3,7 +3,7 @@
 namespace common {
 
 Message::Message(const int& sender_id, const int& receiver_id, const std::string& text) :
-	_metadata(0, sender_id, receiver_id), _text(0, text)
+	_metadata(0, sender_id, receiver_id, 0), _text(0, text)
 {
 }
 
