@@ -15,7 +15,8 @@ public:
 	MessageMetadata(
 		const int& id,
 		const int& sender_id,
-		const int& receiver_id
+		const int& receiver_id,
+		const int& chat_id
 		);
 
 	bool is_deleted() const noexcept;

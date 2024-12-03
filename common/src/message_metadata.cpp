@@ -89,6 +89,7 @@ nlohmann::json MessageMetadata::to_json() const {
 	j["id"] = _id;
 	j["sender_id"] = _sender_id;
 	j["receiver_id"] = _receiver_id;
+	j["chat_id"] = _chat_id;
 	j["deleted"] = _deleted;
 	j["created_timestamp"] = _created_timestamp.time_since_epoch().count();
 	if (_deleted_timestamp) {
@@ -101,7 +102,7 @@ nlohmann::json MessageMetadata::to_json() const {
 }
 
 MessageMetadata MessageMetadata::from_json(const nlohmann::json& j) {
-	MessageMetadata msg(j["id"], j["sender_id"], j["receiver_id"]);
+	MessageMetadata msg(j["id"], j["sender_id"], j["receiver_id"], j["chat_id"]);
 	msg._id = j["id"];
 	msg._deleted = j["deleted"];
 	msg._created_timestamp = Timestamp(std::chrono::nanoseconds(j["created_timestamp"]));
