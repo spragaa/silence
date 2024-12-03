@@ -332,25 +332,25 @@ void Client::authorize_user() {
 }
 
 // void?
-bool Client::send_aes_key(const std::string& receiver_nickname, const std::string& receiver_public_key) {
+void Client::send_aes_key(const std::string& receiver_nickname, const std::string& receiver_public_key) {
 	crypto::EncryptedMessage encrypted_aes_key = _hybrid_crypto_system.encrypt_aes_key(receiver_public_key);
-	std::string encrypted_aes_key_c1 = crypto::cpp_int_to_hex(encrypted_aes_key._c1);  
-	std::string encrypted_aes_key_c2 = crypto::cpp_int_to_hex(encrypted_aes_key._c2);  
-	
+	std::string encrypted_aes_key_c1 = crypto::cpp_int_to_hex(encrypted_aes_key._c1);
+	std::string encrypted_aes_key_c2 = crypto::cpp_int_to_hex(encrypted_aes_key._c2);
+
 	crypto::SHA256 sha256;
 	sha256.update(encrypted_aes_key_c1 + encrypted_aes_key_c2);
 	crypto::DSASignature dsa_signature = _hybrid_crypto_system.sign(
-	   crypto::hex_to_cpp_int(sha256.digest())
-	);
+		crypto::hex_to_cpp_int(sha256.digest())
+		);
 
 	nlohmann::json request;
 	request["type"] = "send_aes_key";
 	request["receiver_nickname"] = receiver_nickname;
 	request["encrypted_aes_key_c1"] = encrypted_aes_key_c1;
-	request["encrypted_aes_key_c2"] = encrypted_aes_key_c2;  
-	request["dsa__r"] = crypto::cpp_int_to_hex(dsa_signature._r);  
-	request["dsa_signature"] = crypto::cpp_int_to_hex(dsa_signature._signature);  
-	
+	request["encrypted_aes_key_c2"] = encrypted_aes_key_c2;
+	request["dsa_r"] = crypto::cpp_int_to_hex(dsa_signature._r);
+	request["dsa_signature"] = crypto::cpp_int_to_hex(dsa_signature._signature);
+
 	DEBUG_MSG("[Client::send_aes_key] Sending request: " + request.dump());
 
 	try {
@@ -358,7 +358,7 @@ bool Client::send_aes_key(const std::string& receiver_nickname, const std::strin
 	} catch (const std::exception& e) {
 		ERROR_MSG("[Client::send_aes_key] Exception caught: " + std::string(e.what()));
 	}
-} 
+}
 
 void Client::get_receiver_public_keys(const std::string& receiver_nickname) {
 	nlohmann::json request;

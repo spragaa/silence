@@ -62,7 +62,7 @@
 - base class for request, and derived classes for each possible request type
 
 ## questions?
-- is it possib le to simplify setup_db scripts?
+- is it possible to simplify setup_db scripts?
 - merge message_metadata and user_metadata dbs into one with different tables?
 - does it even make sense to use --clean in cmake?
 - ??? another server with rest api with statistics

@@ -19,7 +19,7 @@ namespace crypto {
         2. generate aes key for particular receiver
         3. encrypt aes key using el gamal public key of receiver
         4. create hash of encrypted message
-        5. sign encrypted messsage hash using dsa, where message is c1 || c2  
+        5. sign encrypted messsage hash using dsa, where message is c1 || c2
 
         -> (first) SecureMessage (el gamal encypted aes key, aes encypted message, dsa signature)
 
@@ -64,7 +64,7 @@ public:
 	cpp_int get_dsa_public_key() const;
 	EncryptedMessage encrypt_aes_key(const std::string& recipients_public_key) const;
 	DSASignature sign(const cpp_int& message_hash);
-	
+
 private:
 
 protected:

@@ -51,7 +51,7 @@ EncryptedMessage HybridCryptoSystem::encrypt_aes_key(const std::string& recipien
 }
 
 DSASignature HybridCryptoSystem::sign(const cpp_int& message_hash) {
-    return _dsa->sign(message_hash);
+	return _dsa->sign(message_hash);
 }
 
 
