@@ -22,12 +22,14 @@ public:
 	int get_id() const noexcept;
 	int get_sender_id() const noexcept;
 	int get_receiver_id() const noexcept;
+	int get_chat_id() const noexcept;
 	Timestamp get_created_timestamp() const noexcept;
 	std::optional<Timestamp>get_deleted_timestamp() const noexcept;
 	std::optional<Timestamp>get_last_edited_timestamp() const noexcept;
 
 	void set_id(const int& msg_id) noexcept;
-	void set_sender(const int& t) noexcept;
+	void set_sender_id(const int& t) noexcept;
+	void set_chat_id(const int& chat_if) noexcept;
 	void set_created_timestamp(const Timestamp& timestamp) noexcept;
 	void set_last_edited_timestamp(const Timestamp& timestamp) noexcept;
 	void set_deleted_timestamp(const Timestamp& timestamp) noexcept;
@@ -40,6 +42,7 @@ private:
 	int _id;
 	int _sender_id;
 	int _receiver_id;
+	int _chat_id;
 	bool _deleted;
 	Timestamp _created_timestamp;
 	std::optional<Timestamp> _deleted_timestamp;
