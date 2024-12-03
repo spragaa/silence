@@ -33,7 +33,7 @@
 //     msg.set_text("Zig is the guy");
 //     EXPECT_EQ(msg.get_text(), "Zig is the guy");
 
-//     msg.set_sender(3);
+//     msg.set_sender_id(3);
 //     EXPECT_EQ(msg.get_sender_id(), 3);
 
 //     common::Timestamp ts = create_timestamp();

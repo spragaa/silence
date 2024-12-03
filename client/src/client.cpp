@@ -98,7 +98,6 @@ void Client::run() {
 	}
 }
 
-
 void inline Client::show_actions() {
 	std::cout << _user.get_nickname() << ", please select the number of the action you would like to perform now from the list below:" << std::endl;
 	std::cout << "0. Send message" << std::endl;
