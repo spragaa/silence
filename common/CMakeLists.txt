@@ -5,6 +5,7 @@ add_library(common_lib
     src/message_metadata.cpp
     src/message_text.cpp
     src/user.cpp
+    src/chat.cpp
 )
 
 target_link_libraries(common_lib

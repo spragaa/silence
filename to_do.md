@@ -60,7 +60,9 @@
 - refactor client
 - refactor aes class into aes256 and aes256_state and maybe extract padding into another class too
 - base class for request, and derived classes for each possible request type
-
+- there are classes that are used as a "conatiners", for example Chat, MessageMetadata, User, etc. They have a similar structure, 
+  so they could be refactored, there should be a base class (sth like PostgresTableBase) and all of those derive from them
+ 
 ## questions?
 - is it possible to simplify setup_db scripts?
 - merge message_metadata and user_metadata dbs into one with different tables?
