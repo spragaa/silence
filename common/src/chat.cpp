@@ -6,7 +6,7 @@ Chat::Chat(
 	const int& id,
 	const int& user1_id,
 	const int& user2_id
-) : _id(id),
+	) : _id(id),
 	_user1_id(user1_id),
 	_user2_id(user2_id),
 	_deleted(false),

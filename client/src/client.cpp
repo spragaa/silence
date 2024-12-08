@@ -330,9 +330,8 @@ void Client::authorize_user() {
 	INFO_MSG("[Client::authorize_user()] Authorization process completed");
 }
 
-// void?
 void Client::send_aes_key(const std::string& receiver_nickname, const std::string& receiver_public_key) {
-	crypto::EncryptedMessage encrypted_aes_key = _hybrid_crypto_system.encrypt_aes_key(receiver_public_key);
+	crypto::EncryptedMessage encrypted_aes_key = _hybrid_crypto_system.encrypt_message(receiver_public_key);
 	std::string encrypted_aes_key_c1 = crypto::cpp_int_to_hex(encrypted_aes_key._c1);
 	std::string encrypted_aes_key_c2 = crypto::cpp_int_to_hex(encrypted_aes_key._c2);
 
@@ -344,6 +343,7 @@ void Client::send_aes_key(const std::string& receiver_nickname, const std::strin
 
 	nlohmann::json request;
 	request["type"] = "send_aes_key";
+	request["sender_id"] = _user.get_id();
 	request["receiver_nickname"] = receiver_nickname;
 	request["encrypted_aes_key_c1"] = encrypted_aes_key_c1;
 	request["encrypted_aes_key_c2"] = encrypted_aes_key_c2;
@@ -583,8 +583,10 @@ void Client::process_server_message(const std::string& message) {
 		}
 		else if (json_message["type"] == "file_chunk") {
 			handle_incoming_file_chunk(json_message);
-		} else if (json_message["type"] == "receive_user_keys") {
-			handle_receive_user_keys(json_message);
+		} else if (json_message["type"] == "receive_user_public_keys") {
+			handle_receive_user_public_keys(json_message);
+		} else if (json_message["type"] == "receive_aes_key") {
+			handle_receive_aes_key(json_message);
 		}
 	} catch (const nlohmann::json::parse_error& e) {
 		ERROR_MSG("[Client::process_server_message] Failed to parse message: " + std::string(e.what()));
@@ -642,20 +644,58 @@ void Client::handle_incoming_file_chunk(const nlohmann::json& chunk_message) {
 	}
 }
 
-void Client::handle_receive_user_keys(const nlohmann::json& response) {
-	if (response["type"] == "success") {
-		int user_id = response["sender_id"];
+void Client::handle_receive_user_public_keys(const nlohmann::json& request) {
+	if (request["type"] == "success") {
+		int user_id = request["sender_id"];
 		crypto::UserCryptoKeys user_crypto_keys(
-			crypto::hex_to_cpp_int(response["dsa_public_key"]),
-			crypto::hex_to_cpp_int(response["el_gamal_public_key"]),
+			crypto::hex_to_cpp_int(request["dsa_public_key"]),
+			crypto::hex_to_cpp_int(request["el_gamal_public_key"]),
 			crypto::cpp_int(-1)
 			);
 		_user_crypto_key_set.add_user_keys(user_id, user_crypto_keys);
 
-		DEBUG_MSG("[Client::handle_receive_user_keys] Keys received successfully for user: " + std::to_string(user_id));
+		DEBUG_MSG("[Client::handle_receive_user_public_keys] Keys received successfully for user: " + std::to_string(user_id));
 	} else {
-		ERROR_MSG("[Client::handle_receive_user_keys] Failed to receive keys for user");
-		DEBUG_MSG("[Client::handle_receive_user_keys] Response: " + response.dump());
+		ERROR_MSG("[Client::handle_receive_user_public_keys] Failed to receive keys for user");
+		DEBUG_MSG("[Client::handle_receive_user_public_keys] Response: " + request.dump());
+	}
+}
+
+void Client::handle_receive_aes_key(const nlohmann::json& request) {
+	if (request["type"] == "success") {
+		int sender_id = request["sender_id"];
+
+		crypto::EncryptedMessage encrypted_aes_key{
+			crypto::hex_to_cpp_int(request["encrypted_aes_key_c1"]),
+			crypto::hex_to_cpp_int(request["encrypted_aes_key_c2"])
+		};
+		crypto::cpp_int aes_key = _hybrid_crypto_system.decrypt_message(encrypted_aes_key);
+		_user_crypto_key_set.set_aes_key(sender_id, aes_key);
+
+		crypto::DSASignature dsa_signature{
+			crypto::hex_to_cpp_int(request["dsa_r"]),
+			crypto::hex_to_cpp_int(request["dsa_signature"])
+		};
+		crypto::SHA256 sha256;
+		std::string encrypted_aes_key_c1 = request["encrypted_aes_key_c1"];
+		std::string encrypted_aes_key_c2 = request["encrypted_aes_key_c2"];
+
+		sha256.update(encrypted_aes_key_c2 + encrypted_aes_key_c2);
+		crypto::cpp_int message_hash = crypto::hex_to_cpp_int(sha256.digest());
+		auto user_keys = _user_crypto_key_set.get_user_keys(sender_id);
+		crypto::cpp_int sender_dsa_public_key = user_keys->get_dsa_public_key();
+
+		bool is_verified =_hybrid_crypto_system.verify(message_hash, dsa_signature, sender_dsa_public_key);
+
+		if(is_verified) {
+			_user_crypto_key_set.set_aes_key(sender_id, aes_key);
+			DEBUG_MSG("[Client::handle_receive_aes_key] AES key decrypted and verified successfully for chat with user_id: " + std::to_string(sender_id));
+		} else {
+			WARN_MSG("[Client::handle_receive_aes_key] Failed to verify signature of encrypted aes key for chat with user_id: " + std::to_string(sender_id));
+		}
+	} else {
+		ERROR_MSG("[Client::handle_receive_aes_key] Failed to receive aes for user");
+		DEBUG_MSG("[Client::handle_receive_aes_key] Response: " + request.dump());
 	}
 }
 

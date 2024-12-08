@@ -49,9 +49,9 @@ void RequestHandler::handle_request(boost::shared_ptr<tcp::socket> socket) {
 					handle_file_chunk(socket, request);
 				} else if (request["type"] == "get_user_keys") {
 					handle_get_user_keys(socket, request);
-				} /* else if (request["type"] == "send_private_keys") {
-					 handle_send_public_keys(socket, request);
-					 } */
+				} else if (request["type"] == "send_aes_key") {
+					handle_send_aes_key(socket, request);
+				}
 				else {
 					nlohmann::json response = {
 						{"status", "error"},
@@ -369,6 +369,47 @@ void RequestHandler::handle_get_user_keys(boost::shared_ptr<tcp::socket> socket,
 // then when keys cycle is over we will use these methods;
 // void RequestHandler::handle_send_public_keys(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
 // }
+
+void RequestHandler::handle_send_aes_key(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request) {
+	DEBUG_MSG("[RequaestHandler::handle_send_aes_key] Called on request " + request.dump());
+
+	int sender_id = request["sender_id"];
+	std::string receiver_nickname = request["receiver_nickname"];
+	std::string encrypted_aes_key_c1 = request["encrypted_aes_key_c1"];
+	std::string encrypted_aes_key_c2 = request["encrypted_aes_key_c2"];
+	std::string dsa_r = request["dsa_r"];
+	std::string dsa_signature = request["dsa_signrature"];
+
+	nlohmann::json sender_response, receiver_response;
+
+	int receiver_id = _repo_manager.get_user_id(receiver_nickname);
+	if (receiver_id == 0) {
+		sender_response["status"] = "error";
+		sender_response["response"] = "Receiver not found";
+		boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
+		return;
+	}
+
+	// mb in db, mark aes key as initialized???
+
+	sender_response["status"] = "success";
+	sender_response["response"] = "AES key sent successfully";
+	DEBUG_MSG("[RequaestHandler::handle_send_aes_key] Response for sender: " +  sender_response.dump());
+	boost::asio::write(*socket, boost::asio::buffer(sender_response.dump() + "\r\n\r\n"));
+
+	auto receiver_socket = _connected_clients_manager.get_client_socket(receiver_id);
+	if(receiver_socket) {
+		receiver_response["type"] = "receive_aes_key";
+		receiver_response["sender_id"] = sender_id;
+		receiver_response["encrypted_aes_key_c1"] = encrypted_aes_key_c1;
+		receiver_response["encrypted_aes_key_c2"] = encrypted_aes_key_c2;
+		receiver_response["dsa_r"] = dsa_r;
+		receiver_response["dsa_signature"] = dsa_signature;
+
+		DEBUG_MSG("[RequaestHandler::handle_send_aes_key] Response for receiver: " +  receiver_response.dump());
+		boost::asio::write(*receiver_socket, boost::asio::buffer(receiver_response.dump() + "\r\n\r\n"));
+	}
+}
 
 void RequestHandler::send_file_to_client(boost::shared_ptr<tcp::socket> client_socket, const std::string& filename) {
 	std::vector<std::string> chunks = _repo_manager.download_file_chunks(filename);

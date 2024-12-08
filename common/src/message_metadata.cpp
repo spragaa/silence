@@ -7,7 +7,7 @@ MessageMetadata::MessageMetadata(
 	const int& sender_id,
 	const int& receiver_id,
 	const int& chat_id
-) : _id(id),
+	) : _id(id),
 	_sender_id(sender_id),
 	_receiver_id(receiver_id),
 	_chat_id(chat_id),
