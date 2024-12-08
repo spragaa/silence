@@ -50,6 +50,10 @@ void UserCryptoKeySet::add_user_keys(int user_id, const UserCryptoKeys& keys) {
 	          );
 }
 
+void UserCryptoKeySet::set_aes_key(int user_id, const cpp_int& aes_key) {
+	_key_set[user_id].set_aes_key(aes_key);
+}
+
 std::optional<UserCryptoKeys> UserCryptoKeySet::get_user_keys(int user_id) const {
 	auto it = _key_set.find(user_id);
 	if (it != _key_set.end()) {

@@ -22,7 +22,7 @@
 
 namespace client {
 
-// to do: refactor this shit 
+// to do: refactor this shit
 class Client {
 public:
 	Client(const std::string& server_address,
@@ -47,7 +47,8 @@ private:
 	void handle_chunk_acknowledgment(const nlohmann::json& response);
 	void handle_incoming_file(const nlohmann::json& notification);
 	void handle_incoming_file_chunk(const nlohmann::json& chunk_message);
-	void handle_receive_user_keys(const nlohmann::json& response);
+	void handle_receive_user_public_keys(const nlohmann::json& request);
+	void handle_receive_aes_key(const nlohmann::json& request);
 
 	bool is_registered() const noexcept;
 	bool is_connected();
@@ -96,7 +97,7 @@ private:
 	std::string _user_files_dir = std::string(SOURCE_DIR) + "/client/user_files";
 	std::map<std::string, std::ofstream> _incoming_files;
 	crypto::HybridCryptoSystem _hybrid_crypto_system;
-	crypto::UserCryptoKeySet _user_crypto_key_set; 
+	crypto::UserCryptoKeySet _user_crypto_key_set;
 	// ^-- store all of the keys in users json if that is common practice, look for a proper way of storing this data
 };
 

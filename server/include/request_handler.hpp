@@ -44,6 +44,7 @@ private:
 	// check_comments in .cpp
 	void handle_get_user_keys(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	void handle_send_public_keys(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
+	void handle_send_aes_key(boost::shared_ptr<tcp::socket> socket, const nlohmann::json& request);
 	void send_file_to_client(boost::shared_ptr<tcp::socket> client_socket, const std::string& filename);
 
 private:

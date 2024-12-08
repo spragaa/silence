@@ -35,11 +35,14 @@ private:
 class UserCryptoKeySet {
 public:
 	void add_user_keys(int user_id, const UserCryptoKeys& keys);
+	void set_aes_key(int user_id, const cpp_int& aes_key);
 	std::optional<UserCryptoKeys> get_user_keys(int user_id) const;
+
 	bool remove_user_keys(int user_id);
 	bool has_user(int user_id) const;
 	size_t size() const;
 	void clear();
+
 
 private:
 	std::map<int, UserCryptoKeys> _key_set;

@@ -46,13 +46,20 @@ cpp_int HybridCryptoSystem::get_dsa_public_key() const {
 	return _dsa->get_public_key();
 }
 
-EncryptedMessage HybridCryptoSystem::encrypt_aes_key(const std::string& recipients_public_key) const {
+EncryptedMessage HybridCryptoSystem::encrypt_message(const std::string& recipients_public_key) const {
 	return _el_gamal->encrypt(hex_to_cpp_int(_aes->get_key()), hex_to_cpp_int(recipients_public_key));
+}
+
+cpp_int HybridCryptoSystem::decrypt_message(const EncryptedMessage& encrypted_message) {
+	return _el_gamal->decrypt(encrypted_message);
 }
 
 DSASignature HybridCryptoSystem::sign(const cpp_int& message_hash) {
 	return _dsa->sign(message_hash);
 }
 
+bool HybridCryptoSystem::verify(const cpp_int& message_hash, const DSASignature& signature, const cpp_int& signer_public_key) {
+	return _dsa->verify(message_hash, signature, signer_public_key);
+}
 
 } // namespace crypto

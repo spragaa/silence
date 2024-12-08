@@ -62,8 +62,10 @@ public:
 
 	cpp_int get_el_gamal_public_key() const;
 	cpp_int get_dsa_public_key() const;
-	EncryptedMessage encrypt_aes_key(const std::string& recipients_public_key) const;
+	EncryptedMessage encrypt_message(const std::string& recipients_public_key) const;
+	cpp_int decrypt_message(const EncryptedMessage& encrypted_message);
 	DSASignature sign(const cpp_int& message_hash);
+	bool verify(const cpp_int& message_hash, const DSASignature& signature, const cpp_int& signer_public_key);
 
 private:
 

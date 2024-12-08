@@ -133,7 +133,7 @@ common::MessageMetadata MessageMetadataRepository::construct_message(const pqxx:
 		row["sender_id"].as<int>(),
 		row["receiver_id"].as<int>(),
 		row["chat_id"].as<int>()
-	);
+		);
 	msg.set_deleted(row["deleted"].as<bool>());
 	msg.set_created_timestamp(parse_timestamp(row["created_timestamp"].as<std::string>()));
 	if (!row["deleted_timestamp"].is_null())
