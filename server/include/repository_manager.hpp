@@ -23,6 +23,7 @@ public:
 
 	int create_user(const common::User& user);
 	bool set_public_keys(const int user_id, const std::string& el_gamal_public_key, const std::string& dsa_public_key);
+	// bool mark_aes_key_as_initialized();
 	bool authorize_user(int user_id, const std::string& nickname, const std::string& password);
 	int get_user_id(const std::string& nickname);
 	std::optional<crypto::UserCryptoKeys> get_public_keys(const int user_id);

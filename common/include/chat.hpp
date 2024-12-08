@@ -16,8 +16,8 @@ public:
 		const int& id,
 		const int& user1_id,
 		const int& user2_id
-	);
-    
+		);
+
 	bool is_deleted() const noexcept;
 	int get_id() const noexcept;
 	int get_user1_id() const noexcept;
@@ -25,7 +25,7 @@ public:
 	Timestamp get_created_timestamp() const noexcept;
 	std::optional<Timestamp>get_deleted_timestamp() const noexcept;
 	std::optional<Timestamp>get_last_edited_timestamp() const noexcept;
-    
+
 	void set_id(const int& id) noexcept;
 	void set_user1_id(const int& user1_id) noexcept;
 	void set_user2_id(const int& user2_id) noexcept;
@@ -33,10 +33,10 @@ public:
 	void set_last_edited_timestamp(const Timestamp& timestamp) noexcept;
 	void set_deleted_timestamp(const Timestamp& timestamp) noexcept;
 	void set_deleted(const bool& deleted) noexcept;
-    
+
 	nlohmann::json to_json() const;
 	Chat from_json(const nlohmann::json& j);
-    
+
 private:
 	int _id;
 	int _user1_id;

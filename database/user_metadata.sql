@@ -23,6 +23,7 @@ CREATE TABLE crypto_keys (
     user_id INTEGER NOT NULL UNIQUE,
     dsa_public_key TEXT NOT NULL,
     el_gamal_public_key TEXT NOT NULL,
+    -- mb add a flag, is_aes_key_initialized?
     created_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

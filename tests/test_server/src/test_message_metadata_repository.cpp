@@ -14,7 +14,7 @@ protected:
 };
 
 TEST_F(MessageMetadataRepositoryTests, create_message) {
-	common::MessageMetadata message(100, 1, 2, 0); // chat id shouldn't be a 0 here 
+	common::MessageMetadata message(100, 1, 2, 0); // chat id shouldn't be a 0 here
 	int message_id = _repo->create(message);
 
 	ASSERT_EQ(message_id, 100);
