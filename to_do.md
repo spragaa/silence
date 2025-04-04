@@ -104,3 +104,4 @@
 - use std::filesystem::filepath instead of strings
 - add namespaces
 - https://stackoverflow.com/questions/45710667/defining-global-constants-in-c17
+
